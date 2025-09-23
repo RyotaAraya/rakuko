@@ -266,3 +266,7 @@
 ### 初期設定
 - 情報システム部にシステム管理者権限の初期ユーザを設定
 - 管理者が他部署・ユーザを順次登録・承認する運用
+
+### 画面遷移
+Figma
+https://www.figma.com/design/xjqV0lyze9E7nNkKbOTeh6/Rakuko?node-id=0-1&t=cp8LNpW1SiGOXaP6-1
