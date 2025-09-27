@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const message = ref<string>("こんにちは！Vue + Rails + Vite + TypeScript")
+const message = ref<string>('こんにちは！Vue + Rails + Vite + TypeScript')
 const count = ref<number>(0)
 
 const updateMessage = (): void => {
