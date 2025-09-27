@@ -1,3 +1,22 @@
-<h1>Rails + Vue.js + Vite</h1>
+<% content_for :title, "ラクコ - ホーム" %>
 
-<div id="vue-app"></div>
+<!-- ヘッダー -->
+<header class="border-b border-gray-300 py-4 bg-white">
+  <div class="max-w-screen-xl mx-auto flex justify-between items-center px-5">
+    <h1><%= link_to "ラクコ", root_path, class: "text-lg font-bold no-underline text-inherit" %></h1>
+    <div class="flex items-center gap-4">
+      <% if false # ログイン機能実装時に変更 %>
+        <span class="text-sm">田中太郎</span>
+        <a href="#" class="px-4 py-2 border border-gray-300 bg-gray-50 text-sm no-underline text-black hover:bg-gray-200">ログアウト</a>
+      <% else %>
+        <a href="#" class="px-4 py-2 border border-gray-300 bg-gray-50 text-sm no-underline text-black hover:bg-gray-200">ログイン</a>
+        <a href="#" class="px-4 py-2 border border-gray-300 bg-gray-50 text-sm no-underline text-black hover:bg-gray-200">新規登録</a>
+      <% end %>
+    </div>
+  </div>
+</header>
+
+<!-- メインコンテンツ -->
+<main class="max-w-screen-xl mx-auto py-8 px-5">
+  <div id="vue-app"></div>
+</main>

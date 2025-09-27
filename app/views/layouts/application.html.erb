@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>App</title>
+    <title><%= content_for?(:title) ? "#{content_for(:title)} | ラクコ" : "ラクコ - 学生アルバイト勤怠管理システム" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -10,19 +10,157 @@
     <%= javascript_importmap_tags %>
     <%= vite_client_tag %>
     <%= vite_typescript_tag 'application' %>
-    <!--
-      If using a TypeScript entrypoint file:
-        vite_typescript_tag 'application'
 
-      If using a .jsx or .tsx entrypoint, add the extension:
-        vite_javascript_tag 'application.jsx'
+    <style>
+      /* Critical CSS to prevent FOUC */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-      Visit the guide for more information: https://vite-ruby.netlify.app/guide/rails
-    -->
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #fafafa;
+      }
 
+      /* Critical Tailwind styles to prevent FOUC */
+      .w-full { width: 100%; }
+      .text-center { text-align: center; }
+      .mb-8 { margin-bottom: 2rem; }
+      .mb-2 { margin-bottom: 0.5rem; }
+      .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+      .font-bold { font-weight: 700; }
+      .text-gray-800 { color: rgb(31 41 55); }
+      .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+      .text-gray-600 { color: rgb(75 85 99); }
+      .grid { display: grid; }
+      .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+      .gap-4 { gap: 1rem; }
+      .border { border-width: 1px; }
+      .border-gray-300 { border-color: rgb(209 213 219); }
+      .p-5 { padding: 1.25rem; }
+      .bg-white { background-color: rgb(255 255 255); }
+      .cursor-pointer { cursor: pointer; }
+      .hover\:bg-gray-50:hover { background-color: rgb(249 250 251); }
+      .transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+      .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+      .border-b { border-bottom-width: 1px; }
+      .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+      .max-w-screen-xl { max-width: 1280px; }
+      .mx-auto { margin-left: auto; margin-right: auto; }
+      .flex { display: flex; }
+      .justify-between { justify-content: space-between; }
+      .items-center { align-items: center; }
+      .px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .no-underline { text-decoration: none; }
+      .text-inherit { color: inherit; }
+      .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+
+      @media (min-width: 768px) {
+        .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+
+      /* Header styling */
+      .header {
+        border-bottom: 1px solid #ddd;
+        padding: 15px 0;
+        background: white;
+      }
+
+      .header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .nav-link {
+        padding: 8px 16px;
+        border: 1px solid #ccc;
+        background: #f5f5f5;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        color: black;
+      }
+
+      .nav-link:hover {
+        background: #e8e8e8;
+      }
+
+      /* Main content styling */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px 20px;
+      }
+
+      /* Flash messages */
+      .flash-messages {
+        max-width: 1200px;
+        margin: 20px auto 0;
+        padding: 0 20px;
+      }
+
+      .flash {
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        background: white;
+      }
+
+      .flash.notice {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+      }
+
+      .flash.alert {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .header-content {
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .container {
+          padding: 20px 15px;
+        }
+      }
+    </style>
   </head>
 
   <body>
+    <% if flash.any? %>
+      <div class="flash-messages">
+        <% flash.each do |type, message| %>
+          <div class="flash <%= type %>"><%= message %></div>
+        <% end %>
+      </div>
+    <% end %>
+
     <%= yield %>
   </body>
 </html>
