@@ -4,12 +4,13 @@
 //    <%= vite_client_tag %>
 //    <%= vite_javascript_tag 'application' %>
 
+import '../styles/application.css'
 import { createApp } from 'vue'
-import HelloVue from '../components/HelloVue.vue'
+import WelcomeMessage from '../components/WelcomeMessage.vue'
 
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('vue-app')
   if (el) {
-    createApp(HelloVue).mount(el)
+    createApp(WelcomeMessage).mount(el)
   }
 })

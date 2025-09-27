@@ -60,21 +60,21 @@
 **概要**: アプリケーションのランディングページを作成し、基本レイアウトとVue.jsの動作を確認
 
 **詳細タスク**:
-- [ ] ランディングページ作成
-  - [ ] HomeController#index作成
-  - [ ] ルート設定（root to: 'home#index'）
-  - [ ] 基本的なトップページビュー作成
-- [ ] Vue.js部分組み込み
-  - [ ] Vue.jsコンポーネント作成（例: WelcomeMessage）
-  - [ ] Rails ViewとVue.jsの連携確認
-  - [ ] TypeScriptでの基本的な連携確認
-- [ ] 基本レイアウト・デザイン
-  - [ ] application.html.erb レイアウト作成
-  - [ ] ナビゲーションバー基本構造
-  - [ ] 基本CSS設定
-  - [ ] フラッシュメッセージ表示機能
-- [ ] 初期ルーティング設定
-  - [ ] routes.rb基本設定
+- [x] ランディングページ作成
+  - [x] HomeController#index作成
+  - [x] ルート設定（root to: 'home#index'）
+  - [x] 基本的なトップページビュー作成
+- [x] Vue.js部分組み込み
+  - [x] Vue.jsコンポーネント作成（例: WelcomeMessage）
+  - [x] Rails ViewとVue.jsの連携確認
+  - [x] TypeScriptでの基本的な連携確認
+- [x] 基本レイアウト・デザイン
+  - [x] application.html.erb レイアウト作成
+  - [x] ナビゲーションバー基本構造
+  - [x] 基本CSS設定（Tailwind CSS + FOUC対策）
+  - [x] フラッシュメッセージ表示機能
+- [x] 初期ルーティング設定
+  - [x] routes.rb基本設定
 
 **完了条件**:
 - トップページが正常に表示される
