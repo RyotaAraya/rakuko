@@ -2,12 +2,18 @@
 
 ## Phase 1: 基盤構築
 
-### 1-1. Rails新規プロジェクト作成 - 2SP
+### 1-1. Docker環境構築 + Rails新規プロジェクト作成 - 3SP
 
-**概要**: 学生アルバイト勤怠管理システムのRailsプロジェクトを新規作成し、必要なgemを導入
+**概要**: Docker開発環境を構築し、その中で学生アルバイト勤怠管理システムのRailsプロジェクトを新規作成
 
 **詳細タスク**:
-- [ ] `rails new rakuko --database=postgresql` でプロジェクト作成
+- [ ] Docker環境構築
+  - [ ] Dockerfile作成（Ruby 3.2 + Node.js環境）
+  - [ ] docker-compose.yml作成（PostgreSQL、Redis含む）
+  - [ ] 開発環境用の環境変数設定
+- [ ] Docker内でRailsプロジェクト作成
+  - [ ] `rails new rakuko --database=postgresql` でプロジェクト作成
+  - [ ] database.yml設定（Docker環境用）
 - [ ] 基本gem導入
   - [ ] devise gem（ユーザー認証）
   - [ ] omniauth-google-oauth2 gem（Google OAuth）
@@ -20,15 +26,16 @@
   - [ ] 初期コミット・GitHubプッシュ
 
 **完了条件**:
-- Railsアプリケーションが正常に起動する
+- Dockerコンテナ内でRailsアプリケーションが正常に起動する
 - 全ての基本gemが正しく導入されている
 - GitHubリポジトリに初期コードがプッシュされている
+- PostgreSQL、Redisとの接続が確認できている
 
 ---
 
-### 1-2. Vue.js + Docker環境構築 - 2SP
+### 1-2. Vue.js + TypeScript環境構築 - 2SP
 
-**概要**: Vue.js 3 + TypeScriptの部分組み込み設定とDocker開発環境を構築
+**概要**: Vue.js 3 + TypeScriptの部分組み込み設定
 
 **詳細タスク**:
 - [ ] Vue.js 3 + TypeScript部分組み込み設定
@@ -36,16 +43,15 @@
   - [ ] package.json設定
   - [ ] TypeScript設定ファイル作成
   - [ ] Vite設定ファイル作成
-- [ ] Docker環境構築
-  - [ ] Dockerfile作成（Ruby 3.2 + Node.js環境）
-  - [ ] docker-compose.yml作成（PostgreSQL、Redis含む）
-  - [ ] 開発環境用の環境変数設定
+- [ ] Vue.js環境確認
   - [ ] Docker内でのVite + Rails連携確認
+  - [ ] 基本的なVue.jsコンポーネント作成テスト
+  - [ ] TypeScriptコンパイル確認
 
 **完了条件**:
-- Dockerコンテナ内でRailsアプリケーションが正常に起動する
 - Vue.js開発環境が機能している
 - ViteによるHMRが動作している
+- TypeScriptが正常にコンパイルされている
 
 ---
 
