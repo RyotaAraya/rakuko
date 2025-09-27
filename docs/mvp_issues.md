@@ -9,14 +9,16 @@
 ## MVP Issue一覧（開発順序）
 
 ### Phase 1: 基盤構築
-1-1. **Rails新規プロジェクト作成** - 2SP
-   - rails new rakuko --database=postgresql
+1-1. **Docker環境構築 + Rails新規プロジェクト作成** - 3SP
+   - Docker環境構築（Dockerfile, docker-compose.yml）
+   - Docker内でrails new rakuko --database=postgresql
    - 基本gem導入（devise gem, omniauth-google-oauth2 gem, pundit gem, aasm gem等）
    - Gemfile設定・初期セットアップ
 
-1-2. **Vue.js + Docker環境構築** - 2SP
+1-2. **Vue.js + TypeScript環境構築** - 2SP
    - Vue.js 3 + TypeScript部分組み込み設定
-   - Docker環境構築（Dockerfile, docker-compose.yml）
+   - vite_rails gem導入と設定
+   - Docker内でのVite + Rails連携確認
 
 1-3. **トップページ作成** - 2SP
    - ランディングページ（Vue.js）
@@ -148,7 +150,7 @@
     - パフォーマンス最適化
     - ユーザビリティ改善
 
-## 合計：70SP
+## 合計：71SP
 
 ## MVP後の拡張機能
 - [ ] 通知システム基盤実装

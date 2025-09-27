@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
+    "@vue/tsconfig": "^0.8.1",
+    "typescript": "^5.9.2",
+    "vite": "^5.4.20",
+    "vite-plugin-ruby": "^5.1.1"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "vue": "^3.5.22"
+  }
+}
