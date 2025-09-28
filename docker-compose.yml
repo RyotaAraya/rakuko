@@ -34,6 +34,8 @@ services:
     depends_on:
       - db
       - redis
+    env_file:
+      - .env.development
     environment:
       DATABASE_URL: postgresql://postgres:password@db:5432/rakuko_development
       REDIS_URL: redis://redis:6379/0
