@@ -6,10 +6,17 @@
     <h1><%= link_to "ラクコ", root_path, class: "text-lg font-bold no-underline text-inherit" %></h1>
     <div class="flex items-center gap-4">
       <% if user_signed_in? %>
-        <span class="text-sm"><%= current_user.name || current_user.email %></span>
-        <%= button_to "ログアウト", destroy_user_session_path, method: :delete, class: "px-4 py-2 border border-gray-300 bg-gray-50 text-sm cursor-pointer hover:bg-gray-200", style: "background: none; color: black; border: 1px solid #d1d5db;" %>
+        <span class="text-sm"><%= current_user.display_name %></span>
+        <%= link_to "ログアウト", destroy_user_session_path, class: "px-4 py-2 border border-gray-300 bg-gray-50 text-sm cursor-pointer hover:bg-gray-200", style: "background: none; color: black; border: 1px solid #d1d5db; text-decoration: none; display: inline-block;" %>
       <% else %>
         <%= button_to "Googleでログイン", user_google_oauth2_omniauth_authorize_path, method: :post, class: "px-4 py-2 border border-gray-300 bg-gray-50 text-sm cursor-pointer hover:bg-gray-200", style: "background: none; color: black; border: 1px solid #d1d5db;", data: { turbo: false } %>
+      <% end %>
+
+      <!-- 開発・STG環境でのみ表示するログインボタン -->
+      <% unless Rails.env.production? %>
+        <% unless user_signed_in? %>
+          <%= link_to "開発用ログイン", new_user_session_path, class: "px-4 py-2 border border-blue-300 bg-blue-50 text-sm cursor-pointer hover:bg-blue-100 text-blue-700 rounded", style: "text-decoration: none;" %>
+        <% end %>
       <% end %>
     </div>
   </div>
