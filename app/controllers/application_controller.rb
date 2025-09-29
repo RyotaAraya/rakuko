@@ -1,5 +1,10 @@
 class ApplicationController < ActionController::Base
+  include Pundit::Authorization
+
   before_action :redirect_pending_users
+
+  # Pundit関連
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   private
 
@@ -12,5 +17,10 @@ class ApplicationController < ActionController::Base
     if current_user.pending?
       redirect_to pending_approvals_index_path
     end
+  end
+
+  def user_not_authorized
+    flash[:alert] = 'この操作を実行する権限がありません。'
+    redirect_to(request.referrer || root_path)
   end
 end

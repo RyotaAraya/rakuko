@@ -2,6 +2,23 @@ Rails.application.routes.draw do
   # 承認待ちユーザー画面
   get 'pending_approvals', to: 'pending_approvals#index', as: :pending_approvals_index
 
+  # 管理者機能
+  namespace :admin do
+    resources :users, only: [:index, :show, :edit, :update] do
+      member do
+        patch :approve
+        patch :reject
+      end
+      collection do
+        post :bulk_approve
+        post :bulk_reject
+      end
+    end
+  end
+
+  # 部署管理（管理者権限のみ）
+  resources :departments
+
   devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
 
   get 'home/index'
