@@ -1,0 +1,119 @@
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+  <div class="sm:mx-auto sm:w-full sm:max-w-md">
+    <div class="text-center">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">楽工システム</h1>
+      <h2 class="text-xl text-gray-600">ログイン</h2>
+    </div>
+  </div>
+
+  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+    <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      <%= form_for(resource, as: resource_name, url: user_session_path, html: { class: "space-y-6" }) do |f| %>
+        <% if !Rails.env.production? %>
+          <div>
+            <%= f.label :email, "メールアドレス", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.email_field :email,
+                              autofocus: true,
+                              autocomplete: "email",
+                              id: "user_email",
+                              class: "appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                              placeholder: "your@email.com" %>
+          </div>
+
+          <div>
+            <%= f.label :password, "パスワード", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.password_field :password,
+                                 autocomplete: "current-password",
+                                 id: "user_password",
+                                 class: "appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                                 placeholder: "パスワードを入力" %>
+          </div>
+
+          <% if devise_mapping.rememberable? %>
+            <div class="flex items-center">
+              <%= f.check_box :remember_me, class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" %>
+              <%= f.label :remember_me, "ログイン状態を記憶する", class: "ml-2 block text-sm text-gray-900" %>
+            </div>
+          <% end %>
+
+          <div>
+            <%= f.submit "ログイン",
+                         class: "w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+          </div>
+        <% else %>
+          <div class="text-center">
+            <p class="text-gray-600 mb-4">このシステムはGoogle認証でのログインのみ対応しています。</p>
+          </div>
+        <% end %>
+      <% end %>
+
+      <%= render "devise/shared/links" %>
+
+      <% if Rails.env.development? %>
+        <div class="mt-8 pt-6 border-t border-gray-200">
+          <h3 class="text-sm font-medium text-gray-700 mb-3">開発用アカウント（クリックで自動入力）</h3>
+          <div class="space-y-2 text-xs">
+            <button type="button"
+                    class="w-full text-left p-2 rounded hover:bg-gray-50 border border-gray-200 transition-colors"
+                    onclick="fillLoginForm('student@example.com', 'password123')">
+              <span class="font-medium text-gray-700">学生:</span>
+              <span class="text-gray-600">student@example.com</span>
+            </button>
+
+            <button type="button"
+                    class="w-full text-left p-2 rounded hover:bg-gray-50 border border-gray-200 transition-colors"
+                    onclick="fillLoginForm('department.manager@example.com', 'password123')">
+              <span class="font-medium text-gray-700">部署管理者:</span>
+              <span class="text-gray-600">department.manager@example.com</span>
+            </button>
+
+            <button type="button"
+                    class="w-full text-left p-2 rounded hover:bg-gray-50 border border-gray-200 transition-colors"
+                    onclick="fillLoginForm('hr.manager@example.com', 'password123')">
+              <span class="font-medium text-gray-700">労務担当者:</span>
+              <span class="text-gray-600">hr.manager@example.com</span>
+            </button>
+
+            <button type="button"
+                    class="w-full text-left p-2 rounded hover:bg-gray-50 border border-gray-200 transition-colors"
+                    onclick="fillLoginForm('system.admin@example.com', 'password123')">
+              <span class="font-medium text-gray-700">システム管理者:</span>
+              <span class="text-gray-600">system.admin@example.com</span>
+            </button>
+
+            <button type="button"
+                    class="w-full text-left p-2 rounded hover:bg-yellow-50 border border-yellow-200 transition-colors"
+                    onclick="fillLoginForm('pending.user@example.com', 'password123')">
+              <span class="font-medium text-yellow-700">承認待ち:</span>
+              <span class="text-yellow-600">pending.user@example.com</span>
+              <div class="text-xs text-yellow-500 mt-1">※ログイン後に承認待ち画面が表示されます</div>
+            </button>
+          </div>
+        </div>
+
+        <script>
+          function fillLoginForm(email, password) {
+            document.getElementById('user_email').value = email;
+            document.getElementById('user_password').value = password;
+
+            // フォームフィールドにフォーカスして入力されたことを視覚的に示す
+            document.getElementById('user_email').focus();
+            document.getElementById('user_password').blur();
+
+            // 入力が完了したことを視覚的に示すため、フィールドを軽くハイライト
+            const emailField = document.getElementById('user_email');
+            const passwordField = document.getElementById('user_password');
+
+            emailField.classList.add('ring-2', 'ring-green-500', 'border-green-500');
+            passwordField.classList.add('ring-2', 'ring-green-500', 'border-green-500');
+
+            setTimeout(() => {
+              emailField.classList.remove('ring-2', 'ring-green-500', 'border-green-500');
+              passwordField.classList.remove('ring-2', 'ring-green-500', 'border-green-500');
+            }, 1000);
+          }
+        </script>
+      <% end %>
+    </div>
+  </div>
+</div>
