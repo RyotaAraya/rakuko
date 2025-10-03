@@ -282,3 +282,113 @@
 
 ### 画面遷移図
 Figma: https://www.figma.com/design/xjqV0lyze9E7nNkKbOTeh6/Rakuko?node-id=0-1&t=cp8LNpW1SiGOXaP6-1
+
+## 開発環境セットアップ・実行コマンド
+
+### 環境構築
+
+**Docker環境の起動**
+```bash
+# 全サービス起動（Rails + PostgreSQL + Redis）
+docker-compose up -d
+
+# データベースのセットアップ
+docker-compose exec web bin/rails db:create db:migrate db:seed
+```
+
+### 開発サーバー
+
+**Railsサーバー起動**
+```bash
+# Docker環境
+docker-compose up -d web
+# ローカル環境
+bin/rails server
+```
+
+**フロントエンド開発サーバー（Vue.js）**
+```bash
+# Vite開発サーバー起動（HMR対応）
+bin/vite dev
+# または
+npm run dev
+```
+
+**フルスタック開発**
+```bash
+# Rails + Vite を同時起動
+foreman start -f Procfile.dev
+```
+
+### データベース操作
+
+```bash
+# マイグレーション実行
+docker-compose exec web bin/rails db:migrate
+
+# シードデータ投入
+docker-compose exec web bin/rails db:seed
+
+# データベースリセット
+docker-compose exec web bin/rails db:reset
+
+# Railsコンソール
+docker-compose exec web bin/rails console
+```
+
+### コード品質チェック
+
+**リント・フォーマット**
+```bash
+# フロントエンド（Biome）
+docker-compose exec web npm run lint          # チェックのみ
+docker-compose exec web npm run lint:fix      # 自動修正
+docker-compose exec web npm run format        # フォーマット
+
+# バックエンド（RuboCop）
+docker-compose exec web bundle exec rubocop            # チェックのみ
+docker-compose exec web bundle exec rubocop --autocorrect  # 自動修正
+
+# TypeScriptチェック
+docker-compose exec web npm run typecheck
+```
+
+### テスト実行
+
+```bash
+# Railsテスト
+docker-compose exec web bin/rails test
+
+# RSpecテスト（将来追加予定）
+docker-compose exec web bundle exec rspec
+```
+
+### 開発用ユーザーアカウント
+
+シードデータで以下のテストアカウントが作成されます：
+
+| 役割 | メールアドレス | パスワード | 権限 |
+|------|---------------|-----------|------|
+| 学生ユーザー | student@example.com | password123 | アルバイト |
+| 部署管理者 | department.manager@example.com | password123 | 部署担当者 |
+| 労務担当者 | hr.manager@example.com | password123 | 労務担当者 |
+| システム管理者 | system.admin@example.com | password123 | システム管理者 |
+| 承認待ちユーザー | pending.user@example.com | password123 | 承認待ち |
+
+**ログインURL**: http://localhost:3000/users/sign_in
+
+### その他のコマンド
+
+```bash
+# ログ確認
+docker-compose logs -f web
+
+# コンテナシェルアクセス
+docker-compose exec web bash
+
+# 環境停止
+docker-compose down
+
+# 環境完全削除（ボリューム含む）
+docker-compose down -v
+```
