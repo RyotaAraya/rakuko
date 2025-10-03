@@ -12,7 +12,7 @@ class User < ApplicationRecord
   end
 
   # Enums
-  enum status: { pending: 0, active: 1, inactive: 2 }
+  enum :status, { pending: 0, active: 1, inactive: 2 }
 
   # Validations
   validates :email, presence: true, uniqueness: true
@@ -71,7 +71,7 @@ class User < ApplicationRecord
   end
 
   def display_name
-    full_name.present? ? full_name : email
+    full_name.presence || email
   end
 
   # Deviseの認証メソッドをオーバーライド（開発・ステージング環境では制限を緩和）
@@ -145,6 +145,7 @@ class User < ApplicationRecord
     return '労務担当者' if hr_manager?
     return '部署担当者' if department_manager?
     return 'アルバイト' if student?
+
     '権限なし'
   end
 end

@@ -1,6 +1,6 @@
 class Department < ApplicationRecord
   # Enums
-  enum department_type: { general: 0, labor: 1, management: 2 }
+  enum :department_type, { general: 0, labor: 1, management: 2 }
 
   # Associations
   has_many :users, dependent: :nullify

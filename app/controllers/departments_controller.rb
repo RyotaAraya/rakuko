@@ -17,6 +17,10 @@ class DepartmentsController < ApplicationController
     @department = Department.new
   end
 
+  def edit
+    authorize @department
+  end
+
   def create
     authorize Department
     @department = Department.new(department_params)
@@ -26,10 +30,6 @@ class DepartmentsController < ApplicationController
     else
       render :new, status: :unprocessable_entity
     end
-  end
-
-  def edit
-    authorize @department
   end
 
   def update
