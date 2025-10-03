@@ -1,6 +1,6 @@
 class Role < ApplicationRecord
   # Enums - ER図準拠の権限名
-  enum name: { student: 0, department_manager: 1, hr_manager: 2, system_admin: 3 }
+  enum :name, { student: 0, department_manager: 1, hr_manager: 2, system_admin: 3 }
 
   # Associations
   has_many :user_roles, dependent: :destroy
@@ -31,7 +31,7 @@ class Role < ApplicationRecord
       { name: 'student', description: '一般学生ユーザ - シフト希望提出、勤怠登録、各種申請' },
       { name: 'department_manager', description: '部署内アルバイト管理 - 自部署アルバイトの承認・管理' },
       { name: 'hr_manager', description: '全社労務管理 - 全部署の労務観点での承認・制約チェック' },
-      { name: 'system_admin', description: 'システム全体管理 - ユーザ承認、部署管理、システム設定' }
+      { name: 'system_admin', description: 'システム全体管理 - ユーザ承認、部署管理、システム設定' },
     ]
   end
 end

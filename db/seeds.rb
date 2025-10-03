@@ -2,10 +2,10 @@
 # development, test). The code here should be idempotent so that it can be executed at any point in every environment.
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 
-puts "Setting up roles and departments..."
+puts 'Setting up roles and departments...'
 
 # 1. 初期ロールの作成（ER図準拠）
-puts "Creating roles..."
+puts 'Creating roles...'
 Role.seed_data.each do |role_data|
   role = Role.find_or_create_by(name: role_data[:name]) do |r|
     r.description = role_data[:description]
@@ -14,12 +14,12 @@ Role.seed_data.each do |role_data|
 end
 
 # 2. 初期部署の作成
-puts "Creating departments..."
+puts 'Creating departments...'
 initial_departments = [
-  { name: "情報システム部", department_type: :management, description: "システム管理・運用を担当" },
-  { name: "人事労務部", department_type: :labor, description: "労務管理・人事業務を担当" },
-  { name: "営業部", department_type: :general, description: "営業活動を担当する一般事業部" },
-  { name: "開発部", department_type: :general, description: "プロダクト開発を担当する一般事業部" }
+  { name: '情報システム部', department_type: :management, description: 'システム管理・運用を担当' },
+  { name: '人事労務部', department_type: :labor, description: '労務管理・人事業務を担当' },
+  { name: '営業部', department_type: :general, description: '営業活動を担当する一般事業部' },
+  { name: '開発部', department_type: :general, description: 'プロダクト開発を担当する一般事業部' },
 ]
 
 initial_departments.each do |dept_data|
@@ -30,58 +30,58 @@ initial_departments.each do |dept_data|
   puts "✓ Department: #{dept.name} (#{dept.type_display_name})"
 end
 
-puts "Creating development user accounts..."
+puts 'Creating development user accounts...'
 
 # 3. 開発用ユーザーアカウントを作成
 development_users = [
   {
-    email: "student@example.com",
-    first_name: "学生",
-    last_name: "太郎",
+    email: 'student@example.com',
+    first_name: '学生',
+    last_name: '太郎',
     roles: [:student],
     status: :active,
-    department: "営業部"
+    department: '営業部',
   },
   {
-    email: "department.manager@example.com",
-    first_name: "部署",
-    last_name: "管理者",
+    email: 'department.manager@example.com',
+    first_name: '部署',
+    last_name: '管理者',
     roles: [:department_manager],
     status: :active,
-    department: "営業部"
+    department: '営業部',
   },
   {
-    email: "hr.manager@example.com",
-    first_name: "労務",
-    last_name: "担当者",
+    email: 'hr.manager@example.com',
+    first_name: '労務',
+    last_name: '担当者',
     roles: [:hr_manager],
     status: :active,
-    department: "人事労務部"
+    department: '人事労務部',
   },
   {
-    email: "system.admin@example.com",
-    first_name: "システム",
-    last_name: "管理者",
+    email: 'system.admin@example.com',
+    first_name: 'システム',
+    last_name: '管理者',
     roles: [:system_admin],
     status: :active,
-    department: "情報システム部"
+    department: '情報システム部',
   },
   {
-    email: "multi.role@example.com",
-    first_name: "複数権限",
-    last_name: "ユーザー",
+    email: 'multi.role@example.com',
+    first_name: '複数権限',
+    last_name: 'ユーザー',
     roles: [:department_manager, :hr_manager],
     status: :active,
-    department: "人事労務部"
+    department: '人事労務部',
   },
   {
-    email: "pending.user@example.com",
-    first_name: "承認待ち",
-    last_name: "ユーザー",
+    email: 'pending.user@example.com',
+    first_name: '承認待ち',
+    last_name: 'ユーザー',
     roles: [], # 承認待ちは権限なし
     status: :pending,
-    department: nil
-  }
+    department: nil,
+  },
 ]
 
 development_users.each do |user_attrs|
@@ -97,8 +97,8 @@ development_users.each do |user_attrs|
       status: user_attrs[:status],
       department: department,
       google_uid: "dev_#{user_attrs[:email].split('@')[0]}",
-      password: "password123",
-      password_confirmation: "password123"
+      password: 'password123',
+      password_confirmation: 'password123'
     )
 
     if user.save
@@ -115,17 +115,17 @@ development_users.each do |user_attrs|
   end
 end
 
-puts "Development user accounts setup complete!"
-puts ""
-puts "Available test accounts:"
-puts "========================"
-puts "学生ユーザー: student@example.com"
-puts "部署管理者: department.manager@example.com"
-puts "労務担当者: hr.manager@example.com"
-puts "システム管理者: system.admin@example.com"
-puts "承認待ちユーザー: pending.user@example.com"
-puts ""
-puts "共通パスワード: password123"
-puts "ログインURL: /users/sign_in"
-puts ""
-puts "注意: これらは開発環境専用のアカウントです。"
+puts 'Development user accounts setup complete!'
+puts ''
+puts 'Available test accounts:'
+puts '========================'
+puts '学生ユーザー: student@example.com'
+puts '部署管理者: department.manager@example.com'
+puts '労務担当者: hr.manager@example.com'
+puts 'システム管理者: system.admin@example.com'
+puts '承認待ちユーザー: pending.user@example.com'
+puts ''
+puts '共通パスワード: password123'
+puts 'ログインURL: /users/sign_in'
+puts ''
+puts '注意: これらは開発環境専用のアカウントです。'
