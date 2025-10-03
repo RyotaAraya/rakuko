@@ -12,8 +12,7 @@ class User < ApplicationRecord
   end
 
   # Enums
-  enum status: { pending: 0, active: 1, inactive: 2 }
-  enum role: { student: 0, department_manager: 1, hr_manager: 2, system_admin: 3 }
+  enum :status, { pending: 0, active: 1, inactive: 2 }
 
   # Validations
   validates :email, presence: true, uniqueness: true
@@ -22,6 +21,8 @@ class User < ApplicationRecord
 
   # Associations
   belongs_to :department, optional: true
+  has_many :user_roles, dependent: :destroy
+  has_many :roles, through: :user_roles
 
   # AASM状態管理
   aasm column: :status, enum: true do
@@ -50,9 +51,6 @@ class User < ApplicationRecord
     where(email: auth.info.email).first_or_create do |user|
       user.email = auth.info.email
 
-      # 既存のnameフィールドも設定（後で削除予定）
-      user.name = auth.info.name || auth.info.email
-
       # 名前を分割してfirst_name, last_nameに設定
       if auth.info.name.present?
         name_parts = auth.info.name.split(' ', 2)
@@ -63,8 +61,6 @@ class User < ApplicationRecord
       end
 
       user.encrypted_password = Devise.friendly_token[0, 20]
-      user.provider = auth.provider
-      user.uid = auth.uid
       user.google_uid = auth.uid
       user.status = :pending # 新規ユーザーは承認待ち状態
     end
@@ -75,7 +71,7 @@ class User < ApplicationRecord
   end
 
   def display_name
-    full_name.present? ? full_name : email
+    full_name.presence || email
   end
 
   # Deviseの認証メソッドをオーバーライド（開発・ステージング環境では制限を緩和）
@@ -93,5 +89,63 @@ class User < ApplicationRecord
     else
       nil # 開発・ステージング環境ではエラーメッセージなし
     end
+  end
+
+  # ====== 権限管理システム（ER図準拠） ======
+
+  # 権限チェックメソッド
+  def has_role?(role_name)
+    roles.exists?(name: role_name.to_s)
+  end
+
+  def add_role(role_name)
+    role = Role.find_by(name: role_name.to_s)
+    return false unless role
+
+    user_roles.find_or_create_by(role: role)
+  end
+
+  def remove_role(role_name)
+    role = Role.find_by(name: role_name.to_s)
+    return false unless role
+
+    user_roles.where(role: role).destroy_all
+  end
+
+  # 権限の表示名リスト
+  def role_display_names
+    roles.map(&:display_name).join(', ')
+  end
+
+  # 個別権限チェック
+  def student?
+    has_role?(:student)
+  end
+
+  def department_manager?
+    has_role?(:department_manager)
+  end
+
+  def hr_manager?
+    has_role?(:hr_manager)
+  end
+
+  def system_admin?
+    has_role?(:system_admin)
+  end
+
+  # 管理者権限チェック（労務担当者 or システム管理者）
+  def admin?
+    hr_manager? || system_admin?
+  end
+
+  # 最高レベル権限の取得（表示用）
+  def primary_role_display_name
+    return 'システム管理者' if system_admin?
+    return '労務担当者' if hr_manager?
+    return '部署担当者' if department_manager?
+    return 'アルバイト' if student?
+
+    '権限なし'
   end
 end

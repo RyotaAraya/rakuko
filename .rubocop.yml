@@ -1,0 +1,56 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  Exclude:
+    - 'vendor/**/*'
+    - 'db/schema.rb'
+    - 'node_modules/**/*'
+    - 'bin/**/*'
+    - 'config/boot.rb'
+    - 'config/environment.rb'
+    - 'config/application.rb'
+    - 'config/environments/**/*'
+    - 'Rakefile'
+
+plugins:
+  - rubocop-rails
+
+# Line length
+Layout/LineLength:
+  Max: 120
+
+# String literals - prefer single quotes
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+# Allow long blocks in specs and routes
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'config/routes.rb'
+    - 'db/seeds.rb'
+
+# Allow longer methods in migrations
+Metrics/MethodLength:
+  Exclude:
+    - 'db/migrate/**/*'
+
+# Allow longer classes in controllers
+Metrics/ClassLength:
+  Exclude:
+    - 'app/controllers/**/*'
+
+# Documentation is not required for all classes
+Style/Documentation:
+  Enabled: false
+
+# Allow trailing commas in multi-line arrays and hashes
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+
+# Prefer symbols array syntax
+Style/SymbolArray:
+  EnforcedStyle: brackets
