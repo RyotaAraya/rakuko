@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RemoveLegacyColumnsFromUsers < ActiveRecord::Migration[7.1]
   def change
     # レガシーroleカラム削除（新しい権限システムに移行）
