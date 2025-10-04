@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ExtendUsersForUserManagement < ActiveRecord::Migration[7.1]
   def change
     # 既存のnameカラムをfirst_name, last_nameに分割
@@ -19,7 +21,7 @@ class ExtendUsersForUserManagement < ActiveRecord::Migration[7.1]
     # 既存のnameデータをfirst_nameに移行（データが存在する場合）
     reversible do |dir|
       dir.up do
-        execute <<-SQL
+        execute <<-SQL.squish
           UPDATE users SET first_name = name WHERE name IS NOT NULL;
         SQL
       end
