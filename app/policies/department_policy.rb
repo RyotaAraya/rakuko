@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DepartmentPolicy < ApplicationPolicy
   def index?
     user.admin? # 労務担当者 or システム管理者のみ

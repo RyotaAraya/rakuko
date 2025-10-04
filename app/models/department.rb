@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Department < ApplicationRecord
   # Enums
   enum :department_type, { general: 0, labor: 1, management: 2 }
@@ -18,13 +20,10 @@ class Department < ApplicationRecord
   end
 
   def type_display_name
-    case department_type
-    when 'general'
-      '一般部署'
-    when 'labor'
-      '労務部署'
-    when 'management'
-      '管理部署'
-    end
+    {
+      'general' => '一般部署',
+      'labor' => '労務部署',
+      'management' => '管理部署',
+    }[department_type]
   end
 end
