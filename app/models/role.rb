@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Role < ApplicationRecord
   # Enums - ER図準拠の権限名
   enum :name, { student: 0, department_manager: 1, hr_manager: 2, system_admin: 3 }
@@ -14,16 +16,12 @@ class Role < ApplicationRecord
   scope :management_roles, -> { where(name: [:department_manager, :hr_manager, :system_admin]) }
 
   def display_name
-    case name
-    when 'student'
-      'アルバイト'
-    when 'department_manager'
-      '部署担当者'
-    when 'hr_manager'
-      '労務担当者'
-    when 'system_admin'
-      'システム管理者'
-    end
+    {
+      'student' => 'アルバイト',
+      'department_manager' => '部署担当者',
+      'hr_manager' => '労務担当者',
+      'system_admin' => 'システム管理者',
+    }[name]
   end
 
   def self.seed_data
