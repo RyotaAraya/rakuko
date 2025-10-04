@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class User < ApplicationRecord
   include AASM
 
@@ -23,6 +25,27 @@ class User < ApplicationRecord
   belongs_to :department, optional: true
   has_many :user_roles, dependent: :destroy
   has_many :roles, through: :user_roles
+
+  # Shift management
+  has_many :shifts, dependent: :destroy
+  has_many :shift_schedules, through: :shifts
+
+  # Attendance management
+  has_many :time_records, dependent: :destroy
+  has_many :attendances, dependent: :destroy
+  has_many :applications, dependent: :destroy
+
+  # Approval system
+  has_many :approvals, foreign_key: 'approver_id', dependent: :destroy
+  has_many :approvable_approvals, as: :approvable, class_name: 'Approval', dependent: :destroy
+
+  # Notification system
+  has_many :notifications, dependent: :destroy
+  has_many :sent_notifications, class_name: 'Notification', foreign_key: 'notifiable_id', dependent: :destroy
+
+  # Month end closings
+  has_many :month_end_closings, dependent: :destroy
+  has_many :closed_month_end_closings, class_name: 'MonthEndClosing', foreign_key: 'closed_by_id', dependent: :nullify
 
   # AASM状態管理
   aasm column: :status, enum: true do
@@ -84,11 +107,9 @@ class User < ApplicationRecord
   end
 
   def inactive_message
-    if Rails.env.production? && !active?
-      :not_approved_yet
-    else
-      nil # 開発・ステージング環境ではエラーメッセージなし
-    end
+    return :not_approved_yet if Rails.env.production? && !active?
+
+    nil # 開発・ステージング環境ではエラーメッセージなし
   end
 
   # ====== 権限管理システム（ER図準拠） ======
@@ -148,4 +169,40 @@ class User < ApplicationRecord
 
     '権限なし'
   end
+
+  # ====== 管理者向けメソッド ======
+
+  # 承認待ちの項目を取得（権限に応じて）
+  def pending_approvals_for_role
+    Approval.pending_for_approver(self)
+  end
+
+  # 未読通知数
+  def unread_notifications_count
+    notifications.unread.count
+  end
+
+  # 今月のシフト
+  def current_month_shift
+    current_date = Date.current
+    shifts.find_by(year: current_date.year, month: current_date.month)
+  end
+
+  # 今月の勤怠記録
+  def current_month_attendances
+    current_date = Date.current
+    attendances.for_month(current_date.year, current_date.month)
+  end
+
+  # 今月の月末締め処理
+  def current_month_closing
+    current_date = Date.current
+    month_end_closings.find_by(year: current_date.year, month: current_date.month)
+  end
+
+  # 承認権限を持つユーザーのスコープ
+  scope :department_managers, -> { joins(:roles).where(roles: { name: 'department_manager' }) }
+  scope :hr_managers, -> { joins(:roles).where(roles: { name: 'hr_manager' }) }
+  scope :system_admins, -> { joins(:roles).where(roles: { name: 'system_admin' }) }
+  scope :students, -> { joins(:roles).where(roles: { name: 'student' }) }
 end
