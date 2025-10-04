@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
   # 承認待ちユーザー画面
   get 'pending_approvals', to: 'pending_approvals#index', as: :pending_approvals_index
