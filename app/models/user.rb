@@ -10,7 +10,7 @@ class User < ApplicationRecord
     devise :rememberable, :omniauthable, omniauth_providers: [:google_oauth2]
   else
     # 開発・ステージング環境：Google認証 + パスワード認証
-    devise :database_authenticatable, :rememberable, :omniauthable, omniauth_providers: [:google_oauth2]
+    devise :database_authenticatable, :registerable, :rememberable, :omniauthable, omniauth_providers: [:google_oauth2]
   end
 
   # Enums
@@ -26,9 +26,7 @@ class User < ApplicationRecord
   has_many :user_roles, dependent: :destroy
   has_many :roles, through: :user_roles
 
-  # Shift management
-  has_many :shifts, dependent: :destroy
-  has_many :shift_schedules, through: :shifts
+  # Legacy shift management (removed - now using weekly-centered design)
 
   # Attendance management
   has_many :time_records, dependent: :destroy
@@ -46,6 +44,12 @@ class User < ApplicationRecord
   # Month end closings
   has_many :month_end_closings, dependent: :destroy
   has_many :closed_month_end_closings, class_name: 'MonthEndClosing', foreign_key: 'closed_by_id', dependent: :nullify
+
+  # Weekly-centered shift management
+  has_many :weekly_shifts, dependent: :destroy
+  has_many :weeks, through: :weekly_shifts
+  has_many :daily_schedules, through: :weekly_shifts
+  has_many :monthly_summaries, dependent: :destroy
 
   # AASM状態管理
   aasm column: :status, enum: true do
@@ -182,10 +186,10 @@ class User < ApplicationRecord
     notifications.unread.count
   end
 
-  # 今月のシフト
-  def current_month_shift
+  # 今月のシフト（週単位）
+  def current_month_shift_summary
     current_date = Date.current
-    shifts.find_by(year: current_date.year, month: current_date.month)
+    monthly_summaries.find_by(target_year: current_date.year, target_month: current_date.month)
   end
 
   # 今月の勤怠記録
