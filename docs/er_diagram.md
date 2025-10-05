@@ -11,6 +11,10 @@ erDiagram
         enum status "ユーザー状態(pending,active,inactive)"
         varchar google_uid "Google OAuth識別子"
         bigint department_id FK "所属部署ID"
+        date contract_start_date "契約開始日"
+        date contract_end_date "契約終了日"
+        timestamp contract_updated_at "契約更新日時"
+        bigint contract_updated_by_id FK "契約更新者ID"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
     }
@@ -40,27 +44,55 @@ erDiagram
         timestamp updated_at "更新日時"
     }
 
-    %% ========== 予定管理（シフト希望） ==========
-    shifts["shifts<br/>(月次シフト希望)"] {
+    %% ========== 週中心シフト管理 ==========
+    weeks["weeks<br/>(週マスター)"] {
+        bigint id PK "主キー"
+        date start_date UK "週開始日(月曜日、一意制約)"
+        date end_date "週終了日(日曜日)"
+        int year "年"
+        int week_number "週番号(1-53)"
+        boolean is_cross_month "月跨ぎ週フラグ"
+        timestamp created_at "作成日時"
+        timestamp updated_at "更新日時"
+    }
+
+    weekly_shifts["weekly_shifts<br/>(週別シフト)"] {
         bigint id PK "主キー"
         bigint user_id FK "ユーザーID"
-        int year "対象年"
-        int month "対象月"
-        enum status "承認状態(下書き,提出済み,部署承認,労務承認,最終承認,却下)"
+        bigint week_id FK "週ID"
+        int submission_month "提出対象月"
+        int submission_year "提出対象年"
+        enum status "承認状態(draft,tentative,confirmed,approved,rejected)"
         json violation_warnings "制限違反警告内容(JSON形式)"
         timestamp submitted_at "提出日時"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
     }
 
-    shift_schedules["shift_schedules<br/>(日次シフト予定)"] {
+    daily_schedules["daily_schedules<br/>(日別スケジュール)"] {
         bigint id PK "主キー"
-        bigint shift_id FK "シフトID"
-        date date "希望勤務日"
+        bigint weekly_shift_id FK "週別シフトID"
+        date date "対象日"
         time company_start_time "自社開始時刻"
         time company_end_time "自社終了時刻"
-        time part_time_start_time "掛け持ち開始時刻"
-        time part_time_end_time "掛け持ち終了時刻"
+        time sidejob_start_time "掛け持ち開始時刻"
+        time sidejob_end_time "掛け持ち終了時刻"
+        boolean is_company_working "自社勤務フラグ"
+        boolean is_sidejob_working "掛け持ち勤務フラグ"
+        timestamp created_at "作成日時"
+        timestamp updated_at "更新日時"
+    }
+
+    monthly_summaries["monthly_summaries<br/>(月次集約)"] {
+        bigint id PK "主キー"
+        bigint user_id FK "ユーザーID"
+        int year "対象年"
+        int month "対象月"
+        decimal total_company_hours "月間自社労働時間"
+        decimal total_sidejob_hours "月間掛け持ち労働時間"
+        decimal total_all_hours "月間合計労働時間"
+        enum status "承認状態(draft,submitted,approved,rejected)"
+        timestamp submitted_at "提出日時"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
     }
@@ -152,9 +184,12 @@ erDiagram
     users ||--o{ user_roles : "has many"
     roles ||--o{ user_roles : "has many"
     departments ||--o{ users : "has many"
+    users ||--o{ users : "contract_updated_by"
 
-    users ||--o{ shifts : "has many"
-    shifts ||--o{ shift_schedules : "has many"
+    weeks ||--o{ weekly_shifts : "has many"
+    users ||--o{ weekly_shifts : "has many"
+    users ||--o{ monthly_summaries : "has many"
+    weekly_shifts ||--o{ daily_schedules : "has many"
 
     users ||--o{ time_records : "has many"
     users ||--o{ attendances : "has many"
@@ -165,7 +200,8 @@ erDiagram
     users ||--o{ notifications : "has many"
 
     %% ポリモーフィック関連（approvalsテーブル）
-    shifts ||--o{ approvals : "approvable"
+    weekly_shifts ||--o{ approvals : "approvable"
+    monthly_summaries ||--o{ approvals : "approvable"
     applications ||--o{ approvals : "approvable"
     attendances ||--o{ approvals : "approvable"
     month_end_closings ||--o{ approvals : "approvable"
@@ -188,24 +224,36 @@ erDiagram
 - ポリモーフィック`approvals`テーブルで部署・労務の独立承認を管理
 - ボトルネックのない承認プロセス
 
-### 3. 労働時間制限の自動チェック
+### 3. 週中心設計による月跨ぎ問題の解決
+- `weeks`テーブルを基軸とした設計で月境界を自然に処理
+- `weekly_shifts`で週単位の段階的提出（draft→tentative→confirmed→approved）
+- `daily_schedules`で日別の詳細スケジュール管理
+- `monthly_summaries`で月単位の集約管理
+
+### 4. 労働時間制限の自動チェック
 - 週20h/合計40h制限の自動検知機能
 - `violation_warnings`(JSON)で制限違反の詳細記録
-- リアルタイム計算により複雑なテーブル構造を回避
+- 週単位での前月データ参照による正確な制限チェック
 
-### 4. 外部システム連携の詳細化
+### 5. 外部システム連携の詳細化
 - ジョブカン・ラクローの完了状況とタイムスタンプを管理
 - PCログチェック、交通費申請状況も追跡
 
-### 5. 通知システムの実装
+### 6. 通知システムの実装
 - `notifications`テーブルでリマインダー・承認通知・制限違反警告を管理
 - Slack連携の基盤として活用可能
 
-### 6. 正規化への配慮
+### 7. 正規化への配慮
 - 第3正規形に準拠したテーブル設計
 - データの冗長性を排除
 - 多対多関係は中間テーブルで適切に解決
 
-### 7. 権限の柔軟性
+### 8. 権限の柔軟性
 - `user_roles`テーブルで複数権限の兼任を可能に
 - 部署担当者かつ労務担当者などの複雑な権限構成に対応
+
+### 9. 契約期間管理
+- `users`テーブルで学生アルバイトの契約期間を管理
+- 契約延長時の自動週テーブル作成に活用
+- 契約満了アラート機能（30日前通知）で管理業務を効率化
+- `contract_updated_by_id`で契約更新の責任者を追跡

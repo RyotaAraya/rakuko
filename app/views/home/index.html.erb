@@ -1,28 +1,197 @@
-<% content_for :title, "ラクコ - ホーム" %>
+<% content_for :title, "勤怠管理システム" %>
 
-<!-- ヘッダー -->
-<header class="border-b border-gray-300 py-4 bg-white">
-  <div class="max-w-screen-xl mx-auto flex justify-between items-center px-5">
-    <h1><%= link_to "ラクコ", root_path, class: "text-lg font-bold no-underline text-inherit" %></h1>
-    <div class="flex items-center gap-4">
-      <% if user_signed_in? %>
-        <span class="text-sm"><%= current_user.display_name %></span>
-        <%= link_to "ログアウト", destroy_user_session_path, class: "px-4 py-2 border border-gray-300 bg-gray-50 text-sm cursor-pointer hover:bg-gray-200", style: "background: none; color: black; border: 1px solid #d1d5db; text-decoration: none; display: inline-block;" %>
-      <% else %>
-        <%= button_to "Googleでログイン", user_google_oauth2_omniauth_authorize_path, method: :post, class: "px-4 py-2 border border-gray-300 bg-gray-50 text-sm cursor-pointer hover:bg-gray-200", style: "background: none; color: black; border: 1px solid #d1d5db;", data: { turbo: false } %>
-      <% end %>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fafafa;
+  }
+  .header {
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+    background: white;
+  }
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .logout-btn {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: black;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+  .status-section {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 30px;
+    background: white;
+  }
+  .status-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  .progress-bar {
+    background: #f0f0f0;
+    height: 8px;
+    margin-top: 10px;
+  }
+  .progress-fill {
+    background: #007cba;
+    height: 100%;
+    width: 68%;
+  }
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  .menu-item {
+    border: 1px solid #ddd;
+    padding: 20px;
+    background: white;
+    cursor: pointer;
+    text-decoration: none;
+    color: black;
+  }
+  .menu-item:hover {
+    background: #f5f5f5;
+  }
+  .menu-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  .menu-desc {
+    font-size: 12px;
+    color: #666;
+  }
+  .today-section {
+    border: 1px solid #ddd;
+    padding: 20px;
+    background: white;
+  }
+  .btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  .btn {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: black;
+  }
+  .btn-primary {
+    background: #007cba;
+    color: white;
+    border-color: #007cba;
+  }
+</style>
 
-      <!-- 開発・STG環境でのみ表示するログインボタン -->
-      <% unless Rails.env.production? %>
-        <% unless user_signed_in? %>
-          <%= link_to "開発用ログイン", new_user_session_path, class: "px-4 py-2 border border-blue-300 bg-blue-50 text-sm cursor-pointer hover:bg-blue-100 text-blue-700 rounded", style: "text-decoration: none;" %>
-        <% end %>
-      <% end %>
+<% if user_signed_in? %>
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header-content">
+      <h1>勤怠管理システム</h1>
+      <div class="user-info">
+        <span style="font-size: 14px;"><%= current_user.display_name %></span>
+        <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<!-- メインコンテンツ -->
-<main class="max-w-screen-xl mx-auto py-8 px-5">
-  <div id="vue-app"></div>
-</main>
+  <!-- メインコンテンツ -->
+  <main class="container">
+    <!-- ステータス表示 -->
+    <div class="status-section">
+      <div class="status-title">労働時間状況</div>
+      <div>今週: 12.5h/20h　掛け持ち: 15h</div>
+      <div>合計: 27.5h/40h</div>
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- 機能メニュー -->
+    <div class="menu-grid">
+      <%= link_to new_shift_request_path, class: "menu-item" do %>
+        <div class="menu-title">シフト希望提出</div>
+        <div class="menu-desc">月間予定を入力</div>
+      <% end %>
+      <a href="#" class="menu-item">
+        <div class="menu-title">勤怠登録</div>
+        <div class="menu-desc">出退勤を記録</div>
+      </a>
+      <a href="#" class="menu-item">
+        <div class="menu-title">各種申請</div>
+        <div class="menu-desc">欠勤・遅刻・早退</div>
+      </a>
+      <a href="#" class="menu-item">
+        <div class="menu-title">交通費申請</div>
+        <div class="menu-desc">月次申請</div>
+      </a>
+      <a href="#" class="menu-item">
+        <div class="menu-title">月末締め作業</div>
+        <div class="menu-desc">外部ツール連携</div>
+      </a>
+      <a href="#" class="menu-item">
+        <div class="menu-title">申請履歴確認</div>
+        <div class="menu-desc">状況確認</div>
+      </a>
+    </div>
+
+    <!-- 今日の予定 -->
+    <div class="today-section">
+      <div class="status-title">今日の予定</div>
+      <div style="background: #f5f5f5; padding: 15px; margin: 15px 0;">
+        9:00-16:00 (予定6h)
+      </div>
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary">出勤</button>
+        <button type="button" class="btn">休憩開始</button>
+        <button type="button" class="btn">休憩終了</button>
+        <button type="button" class="btn">退勤</button>
+      </div>
+    </div>
+  </main>
+<% else %>
+  <!-- ログイン前の表示 -->
+  <div style="text-align: center; padding: 50px;">
+    <h2>学生アルバイト勤怠管理システム</h2>
+    <p>ログインしてください</p>
+    <%= button_to "Googleでログイン", user_google_oauth2_omniauth_authorize_path, method: :post, class: "btn btn-primary", data: { turbo: false } %>
+
+    <% unless Rails.env.production? %>
+      <div style="margin-top: 20px;">
+        <%= link_to "開発用ログイン", new_user_session_path, class: "btn" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

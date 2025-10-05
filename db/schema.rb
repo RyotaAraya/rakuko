@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_03_235416) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_05_060817) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -53,6 +53,22 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_03_235416) do
     t.index ["user_id"], name: "index_attendances_on_user_id"
   end
 
+  create_table "daily_schedules", force: :cascade do |t|
+    t.bigint "weekly_shift_id", null: false, comment: "週間シフトID"
+    t.date "schedule_date", null: false, comment: "スケジュール日付"
+    t.time "company_start_time", comment: "弊社勤務開始時間"
+    t.time "company_end_time", comment: "弊社勤務終了時間"
+    t.time "sidejob_start_time", comment: "掛け持ち開始時間"
+    t.time "sidejob_end_time", comment: "掛け持ち終了時間"
+    t.decimal "company_actual_hours", precision: 4, scale: 2, comment: "弊社実労働時間"
+    t.decimal "sidejob_actual_hours", precision: 4, scale: 2, comment: "掛け持ち実労働時間"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["schedule_date"], name: "index_daily_schedules_on_schedule_date"
+    t.index ["weekly_shift_id", "schedule_date"], name: "index_daily_schedules_on_weekly_shift_id_and_schedule_date", unique: true
+    t.index ["weekly_shift_id"], name: "index_daily_schedules_on_weekly_shift_id"
+  end
+
   create_table "departments", force: :cascade do |t|
     t.string "name", null: false
     t.integer "department_type", default: 0, null: false
@@ -79,6 +95,22 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_03_235416) do
     t.index ["user_id"], name: "index_month_end_closings_on_user_id"
   end
 
+  create_table "monthly_summaries", force: :cascade do |t|
+    t.bigint "user_id", null: false, comment: "ユーザーID"
+    t.integer "target_year", null: false, comment: "対象年"
+    t.integer "target_month", null: false, comment: "対象月"
+    t.decimal "total_company_hours", precision: 5, scale: 2, default: "0.0", comment: "月間弊社合計時間"
+    t.decimal "total_sidejob_hours", precision: 5, scale: 2, default: "0.0", comment: "月間掛け持ち合計時間"
+    t.decimal "total_hours", precision: 5, scale: 2, default: "0.0", comment: "月間合計時間"
+    t.integer "status", default: 0, comment: "draft, submitted, approved, rejected"
+    t.datetime "submitted_at", comment: "提出日時"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_monthly_summaries_on_status"
+    t.index ["user_id", "target_year", "target_month"], name: "idx_on_user_id_target_year_target_month_f6b0fb3c48", unique: true
+    t.index ["user_id"], name: "index_monthly_summaries_on_user_id"
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.string "notifiable_type", null: false
     t.bigint "notifiable_id", null: false
@@ -101,20 +133,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_03_235416) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_roles_on_name", unique: true
-  end
-
-  create_table "shift_requests", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.date "start_date", null: false
-    t.date "end_date", null: false
-    t.time "start_time", null: false
-    t.time "end_time", null: false
-    t.integer "status", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["status"], name: "index_shift_requests_on_status"
-    t.index ["user_id", "start_date"], name: "index_shift_requests_on_user_id_and_start_date"
-    t.index ["user_id"], name: "index_shift_requests_on_user_id"
   end
 
   create_table "shift_schedules", force: :cascade do |t|
@@ -164,18 +182,20 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_03_235416) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.string "first_name", null: false, comment: "名前"
+    t.string "last_name", comment: "苗字"
+    t.integer "status", default: 0, comment: "pending, active, inactive"
+    t.string "google_uid", comment: "Google OAuth UID"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "provider"
+    t.string "uid"
+    t.bigint "department_id"
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "first_name"
-    t.string "last_name"
-    t.integer "status", default: 0, null: false
-    t.string "google_uid"
-    t.bigint "department_id"
     t.index ["department_id"], name: "index_users_on_department_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["google_uid"], name: "index_users_on_google_uid", unique: true
@@ -183,16 +203,49 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_03_235416) do
     t.index ["status"], name: "index_users_on_status"
   end
 
+  create_table "weekly_shifts", force: :cascade do |t|
+    t.bigint "user_id", null: false, comment: "ユーザーID"
+    t.bigint "week_id", null: false, comment: "週ID"
+    t.integer "submission_month", null: false, comment: "提出対象月"
+    t.integer "submission_year", null: false, comment: "提出対象年"
+    t.integer "status", default: 0, comment: "draft, tentative, confirmed, approved"
+    t.text "violation_warnings", comment: "制限違反警告"
+    t.datetime "submitted_at", comment: "提出日時"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_weekly_shifts_on_status"
+    t.index ["user_id", "submission_year", "submission_month"], name: "idx_on_user_id_submission_year_submission_month_c1ada19012"
+    t.index ["user_id", "week_id"], name: "index_weekly_shifts_on_user_id_and_week_id", unique: true
+    t.index ["user_id"], name: "index_weekly_shifts_on_user_id"
+    t.index ["week_id"], name: "index_weekly_shifts_on_week_id"
+  end
+
+  create_table "weeks", force: :cascade do |t|
+    t.date "start_date", null: false, comment: "週開始日（月曜日）"
+    t.date "end_date", null: false, comment: "週終了日（日曜日）"
+    t.integer "year", null: false, comment: "年"
+    t.integer "week_number", null: false, comment: "年内週番号"
+    t.boolean "is_cross_month", default: false, comment: "月跨ぎ週フラグ"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_cross_month"], name: "index_weeks_on_is_cross_month"
+    t.index ["start_date"], name: "index_weeks_on_start_date"
+    t.index ["year", "week_number"], name: "index_weeks_on_year_and_week_number", unique: true
+  end
+
   add_foreign_key "applications", "users"
   add_foreign_key "approvals", "users", column: "approver_id"
   add_foreign_key "attendances", "users"
+  add_foreign_key "daily_schedules", "weekly_shifts"
   add_foreign_key "month_end_closings", "users"
   add_foreign_key "month_end_closings", "users", column: "closed_by_id"
+  add_foreign_key "monthly_summaries", "users"
   add_foreign_key "notifications", "users"
-  add_foreign_key "shift_requests", "users"
   add_foreign_key "shift_schedules", "shifts"
   add_foreign_key "shifts", "users"
   add_foreign_key "time_records", "users"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
+  add_foreign_key "weekly_shifts", "users"
+  add_foreign_key "weekly_shifts", "weeks"
 end

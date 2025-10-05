@@ -21,7 +21,14 @@ Rails.application.routes.draw do
   # 部署管理（管理者権限のみ）
   resources :departments
 
+  # シフト希望提出
+  resources :shift_requests, only: [:new, :create, :update]
+
   devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
+
+  # 開発環境での利便性のため、GETでもログアウト可能にする
+  get '/users/sign_out', to: 'sessions#logout' unless Rails.env.production?
+  get '/logout', to: 'sessions#logout' unless Rails.env.production?
 
   get 'home/index'
 
