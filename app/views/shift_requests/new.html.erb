@@ -1,0 +1,82 @@
+<% content_for :title, "シフト希望提出 - 勤怠管理システム" %>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fafafa;
+  }
+  .header {
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+    background: white;
+  }
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .logout-btn {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: black;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+</style>
+
+<!-- ヘッダー -->
+<header class="header">
+  <div class="header-content">
+    <h1>勤怠管理システム > シフト希望提出</h1>
+    <div class="user-info">
+      <span style="font-size: 14px;"><%= current_user.display_name %></span>
+      <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Vue.jsコンポーネントがマウントされる場所 -->
+  <div id="shift-request-form"
+       data-weeks='<%= (@weeks_data || []).to_json.html_safe %>'
+       data-initial='<%= (@initial_shift_data || {}).to_json.html_safe %>'
+       data-year="<%= @target_year || Date.current.year %>"
+       data-month="<%= @target_month || Date.current.month %>">
+    <!-- Loading fallback -->
+    <div id="loading-message" style="text-align: center; padding: 40px;">
+      <p>シフト画面を読み込み中...</p>
+      <div style="margin-top: 20px;">
+        <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
