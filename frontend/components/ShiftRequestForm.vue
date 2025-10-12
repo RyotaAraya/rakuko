@@ -107,186 +107,20 @@ export default {
 
     // 週データの初期化
     const initializeWeeks = () => {
-      // Railsサーバーから渡されたweeksDataを使用、フォールバックとしてデフォルトデータも保持
+      // Railsサーバーから渡されたweeksDataを使用
       if (props.weeksData && props.weeksData.length > 0) {
-        weeks.value = props.weeksData
+        weeks.value = props.weeksData.map(week => ({
+          ...week,
+          // バックエンドからのデータ構造を正規化
+          companyHours: 0,
+          sidejobHours: 0,
+          totalHours: 0,
+          hasViolations: false
+        }))
+        console.log('週データをバックエンドから取得しました:', weeks.value.length, '週')
       } else {
-        // フォールバック用のデフォルトデータ
-        weeks.value = [
-          {
-            id: 1,
-            title: '第1週 (9/28-10/4)',
-            isCrossMonth: true,
-            daysInMonth: 4,
-            days: [
-              { key: 'sun', label: '日 9/29', inTargetMonth: false },
-              { key: 'mon', label: '月 9/30', inTargetMonth: false },
-              { key: 'tue', label: '火 10/1', inTargetMonth: true },
-              { key: 'wed', label: '水 10/2', inTargetMonth: true },
-              { key: 'thu', label: '木 10/3', inTargetMonth: true },
-              { key: 'fri', label: '金 10/4', inTargetMonth: true },
-              { key: 'sat', label: '土 10/5', inTargetMonth: true },
-            ],
-            shifts: {
-              company: {
-                start: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '09:00', sat: '' },
-                end: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '16:00', sat: '' },
-              },
-              sidejob: {
-                start: { sun: '', mon: '', tue: '18:00', wed: '', thu: '18:00', fri: '', sat: '' },
-                end: { sun: '', mon: '', tue: '22:00', wed: '', thu: '22:00', fri: '', sat: '' },
-              },
-            },
-          },
-          {
-            id: 2,
-            title: '第2週 (10/5-10/11)',
-            isCrossMonth: false,
-            daysInMonth: 7,
-            days: [
-              { key: 'sun', label: '日 10/6', inTargetMonth: true },
-              { key: 'mon', label: '月 10/7', inTargetMonth: true },
-              { key: 'tue', label: '火 10/8', inTargetMonth: true },
-              { key: 'wed', label: '水 10/9', inTargetMonth: true },
-              { key: 'thu', label: '木 10/10', inTargetMonth: true },
-              { key: 'fri', label: '金 10/11', inTargetMonth: true },
-              { key: 'sat', label: '土 10/12', inTargetMonth: true },
-            ],
-            shifts: {
-              company: {
-                start: {
-                  sun: '',
-                  mon: '09:00',
-                  tue: '',
-                  wed: '09:00',
-                  thu: '',
-                  fri: '09:00',
-                  sat: '',
-                },
-                end: {
-                  sun: '',
-                  mon: '16:00',
-                  tue: '',
-                  wed: '16:00',
-                  thu: '',
-                  fri: '16:00',
-                  sat: '',
-                },
-              },
-              sidejob: {
-                start: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '', sat: '' },
-                end: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '', sat: '' },
-              },
-            },
-          },
-          {
-            id: 3,
-            title: '第3週 (10/12-10/18)',
-            isCrossMonth: false,
-            daysInMonth: 7,
-            days: [
-              { key: 'sun', label: '日 10/13', inTargetMonth: true },
-              { key: 'mon', label: '月 10/14', inTargetMonth: true },
-              { key: 'tue', label: '火 10/15', inTargetMonth: true },
-              { key: 'wed', label: '水 10/16', inTargetMonth: true },
-              { key: 'thu', label: '木 10/17', inTargetMonth: true },
-              { key: 'fri', label: '金 10/18', inTargetMonth: true },
-              { key: 'sat', label: '土 10/19', inTargetMonth: true },
-            ],
-            shifts: {
-              company: {
-                start: {
-                  sun: '',
-                  mon: '09:00',
-                  tue: '',
-                  wed: '09:00',
-                  thu: '',
-                  fri: '09:00',
-                  sat: '',
-                },
-                end: {
-                  sun: '',
-                  mon: '16:00',
-                  tue: '',
-                  wed: '16:00',
-                  thu: '',
-                  fri: '16:00',
-                  sat: '',
-                },
-              },
-              sidejob: {
-                start: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '', sat: '' },
-                end: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '', sat: '' },
-              },
-            },
-          },
-          {
-            id: 4,
-            title: '第4週 (10/19-10/25)',
-            isCrossMonth: false,
-            daysInMonth: 7,
-            days: [
-              { key: 'sun', label: '日 10/20', inTargetMonth: true },
-              { key: 'mon', label: '月 10/21', inTargetMonth: true },
-              { key: 'tue', label: '火 10/22', inTargetMonth: true },
-              { key: 'wed', label: '水 10/23', inTargetMonth: true },
-              { key: 'thu', label: '木 10/24', inTargetMonth: true },
-              { key: 'fri', label: '金 10/25', inTargetMonth: true },
-              { key: 'sat', label: '土 10/26', inTargetMonth: true },
-            ],
-            shifts: {
-              company: {
-                start: {
-                  sun: '',
-                  mon: '09:00',
-                  tue: '',
-                  wed: '09:00',
-                  thu: '',
-                  fri: '09:00',
-                  sat: '',
-                },
-                end: {
-                  sun: '',
-                  mon: '16:00',
-                  tue: '',
-                  wed: '16:00',
-                  thu: '',
-                  fri: '16:00',
-                  sat: '',
-                },
-              },
-              sidejob: {
-                start: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '', sat: '' },
-                end: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '', sat: '' },
-              },
-            },
-          },
-          {
-            id: 5,
-            title: '第5週 (10/26-11/1)',
-            isCrossMonth: true,
-            daysInMonth: 6,
-            days: [
-              { key: 'sun', label: '日 10/27', inTargetMonth: true },
-              { key: 'mon', label: '月 10/28', inTargetMonth: true },
-              { key: 'tue', label: '火 10/29', inTargetMonth: true },
-              { key: 'wed', label: '水 10/30', inTargetMonth: true },
-              { key: 'thu', label: '木 10/31', inTargetMonth: true },
-              { key: 'fri', label: '金 11/1', inTargetMonth: false },
-              { key: 'sat', label: '土 11/2', inTargetMonth: false },
-            ],
-            shifts: {
-              company: {
-                start: { sun: '', mon: '09:00', tue: '', wed: '09:00', thu: '', fri: '', sat: '' },
-                end: { sun: '', mon: '16:00', tue: '', wed: '16:00', thu: '', fri: '', sat: '' },
-              },
-              sidejob: {
-                start: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '', sat: '' },
-                end: { sun: '', mon: '', tue: '', wed: '', thu: '', fri: '', sat: '' },
-              },
-            },
-          },
-        ]
+        console.warn('週データが提供されていません。空の配列で初期化します。')
+        weeks.value = []
       }
     }
 
@@ -392,9 +226,24 @@ export default {
 
     const saveShifts = async () => {
       try {
-        // API call to save draft
-        console.log('Saving shifts as draft...', computedWeeks.value)
-        alert('下書きを保存しました')
+        console.log('下書き保存中...', computedWeeks.value)
+
+        const formData = buildFormData('draft')
+        const response = await fetch('/shift_requests', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: formData
+        })
+
+        const result = await response.json()
+        if (result.success) {
+          alert('下書きを保存しました')
+        } else {
+          console.error('保存エラー:', result.errors)
+          alert('保存に失敗しました: ' + (result.errors || []).join(', '))
+        }
       } catch (error) {
         console.error('Save failed:', error)
         alert('保存に失敗しました')
@@ -408,13 +257,52 @@ export default {
       }
 
       try {
-        // API call to submit shifts
-        console.log('Submitting shifts...', computedWeeks.value)
-        alert('シフトを提出しました')
+        console.log('シフト提出中...', computedWeeks.value)
+
+        const formData = buildFormData('submit')
+        const response = await fetch('/shift_requests', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: formData
+        })
+
+        const result = await response.json()
+        if (result.success) {
+          alert('シフトを提出しました')
+          // 提出後はリダイレクトなどを行う
+          window.location.href = '/shift_requests'
+        } else {
+          console.error('提出エラー:', result.errors)
+          alert('提出に失敗しました: ' + (result.errors || []).join(', '))
+        }
       } catch (error) {
         console.error('Submit failed:', error)
         alert('提出に失敗しました')
       }
+    }
+
+    // フォームデータを構築する関数
+    const buildFormData = (submitType) => {
+      const formData = new FormData()
+      formData.append('authenticity_token', document.querySelector('meta[name="csrf-token"]').content)
+      formData.append('submit_type', submitType)
+      formData.append('year', props.targetYear.toString())
+      formData.append('month', props.targetMonth.toString())
+
+      // 週データを送信形式に変換
+      const weeksData = weeks.value.map(week => ({
+        id: week.id,
+        days: week.days.map(day => ({
+          key: day.key,
+          date: day.date
+        })),
+        shifts: week.shifts
+      }))
+
+      formData.append('weeks_data', JSON.stringify(weeksData))
+      return formData
     }
 
     const submitForm = submitShifts
@@ -426,8 +314,20 @@ export default {
 
       // 初期データがある場合は設定
       if (props.initialData) {
-        // TODO: 初期データから週データを復元
+        console.log('初期データが提供されました:', props.initialData)
+        // バックエンドからの初期データを処理
+        if (props.initialData.monthlySum && props.initialData.monthlySum.user_weekly_shifts_for_month) {
+          console.log('既存のシフトデータを復元します')
+          // 既存シフトデータの復元処理は既にbuild_week_shifts_dataで行われているため、
+          // 追加の処理は不要
+        }
       }
+
+      console.log('Vue.jsコンポーネントの初期化完了:', {
+        targetYear: props.targetYear,
+        targetMonth: props.targetMonth,
+        weeksCount: weeks.value.length
+      })
     })
 
     // setup()で作成したリアクティブデータや関数を返す
