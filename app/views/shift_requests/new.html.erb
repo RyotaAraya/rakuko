@@ -58,12 +58,38 @@
 </header>
 
 <div class="container">
+  <!-- 月選択UI -->
+  <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <label style="font-weight: bold; font-size: 14px;">対象月:</label>
+      <select id="month-selector" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+        <% @available_months.each do |month_data| %>
+          <% selected = (month_data[:year] == @target_year && month_data[:month] == @target_month) %>
+          <option value="<%= month_data[:year] %>-<%= month_data[:month] %>" <%= 'selected' if selected %>>
+            <%= month_data[:year] %>年<%= month_data[:month] %>月
+          </option>
+        <% end %>
+      </select>
+
+      <% if @can_edit %>
+        <% if @past_deadline %>
+          <span style="color: #ff9800; font-size: 14px;">⚠️ 締切日(前月25日)を過ぎています</span>
+        <% else %>
+          <span style="color: #4caf50; font-size: 14px;">✅ 編集可能</span>
+        <% end %>
+      <% else %>
+        <span style="color: #f44336; font-size: 14px;">🔒 編集不可（過去月）</span>
+      <% end %>
+    </div>
+  </div>
+
   <!-- Vue.jsコンポーネントがマウントされる場所 -->
   <div id="shift-request-form"
        data-weeks='<%= (@weeks_data || []).to_json.html_safe %>'
        data-initial='<%= (@initial_shift_data || {}).to_json.html_safe %>'
        data-year="<%= @target_year || Date.current.year %>"
-       data-month="<%= @target_month || Date.current.month %>">
+       data-month="<%= @target_month || Date.current.month %>"
+       data-can-edit="<%= @can_edit %>">
     <!-- Loading fallback -->
     <div id="loading-message" style="text-align: center; padding: 40px;">
       <p>シフト画面を読み込み中...</p>
@@ -73,6 +99,19 @@
     </div>
   </div>
 </div>
+
+<script>
+  // 月選択の変更時にページ遷移
+  document.addEventListener('DOMContentLoaded', function() {
+    const selector = document.getElementById('month-selector');
+    if (selector) {
+      selector.addEventListener('change', function() {
+        const [year, month] = this.value.split('-');
+        window.location.href = `/shift_requests/new?year=${year}&month=${month}`;
+      });
+    }
+  });
+</script>
 
 <style>
 @keyframes spin {

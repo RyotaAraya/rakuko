@@ -103,6 +103,14 @@ development_users.each do |user_attrs|
       password_confirmation: 'password123'
     )
 
+    # 学生ユーザーには契約期間を設定
+    if user_attrs[:roles].include?(:student)
+      current_date = Date.current
+      user.contract_start_date = current_date.beginning_of_month
+      user.contract_end_date = (current_date + 6.months).end_of_month
+      user.contract_updated_at = Time.current
+    end
+
     if user.save
       # 新しい権限システムで権限を設定
       user_attrs[:roles].each do |role_name|
@@ -113,43 +121,37 @@ development_users.each do |user_attrs|
       Rails.logger.debug { "✗ Failed to create user: #{user.email} - #{user.errors.full_messages.join(', ')}" }
     end
   else
+    # 既存ユーザーでも学生で契約期間がない場合は設定
+    if user_attrs[:roles].include?(:student) && user.contract_start_date.nil?
+      current_date = Date.current
+      user.update(
+        contract_start_date: current_date.beginning_of_month,
+        contract_end_date: (current_date + 6.months).end_of_month,
+        contract_updated_at: Time.current
+      )
+      Rails.logger.debug { "✓ Updated contract period for: #{user.email}" }
+    end
     Rails.logger.debug { "✓ User already exists: #{user.email} (#{user.role_display_names})" }
   end
 end
 
 Rails.logger.debug 'Development user accounts setup complete!'
 
-# 4. シフトデータの作成
-Rails.logger.debug 'Creating sample shift data...'
+# 4. 週次シフトデータの作成（新設計）
+Rails.logger.debug 'Creating sample weekly shift data...'
 student_user = User.find_by(email: 'student@example.com')
 
 if student_user
-  # 今月と来月のシフト作成
+  # 今月と来月の月次サマリーを作成
   current_date = Date.current
   [current_date, current_date.next_month].each do |date|
-    shift = Shift.find_or_create_by(
-      user: student_user,
-      year: date.year,
-      month: date.month
-    ) do |s|
-      s.status = :submitted
-    end
+    monthly_summary = WeekManagementService.create_monthly_summary_with_shifts(
+      student_user,
+      date.year,
+      date.month
+    )
 
-    # シフトスケジュールの作成（月の最初の2週間）
-    (1..14).each do |day|
-      schedule_date = Date.new(date.year, date.month, day)
-      next if [0, 6].include?(schedule_date.wday) # 土日はスキップ
-
-      shift.shift_schedules.find_or_create_by(date: schedule_date) do |schedule|
-        schedule.company_start_time = Time.zone.parse('09:00')
-        schedule.company_end_time = Time.zone.parse('18:00')
-        schedule.part_time_start_time = Time.zone.parse('13:00')
-        schedule.part_time_end_time = Time.zone.parse('17:00')
-        schedule.is_working = true
-      end
-    end
-
-    Rails.logger.debug { "✓ Created shift for #{shift.display_period}" }
+    Rails.logger.debug { "✓ Created monthly summary for #{date.strftime('%Y年%m月')}" }
   end
 end
 
@@ -246,36 +248,37 @@ if student_user
   Rails.logger.debug { "✓ Created month-end closing for #{last_month.strftime('%Y年%m月')}" }
 end
 
-# 8. 承認データの作成
-Rails.logger.debug 'Creating sample approval data...'
-if student_user
-  department_manager = User.find_by(email: 'department.manager@example.com')
-  hr_manager = User.find_by(email: 'hr.manager@example.com')
-
-  # シフトの承認
-  shift = student_user.shifts.first
-  if shift
-    # 部署承認
-    shift.approvals.find_or_create_by(
-      approval_type: :department_approval,
-      approver: department_manager
-    ) do |approval|
-      approval.status = :approved
-      approval.comment = 'シフト内容を確認しました。'
-      approval.approved_at = Time.current
-    end
-
-    # 労務承認
-    shift.approvals.find_or_create_by(
-      approval_type: :labor_approval,
-      approver: hr_manager
-    ) do |approval|
-      approval.status = :pending
-    end
-  end
-
-  Rails.logger.debug '✓ Created sample approval records'
-end
+# 8. 承認データの作成（週次シフト用）
+# Rails.logger.debug 'Creating sample approval data...'
+# TODO: 承認機能は後のフェーズで実装予定
+# if student_user
+#   department_manager = User.find_by(email: 'department.manager@example.com')
+#   hr_manager = User.find_by(email: 'hr.manager@example.com')
+#
+#   # 月次サマリーの承認
+#   monthly_summary = student_user.monthly_summaries.first
+#   if monthly_summary
+#     # 部署承認
+#     monthly_summary.approvals.find_or_create_by(
+#       approval_type: :department_approval,
+#       approver: department_manager
+#     ) do |approval|
+#       approval.status = :approved
+#       approval.comment = 'シフト内容を確認しました。'
+#       approval.approved_at = Time.current
+#     end
+#
+#     # 労務承認
+#     monthly_summary.approvals.find_or_create_by(
+#       approval_type: :labor_approval,
+#       approver: hr_manager
+#     ) do |approval|
+#       approval.status = :pending
+#     end
+#   end
+#
+#   Rails.logger.debug '✓ Created sample approval records'
+# end
 
 # 9. 通知データの作成
 Rails.logger.debug 'Creating sample notification data...'

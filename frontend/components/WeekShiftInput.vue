@@ -12,9 +12,9 @@
           <td v-for="day in weekDays" :key="`company-start-${day.key}`" class="border border-gray-300 p-2 text-center">
             <select
               class="w-20 p-1 border border-gray-300 text-sm"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isWeekend(day.key) || isOutOfTargetMonth(day.key) }"
+              :class="{ 'bg-gray-100 cursor-not-allowed': !canEdit || isWeekend(day.key) || isOutOfTargetMonth(day.key) }"
               :value="shifts.company.start[day.key]"
-              :disabled="isWeekend(day.key) || isOutOfTargetMonth(day.key)"
+              :disabled="!canEdit || isWeekend(day.key) || isOutOfTargetMonth(day.key)"
               @change="updateShift('company', 'start', day.key, $event.target.value)"
             >
               <option value="">--</option>
@@ -27,13 +27,13 @@
           <td v-for="day in weekDays" :key="`company-end-${day.key}`" class="border border-gray-300 p-2 text-center">
             <select
               class="w-20 p-1 border border-gray-300 text-sm"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isWeekend(day.key) || isOutOfTargetMonth(day.key) }"
+              :class="{ 'bg-gray-100 cursor-not-allowed': !canEdit || isWeekend(day.key) || isOutOfTargetMonth(day.key) }"
               :value="shifts.company.end[day.key]"
-              :disabled="isWeekend(day.key) || isOutOfTargetMonth(day.key)"
+              :disabled="!canEdit || isWeekend(day.key) || isOutOfTargetMonth(day.key)"
               @change="updateShift('company', 'end', day.key, $event.target.value)"
             >
               <option value="">--</option>
-              <option v-for="time in timeOptionsCompany" :key="time" :value="time">{{ time }}</option>
+              <option v-for="time in getValidEndTimes(timeOptionsCompany, shifts.company.start[day.key])" :key="time" :value="time">{{ time }}</option>
             </select>
           </td>
         </tr>
@@ -42,9 +42,9 @@
           <td v-for="day in weekDays" :key="`sidejob-start-${day.key}`" class="border border-gray-300 p-2 text-center">
             <select
               class="w-20 p-1 border border-gray-300 text-sm"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isOutOfTargetMonth(day.key) }"
+              :class="{ 'bg-gray-100 cursor-not-allowed': !canEdit || isOutOfTargetMonth(day.key) }"
               :value="shifts.sidejob.start[day.key]"
-              :disabled="isOutOfTargetMonth(day.key)"
+              :disabled="!canEdit || isOutOfTargetMonth(day.key)"
               @change="updateShift('sidejob', 'start', day.key, $event.target.value)"
             >
               <option value="">--</option>
@@ -57,13 +57,13 @@
           <td v-for="day in weekDays" :key="`sidejob-end-${day.key}`" class="border border-gray-300 p-2 text-center">
             <select
               class="w-20 p-1 border border-gray-300 text-sm"
-              :class="{ 'bg-gray-100 cursor-not-allowed': isOutOfTargetMonth(day.key) }"
+              :class="{ 'bg-gray-100 cursor-not-allowed': !canEdit || isOutOfTargetMonth(day.key) }"
               :value="shifts.sidejob.end[day.key]"
-              :disabled="isOutOfTargetMonth(day.key)"
+              :disabled="!canEdit || isOutOfTargetMonth(day.key)"
               @change="updateShift('sidejob', 'end', day.key, $event.target.value)"
             >
               <option value="">--</option>
-              <option v-for="time in timeOptionsSidejob" :key="time" :value="time">{{ time }}</option>
+              <option v-for="time in getValidEndTimes(timeOptionsSidejob, shifts.sidejob.start[day.key])" :key="time" :value="time">{{ time }}</option>
             </select>
           </td>
         </tr>
@@ -103,6 +103,10 @@ const props = defineProps({
   weekTitle: String,
   weekDays: Array,
   shifts: Object,
+  canEdit: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['update-shift'])
@@ -147,7 +151,26 @@ const isOutOfTargetMonth = (dayKey) => {
 }
 
 const updateShift = (type, timeType, day, value) => {
+  // 開始時間が変更された場合、終了時間が開始時間より前なら終了時間をクリア
+  if (timeType === 'start' && value) {
+    const endTime = props.shifts[type].end[day]
+    if (endTime && endTime <= value) {
+      emit('update-shift', { type, timeType: 'end', day, roundedValue: '' })
+    }
+  }
+
   emit('update-shift', { type, timeType, day, roundedValue: value })
+}
+
+// 終了時間の有効な選択肢を取得（開始時間より後の時間のみ）
+const getValidEndTimes = (timeOptions, startTime) => {
+  if (!startTime) {
+    return timeOptions
+  }
+
+  return timeOptions.filter((time) => {
+    return time > startTime
+  })
 }
 
 // 時間重複チェック

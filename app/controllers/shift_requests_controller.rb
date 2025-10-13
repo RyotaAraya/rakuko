@@ -5,6 +5,11 @@ class ShiftRequestsController < ApplicationController
   before_action :set_target_date, only: [:new, :create, :update]
 
   def new
+    # 利用可能な月のリストを取得
+    @available_months = current_user.available_months_for_shift
+    @can_edit = current_user.can_edit_shift_for_month?(@target_year, @target_month)
+    @past_deadline = current_user.past_deadline_for_month?(@target_year, @target_month)
+
     # 月次サマリーとシフトデータを作成または取得
     @monthly_summary = WeekManagementService.create_monthly_summary_with_shifts(
       current_user,
@@ -141,28 +146,31 @@ class ShiftRequestsController < ApplicationController
     errors = []
     success_count = 0
 
+    # JSON文字列をパース
+    parsed_weeks_data = weeks_data.is_a?(String) ? JSON.parse(weeks_data) : weeks_data
+
     ActiveRecord::Base.transaction do
-      weeks_data.each do |week_data|
-        week = Week.find(week_data[:id])
+      parsed_weeks_data.each do |week_data|
+        week = Week.find(week_data['id'])
         weekly_shift = current_user.weekly_shifts.find_or_create_by(week: week) do |ws|
           ws.submission_year = @target_year
           ws.submission_month = @target_month
         end
 
         # 日別スケジュールの更新
-        week_data[:days].each do |day_data|
-          date = Date.parse(day_data[:date])
+        week_data['days'].each do |day_data|
+          date = Date.parse(day_data['date'])
           daily_schedule = weekly_shift.daily_schedules.find_or_create_by(schedule_date: date)
 
           # 時間データの更新
-          shifts = week_data[:shifts]
-          day_key = day_data[:key]
+          shifts = week_data['shifts']
+          day_key = day_data['key']
 
           daily_schedule.update!(
-            company_start_time: parse_time(shifts[:company][:start][day_key]),
-            company_end_time: parse_time(shifts[:company][:end][day_key]),
-            sidejob_start_time: parse_time(shifts[:sidejob][:start][day_key]),
-            sidejob_end_time: parse_time(shifts[:sidejob][:end][day_key])
+            company_start_time: parse_time(shifts['company']['start'][day_key]),
+            company_end_time: parse_time(shifts['company']['end'][day_key]),
+            sidejob_start_time: parse_time(shifts['sidejob']['start'][day_key]),
+            sidejob_end_time: parse_time(shifts['sidejob']['end'][day_key])
           )
         end
 
