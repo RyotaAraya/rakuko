@@ -9,6 +9,9 @@ module Admin
       authorize [:admin, User]
       @pending_users = policy_scope([:admin, User]).pending.includes(:department, :roles).order(:created_at)
       @active_users = policy_scope([:admin, User]).active.includes(:department, :roles).order(:first_name, :last_name)
+
+      # 週次労働時間の制限違反チェック
+      @weekly_violations = check_all_users_violations(@active_users)
     end
 
     def show
@@ -109,6 +112,27 @@ module Admin
       new_roles.each do |role|
         @user.add_role(role.name)
       end
+    end
+
+    def check_all_users_violations(users)
+      violations = []
+      start_date = Date.current.beginning_of_week
+
+      users.each do |user|
+        # 学生ユーザーのみチェック
+        next unless user.has_role?(:student)
+
+        result = Attendance.check_weekly_violations(user, start_date)
+        next unless result[:has_violations]
+
+        violations << {
+          user: user,
+          violations: result[:violations],
+          breakdown: result[:breakdown]
+        }
+      end
+
+      violations
     end
   end
 end

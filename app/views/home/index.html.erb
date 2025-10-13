@@ -129,14 +129,36 @@
 
   <!-- メインコンテンツ -->
   <main class="container">
+    <!-- 労働時間制限警告 -->
+    <% if @week_violations && @week_violations[:has_violations] %>
+      <div style="margin-bottom: 20px;">
+        <% @week_violations[:violations].each do |violation| %>
+          <div style="padding: 15px; margin-bottom: 10px; border-radius: 4px; <%= violation[:severity] == 'error' ? 'background: #fee; border: 1px solid #fcc; color: #c00;' : 'background: #ffc; border: 1px solid #ffb; color: #860;' %>">
+            <strong><%= violation[:severity] == 'error' ? '⚠️ 労働時間制限超過' : '⚠️ 労働時間制限警告' %></strong><br>
+            <%= violation[:message] %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
     <!-- ステータス表示 -->
     <div class="status-section">
       <div class="status-title">労働時間状況</div>
-      <div>今週: 12.5h/20h　掛け持ち: 15h</div>
-      <div>合計: 27.5h/40h</div>
-      <div class="progress-bar">
-        <div class="progress-fill"></div>
-      </div>
+      <% if @week_violations %>
+        <% breakdown = @week_violations[:breakdown] %>
+        <div>今週（弊社）: <%= breakdown[:actual_company_hours] %>h / <%= breakdown[:company_limit] %>h</div>
+        <div>今週（掛け持ち）: <%= breakdown[:actual_sidejob_hours] %>h</div>
+        <div>合計予測: <%= breakdown[:predicted_total_hours] %>h / <%= breakdown[:total_limit] %>h</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: <%= [breakdown[:predicted_total_hours] / breakdown[:total_limit] * 100, 100].min %>%"></div>
+        </div>
+      <% else %>
+        <div>今週: 12.5h/20h　掛け持ち: 15h</div>
+        <div>合計: 27.5h/40h</div>
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+      <% end %>
     </div>
 
     <!-- 機能メニュー -->
