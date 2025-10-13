@@ -5,6 +5,51 @@
       <p class="mt-2 text-gray-600">新規ユーザーの承認と既存ユーザーの管理</p>
     </div>
 
+    <!-- 労働時間制限違反アラート -->
+    <% if @weekly_violations.any? %>
+      <div class="bg-white shadow sm:rounded-lg mb-8 border-l-4 border-red-500">
+        <div class="px-4 py-5 sm:p-6">
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <div class="ml-3 flex-1">
+              <h3 class="text-lg font-medium text-red-800 mb-4">
+                ⚠️ 週次労働時間制限違反アラート（<%= @weekly_violations.count %>件）
+              </h3>
+              <div class="space-y-4">
+                <% @weekly_violations.each do |violation_data| %>
+                  <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="font-semibold text-gray-900">
+                        <%= violation_data[:user].display_name %>
+                        <span class="text-sm text-gray-600 ml-2">(<%= violation_data[:user].email %>)</span>
+                      </div>
+                      <%= link_to "詳細", admin_user_path(violation_data[:user]), class: "text-blue-600 hover:text-blue-900 text-sm" %>
+                    </div>
+                    <div class="space-y-1">
+                      <% violation_data[:violations].each do |violation| %>
+                        <div class="text-sm <%= violation[:severity] == 'error' ? 'text-red-700' : 'text-yellow-700' %>">
+                          <%= violation[:severity] == 'error' ? '🚫' : '⚠️' %> <%= violation[:message] %>
+                        </div>
+                      <% end %>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-600">
+                      <% breakdown = violation_data[:breakdown] %>
+                      実績: 弊社<%= breakdown[:actual_company_hours] %>h / 掛け持ち<%= breakdown[:actual_sidejob_hours] %>h |
+                      予測合計: <%= breakdown[:predicted_total_hours] %>h / <%= breakdown[:total_limit] %>h
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <!-- 承認待ちユーザー -->
     <div class="bg-white shadow sm:rounded-lg mb-8">
       <div class="px-4 py-5 sm:p-6">

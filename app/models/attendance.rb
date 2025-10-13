@@ -104,6 +104,123 @@ class Attendance < ApplicationRecord
     }
   end
 
+  # 週次労働時間の詳細集計（弊社 + 掛け持ち分離）
+  def self.weekly_hours_breakdown(user, start_date)
+    end_date = start_date.end_of_week
+
+    # 実績労働時間（承認済みのみ）
+    completed_attendances = where(user: user, date: start_date..end_date).approved
+    actual_company_hours = completed_attendances.sum(:actual_hours)
+
+    # 掛け持ちバイト時間（shift_requestsから取得）
+    # TODO: 掛け持ちバイトの実績記録が実装されたら、そちらから取得
+    actual_sidejob_hours = calculate_sidejob_hours(user, start_date, end_date)
+
+    # シフト予定データ（残りの予定時間）
+    remaining_shifts = fetch_remaining_shifts(user, start_date, end_date)
+
+    {
+      # 実績
+      actual_company_hours: actual_company_hours.round(1),
+      actual_sidejob_hours: actual_sidejob_hours.round(1),
+      actual_total_hours: (actual_company_hours + actual_sidejob_hours).round(1),
+
+      # 予定（残り）
+      remaining_company_hours: remaining_shifts[:company].round(1),
+      remaining_sidejob_hours: remaining_shifts[:sidejob].round(1),
+      remaining_total_hours: (remaining_shifts[:company] + remaining_shifts[:sidejob]).round(1),
+
+      # 予測合計
+      predicted_company_hours: (actual_company_hours + remaining_shifts[:company]).round(1),
+      predicted_sidejob_hours: (actual_sidejob_hours + remaining_shifts[:sidejob]).round(1),
+      predicted_total_hours: (actual_company_hours + actual_sidejob_hours +
+                              remaining_shifts[:company] + remaining_shifts[:sidejob]).round(1),
+
+      # 制限値
+      company_limit: 20,
+      total_limit: 40,
+
+      # 違反フラグ
+      company_over_limit: (actual_company_hours + remaining_shifts[:company]) > 20,
+      total_over_limit: (actual_company_hours + actual_sidejob_hours +
+                        remaining_shifts[:company] + remaining_shifts[:sidejob]) > 40,
+    }
+  end
+
+  # 制限違反をチェックして警告メッセージを生成
+  def self.check_weekly_violations(user, start_date)
+    breakdown = weekly_hours_breakdown(user, start_date)
+    violations = []
+
+    if breakdown[:company_over_limit]
+      violations << {
+        type: 'company_hours_exceeded',
+        severity: 'error',
+        message: "弊社での週20時間制限を超過する予測です（予測: #{breakdown[:predicted_company_hours]}時間）",
+        actual: breakdown[:predicted_company_hours],
+        limit: 20
+      }
+    end
+
+    if breakdown[:total_over_limit]
+      violations << {
+        type: 'total_hours_exceeded',
+        severity: 'error',
+        message: "週40時間制限を超過する予測です（予測: #{breakdown[:predicted_total_hours]}時間）",
+        actual: breakdown[:predicted_total_hours],
+        limit: 40
+      }
+    end
+
+    # 警告レベル（80%以上）
+    if breakdown[:predicted_company_hours] >= 16 && !breakdown[:company_over_limit]
+      violations << {
+        type: 'company_hours_warning',
+        severity: 'warning',
+        message: "弊社での週20時間制限に近づいています（予測: #{breakdown[:predicted_company_hours]}時間）",
+        actual: breakdown[:predicted_company_hours],
+        limit: 20
+      }
+    end
+
+    if breakdown[:predicted_total_hours] >= 32 && !breakdown[:total_over_limit]
+      violations << {
+        type: 'total_hours_warning',
+        severity: 'warning',
+        message: "週40時間制限に近づいています（予測: #{breakdown[:predicted_total_hours]}時間）",
+        actual: breakdown[:predicted_total_hours],
+        limit: 40
+      }
+    end
+
+    {
+      has_violations: violations.any?,
+      violations: violations,
+      breakdown: breakdown
+    }
+  end
+
+  private_class_method def self.calculate_sidejob_hours(user, start_date, end_date)
+    # TODO: 掛け持ちバイトの実績記録テーブルが実装されたら、そこから取得
+    # 現時点ではシフト予定から推測
+    0.0
+  end
+
+  private_class_method def self.fetch_remaining_shifts(user, start_date, end_date)
+    # 今週の残り日数のシフト予定を取得
+    today = Date.current
+    remaining_dates = (today..end_date).to_a
+
+    # ShiftRequestから該当週のデータを取得
+    # TODO: ShiftRequestモデルとの連携実装
+    # 現時点では簡易的にゼロを返す
+
+    {
+      company: 0.0,
+      sidejob: 0.0
+    }
+  end
+
   def self.monthly_summary(user, year, month)
     month_attendances = for_month(year, month).where(user: user).approved
     {
