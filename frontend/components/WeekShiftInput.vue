@@ -142,7 +142,7 @@ const isWeekend = (dayKey) => {
 
 // 対象月外の日付判定
 const isOutOfTargetMonth = (dayKey) => {
-  const day = props.weekDays.find(d => d.key === dayKey)
+  const day = props.weekDays.find((d) => d.key === dayKey)
   return day ? !day.inTargetMonth : true
 }
 
