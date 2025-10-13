@@ -1,11 +1,11 @@
 <template>
   <div>
-    <h2>シフト希望提出 {{ monthYear }}</h2>
+    <h2 class="text-xl font-bold mb-4">シフト希望提出 {{ monthYear }}</h2>
 
     <!-- 注意事項 -->
-    <div class="section">
-      <div class="section-title">⚠️ 労働時間制限について</div>
-      <div class="warning">
+    <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-5">
+      <div class="font-bold mb-2 text-base text-gray-800">⚠️ 労働時間制限について</div>
+      <div class="bg-yellow-50 border border-yellow-200 rounded p-2.5 text-yellow-800 text-sm leading-relaxed">
         ・週の合計時間（弊社+掛け持ち）が40時間を超えないよう入力してください<br>
         ・弊社での労働時間は週20時間以内に制限されています<br>
         ・日次で自社と掛け持ちの時間を個別に入力してください<br>
@@ -14,13 +14,13 @@
     </div>
 
     <!-- 月間シフト入力 -->
-    <div class="section">
-      <div class="section-title">{{ monthYear }} 月間シフト希望</div>
-      <div style="margin-bottom: 15px;">
-        <button type="button" class="btn" @click="bulkInput">一括入力</button>
-        <button type="button" class="btn" @click="clearAll">クリア</button>
-        <button type="button" class="btn" @click="saveShifts">下書き保存</button>
-        <button type="button" class="btn btn-primary" @click="submitShifts" :disabled="!canSubmit">提出</button>
+    <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-5">
+      <div class="font-bold mb-2 text-base text-gray-800">{{ monthYear }} 月間シフト希望</div>
+      <div class="mb-4">
+        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700" @click="bulkInput">一括入力</button>
+        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700" @click="clearAll">クリア</button>
+        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700" @click="saveShifts">下書き保存</button>
+        <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="submitShifts" :disabled="!canSubmit">提出</button>
       </div>
 
       <!-- 各週のシフト入力 -->
@@ -37,39 +37,47 @@
     </div>
 
     <!-- 労働時間制限チェック結果 -->
-    <div class="section">
-      <div class="section-title">労働時間制限チェック結果（{{ monthYear }}）</div>
-      <table>
+    <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-5">
+      <div class="font-bold mb-2 text-base text-gray-800">労働時間制限チェック結果（{{ monthYear }}）</div>
+      <table class="w-full border-collapse mt-2.5">
         <tr>
-          <th>週</th>
-          <th>弊社時間</th>
-          <th>掛け持ち時間</th>
-          <th>合計時間</th>
-          <th>弊社制限</th>
-          <th>総労働制限</th>
+          <th class="border border-gray-300 p-2 text-center text-sm bg-gray-100 font-bold">週</th>
+          <th class="border border-gray-300 p-2 text-center text-sm bg-gray-100 font-bold">弊社時間</th>
+          <th class="border border-gray-300 p-2 text-center text-sm bg-gray-100 font-bold">掛け持ち時間</th>
+          <th class="border border-gray-300 p-2 text-center text-sm bg-gray-100 font-bold">合計時間</th>
+          <th class="border border-gray-300 p-2 text-center text-sm bg-gray-100 font-bold">弊社制限</th>
+          <th class="border border-gray-300 p-2 text-center text-sm bg-gray-100 font-bold">総労働制限</th>
+          <th class="border border-gray-300 p-2 text-center text-sm bg-gray-100 font-bold">追加可能時間</th>
         </tr>
-        <tr v-for="week in weeks" :key="`summary-${week.id}`" :class="{ 'violation-row': week.hasViolations }">
-          <td>{{ week.title }}</td>
-          <td>{{ week.companyHours }}h</td>
-          <td>{{ week.sidejobHours }}h</td>
-          <td>{{ week.totalHours }}h</td>
-          <td>{{ week.companyHours <= 20 ? '✓ 制限内' : '⚠️ 超過' }}</td>
-          <td>{{ week.totalHours <= 40 ? '✓ 制限内' : '⚠️ 超過' }}</td>
+        <tr v-for="week in weeks" :key="`summary-${week.id}`" :class="{ 'bg-red-100': week.hasViolations }">
+          <td class="border border-gray-300 p-2 text-center text-sm">{{ week.title }}</td>
+          <td class="border border-gray-300 p-2 text-center text-sm">{{ week.companyHours }}h</td>
+          <td class="border border-gray-300 p-2 text-center text-sm">{{ week.sidejobHours }}h</td>
+          <td class="border border-gray-300 p-2 text-center text-sm">{{ week.totalHours }}h</td>
+          <td class="border border-gray-300 p-2 text-center text-sm">{{ week.companyHours <= 20 ? '✓ 制限内' : '⚠️ 超過' }}</td>
+          <td class="border border-gray-300 p-2 text-center text-sm">{{ week.totalHours <= 40 ? '✓ 制限内' : '⚠️ 超過' }}</td>
+          <td class="border border-gray-300 p-2 text-center text-sm">
+            <span v-if="!week.hasViolations" class="text-green-700 text-sm">
+              弊社: +{{ (20 - week.companyHours).toFixed(1) }}h<br>
+              合計: +{{ (40 - week.totalHours).toFixed(1) }}h
+            </span>
+            <span v-else class="exceeded-hours">-</span>
+          </td>
         </tr>
       </table>
 
-      <div class="success" v-if="allWeeksValid">
+      <div class="bg-green-100 border border-green-300 rounded p-2.5 text-green-800 mt-2.5" v-if="allWeeksValid">
         ✅ 全ての週で制限内です（労働基準法遵守）
       </div>
-      <div class="error" v-else>
+      <div class="bg-red-100 border border-red-300 rounded p-2.5 text-red-800 mt-2.5" v-else>
         ⚠️ 制限を超過している週があります
       </div>
     </div>
 
     <!-- 提出ボタン -->
-    <div class="section">
-      <button type="submit" class="btn btn-primary" @click="submitForm" :disabled="!canSubmit">最終提出</button>
-      <button type="button" class="btn" @click="saveDraft">下書き保存</button>
+    <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-5">
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="submitForm" :disabled="!canSubmit">最終提出</button>
+      <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700" @click="saveDraft">下書き保存</button>
     </div>
   </div>
 </template>
@@ -109,13 +117,13 @@ export default {
     const initializeWeeks = () => {
       // Railsサーバーから渡されたweeksDataを使用
       if (props.weeksData && props.weeksData.length > 0) {
-        weeks.value = props.weeksData.map(week => ({
+        weeks.value = props.weeksData.map((week) => ({
           ...week,
           // バックエンドからのデータ構造を正規化
           companyHours: 0,
           sidejobHours: 0,
           totalHours: 0,
-          hasViolations: false
+          hasViolations: false,
         }))
         console.log('週データをバックエンドから取得しました:', weeks.value.length, '週')
       } else {
@@ -150,19 +158,21 @@ export default {
         let sidejobHours = 0
 
         // 対象月の日のみを計算対象とする
-        week.days.forEach((day) => {
-          if (!day.inTargetMonth) return
+        if (week.days && week.shifts) {
+          week.days.forEach((day) => {
+            if (!day.inTargetMonth) return
 
-          // 弊社時間
-          const companyStart = week.shifts.company.start[day.key]
-          const companyEnd = week.shifts.company.end[day.key]
-          companyHours += calculateWorkingHours(companyStart, companyEnd)
+            // 弊社時間
+            const companyStart = week.shifts?.company?.start?.[day.key]
+            const companyEnd = week.shifts?.company?.end?.[day.key]
+            companyHours += calculateWorkingHours(companyStart, companyEnd)
 
-          // 掛け持ち時間
-          const sidejobStart = week.shifts.sidejob.start[day.key]
-          const sidejobEnd = week.shifts.sidejob.end[day.key]
-          sidejobHours += calculateWorkingHours(sidejobStart, sidejobEnd)
-        })
+            // 掛け持ち時間
+            const sidejobStart = week.shifts?.sidejob?.start?.[day.key]
+            const sidejobEnd = week.shifts?.sidejob?.end?.[day.key]
+            sidejobHours += calculateWorkingHours(sidejobStart, sidejobEnd)
+          })
+        }
 
         const totalHours = companyHours + sidejobHours
         const hasViolations = companyHours > 20 || totalHours > 40
@@ -190,16 +200,17 @@ export default {
     })
 
     // イベントハンドラー
-    const updateWeekShift = (weekId, shiftData) => {
+    const updateWeekShift = (weekId, eventData) => {
       const weekIndex = weeks.value.findIndex((w) => w.id === weekId)
-      if (weekIndex !== -1) {
-        weeks.value[weekIndex].shifts = { ...shiftData }
+      if (weekIndex !== -1 && weeks.value[weekIndex].shifts) {
+        const { type, timeType, day, roundedValue } = eventData
+        weeks.value[weekIndex].shifts[type][timeType][day] = roundedValue
       }
     }
 
     const bulkInput = () => {
-      const companyStart = prompt('弊社開始時間を入力してください (例: 09:00)')
-      const companyEnd = prompt('弊社終了時間を入力してください (例: 16:00)')
+      const companyStart = prompt('弊社開始時間を入力してください', '09:00')
+      const companyEnd = prompt('弊社終了時間を入力してください', '18:00')
 
       if (companyStart && companyEnd) {
         weeks.value.forEach((week) => {
@@ -232,9 +243,9 @@ export default {
         const response = await fetch('/shift_requests', {
           method: 'POST',
           headers: {
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
           },
-          body: formData
+          body: formData,
         })
 
         const result = await response.json()
@@ -242,7 +253,7 @@ export default {
           alert('下書きを保存しました')
         } else {
           console.error('保存エラー:', result.errors)
-          alert('保存に失敗しました: ' + (result.errors || []).join(', '))
+          alert(`保存に失敗しました: ${(result.errors || []).join(', ')}`)
         }
       } catch (error) {
         console.error('Save failed:', error)
@@ -263,9 +274,9 @@ export default {
         const response = await fetch('/shift_requests', {
           method: 'POST',
           headers: {
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
           },
-          body: formData
+          body: formData,
         })
 
         const result = await response.json()
@@ -275,7 +286,7 @@ export default {
           window.location.href = '/shift_requests'
         } else {
           console.error('提出エラー:', result.errors)
-          alert('提出に失敗しました: ' + (result.errors || []).join(', '))
+          alert(`提出に失敗しました: ${(result.errors || []).join(', ')}`)
         }
       } catch (error) {
         console.error('Submit failed:', error)
@@ -286,19 +297,22 @@ export default {
     // フォームデータを構築する関数
     const buildFormData = (submitType) => {
       const formData = new FormData()
-      formData.append('authenticity_token', document.querySelector('meta[name="csrf-token"]').content)
+      formData.append(
+        'authenticity_token',
+        document.querySelector('meta[name="csrf-token"]').content
+      )
       formData.append('submit_type', submitType)
       formData.append('year', props.targetYear.toString())
       formData.append('month', props.targetMonth.toString())
 
       // 週データを送信形式に変換
-      const weeksData = weeks.value.map(week => ({
+      const weeksData = weeks.value.map((week) => ({
         id: week.id,
-        days: week.days.map(day => ({
+        days: week.days.map((day) => ({
           key: day.key,
-          date: day.date
+          date: day.date,
         })),
-        shifts: week.shifts
+        shifts: week.shifts,
       }))
 
       formData.append('weeks_data', JSON.stringify(weeksData))
@@ -316,7 +330,7 @@ export default {
       if (props.initialData) {
         console.log('初期データが提供されました:', props.initialData)
         // バックエンドからの初期データを処理
-        if (props.initialData.monthlySum && props.initialData.monthlySum.user_weekly_shifts_for_month) {
+        if (props.initialData.monthlySum?.user_weekly_shifts_for_month) {
           console.log('既存のシフトデータを復元します')
           // 既存シフトデータの復元処理は既にbuild_week_shifts_dataで行われているため、
           // 追加の処理は不要
@@ -326,7 +340,7 @@ export default {
       console.log('Vue.jsコンポーネントの初期化完了:', {
         targetYear: props.targetYear,
         targetMonth: props.targetMonth,
-        weeksCount: weeks.value.length
+        weeksCount: weeks.value.length,
       })
     })
 
@@ -349,97 +363,4 @@ export default {
 </script>
 
 <style scoped>
-.section {
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 20px;
-}
-
-.section-title {
-  font-weight: bold;
-  margin-bottom: 10px;
-  font-size: 16px;
-  color: #333;
-}
-
-.warning {
-  background-color: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 4px;
-  padding: 10px;
-  color: #856404;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.success {
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-  border-radius: 4px;
-  padding: 10px;
-  color: #155724;
-  margin-top: 10px;
-}
-
-.error {
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  border-radius: 4px;
-  padding: 10px;
-  color: #721c24;
-  margin-top: 10px;
-}
-
-.btn {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-right: 10px;
-  font-size: 14px;
-}
-
-.btn:hover {
-  background-color: #5a6268;
-}
-
-.btn:disabled {
-  background-color: #6c757d;
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background-color: #007bff;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-  font-size: 14px;
-}
-
-th {
-  background-color: #f8f9fa;
-  font-weight: bold;
-}
-
-.violation-row {
-  background-color: #f8d7da;
-}
 </style>
