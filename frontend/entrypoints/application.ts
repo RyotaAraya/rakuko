@@ -6,6 +6,7 @@
 
 import '../styles/application.css'
 import { createApp } from 'vue'
+import AttendanceToday from '../components/AttendanceToday.vue'
 import ShiftRequestForm from '../components/ShiftRequestForm.vue'
 import WelcomeMessage from '../components/WelcomeMessage.vue'
 
@@ -61,20 +62,62 @@ function initializeVueComponents() {
       console.error('Error mounting Vue app:', error)
     }
   }
+
+  // Attendance today component
+  const attendanceEl = document.getElementById('attendance-app') as HTMLElement & { _vueApp?: any }
+  if (attendanceEl && !attendanceEl._vueApp) {
+    try {
+      const loadingEl = document.getElementById('loading-message')
+      if (loadingEl) {
+        loadingEl.remove()
+      }
+
+      const date = attendanceEl.dataset.date || new Date().toISOString().split('T')[0]
+
+      const app = createApp(AttendanceToday, { date })
+      attendanceEl._vueApp = app.mount(attendanceEl)
+    } catch (error) {
+      console.error('Error mounting Attendance app:', error)
+    }
+  }
+
+  // Home page attendance component
+  const homeAttendanceEl = document.getElementById('home-attendance-app') as HTMLElement & {
+    _vueApp?: any
+  }
+  if (homeAttendanceEl && !homeAttendanceEl._vueApp) {
+    try {
+      const loadingEl = document.getElementById('home-loading-message')
+      if (loadingEl) {
+        loadingEl.remove()
+      }
+
+      const date = homeAttendanceEl.dataset.date || new Date().toISOString().split('T')[0]
+
+      const app = createApp(AttendanceToday, { date })
+      homeAttendanceEl._vueApp = app.mount(homeAttendanceEl)
+    } catch (error) {
+      console.error('Error mounting Home Attendance app:', error)
+    }
+  }
 }
 
 function tryInitialize() {
-  // シフトリクエストページかどうかを確認
+  // Vue.jsコンポーネントを使用するページかどうかを確認
   const isShiftRequestPage = window.location.pathname.includes('/shift_requests/new')
+  const isAttendancePage = window.location.pathname.includes('/attendances/today')
+  const isHomePage = window.location.pathname === '/' || window.location.pathname === '/home/index'
 
-  if (!isShiftRequestPage) {
+  if (!isShiftRequestPage && !isAttendancePage && !isHomePage) {
     return true // 初期化が必要ないページでは成功とみなす
   }
 
   // HTML要素が存在するかチェック
   const shiftFormEl = document.getElementById('shift-request-form')
+  const attendanceEl = document.getElementById('attendance-app')
+  const homeAttendanceEl = document.getElementById('home-attendance-app')
 
-  if (shiftFormEl) {
+  if (shiftFormEl || attendanceEl || homeAttendanceEl) {
     initializeVueComponents()
     return true
   }
@@ -99,9 +142,11 @@ window.addEventListener('load', () => {
   }
 })
 
-// フォールバック: 定期的にチェック（シフトリクエストページのみ）
+// フォールバック: 定期的にチェック（Vue.jsを使用するページのみ）
 const isShiftRequestPage = window.location.pathname.includes('/shift_requests/new')
-if (isShiftRequestPage) {
+const isAttendancePage = window.location.pathname.includes('/attendances/today')
+const isHomePage = window.location.pathname === '/' || window.location.pathname === '/home/index'
+if (isShiftRequestPage || isAttendancePage || isHomePage) {
   let attempts = 0
   const maxAttempts = 30
   const checkInterval = setInterval(() => {

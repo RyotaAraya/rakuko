@@ -1,0 +1,138 @@
+<% content_for :title, "勤怠詳細 - 勤怠管理システム" %>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fafafa;
+  }
+  .header {
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+    background: white;
+  }
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .logout-btn {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: black;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+</style>
+
+<!-- ヘッダー -->
+<header class="header">
+  <div class="header-content">
+    <h1>勤怠管理システム > 勤怠詳細</h1>
+    <div class="user-info">
+      <span style="font-size: 14px;"><%= current_user.display_name %></span>
+      <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+    勤怠詳細 <%= @attendance.date.strftime('%Y年%m月%d日 (%a)') %>
+  </h2>
+
+  <!-- 基本情報 -->
+  <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+    <div style="font-weight: bold; margin-bottom: 15px; font-size: 16px;">基本情報</div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+      <div>
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">実労働時間</div>
+        <div style="font-size: 24px; font-weight: bold;"><%= @attendance.work_hours_display %></div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">休憩時間</div>
+        <div style="font-size: 24px; font-weight: bold;"><%= @attendance.break_time_display %></div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">ステータス</div>
+        <div style="font-size: 18px; font-weight: bold;">
+          <% if @attendance.status == 'approved' %>
+            <span style="color: #060;">✓ <%= @attendance.status_display_name %></span>
+          <% elsif @attendance.status == 'pending' %>
+            <span style="color: #f90;">⏳ <%= @attendance.status_display_name %></span>
+          <% elsif @attendance.status == 'rejected' %>
+            <span style="color: #c00;">✗ <%= @attendance.status_display_name %></span>
+          <% end %>
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">生成方法</div>
+        <div style="font-size: 18px;"><%= @attendance.generation_type_display %></div>
+      </div>
+    </div>
+
+    <% if @attendance.violations? %>
+      <div style="margin-top: 15px; padding: 10px; background: #fee; border: 1px solid #fcc; border-radius: 4px; color: #c00;">
+        ⚠️ 制限違反があります
+        <ul style="margin: 10px 0 0 20px; padding: 0;">
+          <% @attendance.violation_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- 打刻履歴 -->
+  <% time_records = @attendance.user.time_records.for_date(@attendance.date).ordered_by_time %>
+  <% if time_records.any? %>
+    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <div style="font-weight: bold; margin-bottom: 15px; font-size: 16px;">打刻履歴</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: left;">時刻</th>
+            <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: left;">種類</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% time_records.each do |record| %>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 10px;"><%= record.time_display %></td>
+              <td style="border: 1px solid #ddd; padding: 10px;"><%= record.record_type_display_name %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <!-- 戻るリンク -->
+  <div style="margin-top: 20px; display: flex; gap: 10px;">
+    <%= link_to "← 一覧に戻る", attendances_path(year: @attendance.date.year, month: @attendance.date.month),
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+    <%= link_to "勤怠登録", today_attendances_path,
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+  </div>
+</div>

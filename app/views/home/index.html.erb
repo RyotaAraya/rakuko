@@ -145,10 +145,10 @@
         <div class="menu-title">シフト希望提出</div>
         <div class="menu-desc">月間予定を入力</div>
       <% end %>
-      <a href="#" class="menu-item">
+      <%= link_to today_attendances_path, class: "menu-item" do %>
         <div class="menu-title">勤怠登録</div>
         <div class="menu-desc">出退勤を記録</div>
-      </a>
+      <% end %>
       <a href="#" class="menu-item">
         <div class="menu-title">各種申請</div>
         <div class="menu-desc">欠勤・遅刻・早退</div>
@@ -167,17 +167,11 @@
       </a>
     </div>
 
-    <!-- 今日の予定 -->
-    <div class="today-section">
-      <div class="status-title">今日の予定</div>
-      <div style="background: #f5f5f5; padding: 15px; margin: 15px 0;">
-        9:00-16:00 (予定6h)
-      </div>
-      <div class="btn-group">
-        <button type="button" class="btn btn-primary">出勤</button>
-        <button type="button" class="btn">休憩開始</button>
-        <button type="button" class="btn">休憩終了</button>
-        <button type="button" class="btn">退勤</button>
+    <!-- 今日の勤怠登録 -->
+    <div id="home-attendance-app" data-date="<%= Date.current.iso8601 %>">
+      <!-- Loading fallback -->
+      <div id="home-loading-message" style="text-align: center; padding: 40px;">
+        <p>勤怠画面を読み込み中...</p>
       </div>
     </div>
   </main>

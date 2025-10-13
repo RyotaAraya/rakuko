@@ -24,6 +24,25 @@ Rails.application.routes.draw do
   # シフト希望提出
   resources :shift_requests, only: [:new, :create, :update]
 
+  # 勤怠登録
+  resources :attendances, only: [:index, :show, :new, :create] do
+    collection do
+      get :today
+      get :weekly
+    end
+  end
+
+  # 打刻API
+  resources :time_records, only: [:create] do
+    collection do
+      post :clock_in
+      post :clock_out
+      post :break_start
+      post :break_end
+      get :today
+    end
+  end
+
   devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
 
   # 開発環境での利便性のため、GETでもログアウト可能にする

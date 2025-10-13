@@ -1,0 +1,156 @@
+<% content_for :title, "月別勤怠一覧 - 勤怠管理システム" %>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fafafa;
+  }
+  .header {
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+    background: white;
+  }
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .logout-btn {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: black;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+</style>
+
+<!-- ヘッダー -->
+<header class="header">
+  <div class="header-content">
+    <h1>勤怠管理システム > 月別勤怠一覧</h1>
+    <div class="user-info">
+      <span style="font-size: 14px;"><%= current_user.display_name %></span>
+      <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+    月別勤怠一覧 <%= @year %>年<%= @month %>月
+  </h2>
+
+  <!-- 月ナビゲーション -->
+  <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <% prev_date = Date.new(@year, @month, 1) - 1.month %>
+    <% next_date = Date.new(@year, @month, 1) + 1.month %>
+    <%= link_to "← 前月", attendances_path(year: prev_date.year, month: prev_date.month),
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+    <%= link_to "今月", attendances_path,
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+    <%= link_to "次月 →", attendances_path(year: next_date.year, month: next_date.month),
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+  </div>
+
+  <!-- 月間サマリー -->
+  <% month_summary = Attendance.monthly_summary(current_user, @year, @month) %>
+  <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+    <div style="font-weight: bold; margin-bottom: 15px; font-size: 16px;">月間集計</div>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+      <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">総労働時間</div>
+        <div style="font-size: 24px; font-weight: bold;"><%= month_summary[:total_hours].to_f.round(1) %>h</div>
+      </div>
+      <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">出勤日数</div>
+        <div style="font-size: 24px; font-weight: bold;"><%= month_summary[:total_days] %>日</div>
+      </div>
+      <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">平均労働時間</div>
+        <div style="font-size: 24px; font-weight: bold;"><%= month_summary[:avg_hours].to_f.round(1) %>h</div>
+      </div>
+      <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">承認待ち</div>
+        <div style="font-size: 24px; font-weight: bold;"><%= month_summary[:pending_count] %>件</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 日別勤怠一覧 -->
+  <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
+    <div style="font-weight: bold; margin-bottom: 15px; font-size: 16px;">日別勤怠</div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: left;">日付</th>
+          <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: center;">労働時間</th>
+          <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: center;">休憩時間</th>
+          <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: center;">ステータス</th>
+          <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: center;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @attendances.each do |attendance| %>
+          <tr>
+            <td style="border: 1px solid #ddd; padding: 10px;">
+              <%= attendance.date.strftime('%Y/%m/%d (%a)') %>
+            </td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">
+              <%= attendance.work_hours_display %>
+            </td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">
+              <%= attendance.break_time_display %>
+            </td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">
+              <% if attendance.status == 'approved' %>
+                <span style="color: #060;">✓ <%= attendance.status_display_name %></span>
+              <% elsif attendance.status == 'pending' %>
+                <span style="color: #f90;">⏳ <%= attendance.status_display_name %></span>
+              <% elsif attendance.status == 'rejected' %>
+                <span style="color: #c00;">✗ <%= attendance.status_display_name %></span>
+              <% end %>
+            </td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">
+              <%= link_to "詳細", attendance_path(attendance), style: "color: #007cba; text-decoration: none;" %>
+            </td>
+          </tr>
+        <% end %>
+        <% if @attendances.empty? %>
+          <tr>
+            <td colspan="5" style="border: 1px solid #ddd; padding: 20px; text-align: center; color: #999;">
+              この月の勤怠記録はありません
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 戻るリンク -->
+  <div style="margin-top: 20px;">
+    <%= link_to "← 勤怠登録に戻る", today_attendances_path,
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+  </div>
+</div>

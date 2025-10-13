@@ -1,0 +1,154 @@
+<% content_for :title, "週間勤怠一覧 - 勤怠管理システム" %>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fafafa;
+  }
+  .header {
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+    background: white;
+  }
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .logout-btn {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    color: black;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+</style>
+
+<!-- ヘッダー -->
+<header class="header">
+  <div class="header-content">
+    <h1>勤怠管理システム > 週間勤怠一覧</h1>
+    <div class="user-info">
+      <span style="font-size: 14px;"><%= current_user.display_name %></span>
+      <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">
+    週間勤怠一覧 <%= @start_date.strftime('%Y年%m月%d日') %> 〜 <%= @end_date.strftime('%m月%d日') %>
+  </h2>
+
+  <!-- 週ナビゲーション -->
+  <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <%= link_to "← 前週", weekly_attendances_path(start_date: @start_date - 1.week),
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+    <%= link_to "今週", weekly_attendances_path,
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+    <%= link_to "次週 →", weekly_attendances_path(start_date: @start_date + 1.week),
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+  </div>
+
+  <!-- 週間サマリー -->
+  <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+    <div style="font-weight: bold; margin-bottom: 15px; font-size: 16px;">週間集計</div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+      <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">総労働時間</div>
+        <div style="font-size: 24px; font-weight: bold;"><%= @week_summary[:total_hours].to_f.round(1) %>h</div>
+      </div>
+      <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">出勤日数</div>
+        <div style="font-size: 24px; font-weight: bold;"><%= @week_summary[:total_days] %>日</div>
+      </div>
+      <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">平均労働時間</div>
+        <div style="font-size: 24px; font-weight: bold;"><%= @week_summary[:avg_hours].to_f.round(1) %>h</div>
+      </div>
+    </div>
+    <% if @week_summary[:total_hours].to_f > 20 %>
+      <div style="margin-top: 15px; padding: 10px; background: #fee; border: 1px solid #fcc; border-radius: 4px; color: #c00;">
+        ⚠️ 週の労働時間が20時間制限を超過しています
+      </div>
+    <% else %>
+      <div style="margin-top: 15px; padding: 10px; background: #efe; border: 1px solid #cfc; border-radius: 4px; color: #060;">
+        ✓ 週の労働時間は制限内です
+      </div>
+    <% end %>
+  </div>
+
+  <!-- 日別勤怠一覧 -->
+  <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
+    <div style="font-weight: bold; margin-bottom: 15px; font-size: 16px;">日別勤怠</div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: left;">日付</th>
+          <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: center;">労働時間</th>
+          <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: center;">休憩時間</th>
+          <th style="border: 1px solid #ddd; padding: 10px; background: #f5f5f5; text-align: center;">ステータス</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (@start_date..@end_date).each do |date| %>
+          <% attendance = @attendances.find { |a| a.date == date } %>
+          <tr>
+            <td style="border: 1px solid #ddd; padding: 10px;">
+              <%= date.strftime('%Y/%m/%d (%a)') %>
+            </td>
+            <% if attendance %>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">
+                <%= attendance.work_hours_display %>
+              </td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">
+                <%= attendance.break_time_display %>
+              </td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">
+                <% if attendance.status == 'approved' %>
+                  <span style="color: #060;">✓ <%= attendance.status_display_name %></span>
+                <% elsif attendance.status == 'pending' %>
+                  <span style="color: #f90;">⏳ <%= attendance.status_display_name %></span>
+                <% else %>
+                  <%= attendance.status_display_name %>
+                <% end %>
+              </td>
+            <% else %>
+              <td colspan="3" style="border: 1px solid #ddd; padding: 10px; text-align: center; color: #999;">
+                勤怠記録なし
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 戻るリンク -->
+  <div style="margin-top: 20px;">
+    <%= link_to "← 勤怠登録に戻る", today_attendances_path,
+        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+  </div>
+</div>
