@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_05_060817) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_13_021235) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -196,6 +196,13 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_05_060817) do
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
+    t.date "contract_start_date", comment: "契約開始日"
+    t.date "contract_end_date", comment: "契約終了日"
+    t.datetime "contract_updated_at", comment: "契約更新日時"
+    t.bigint "contract_updated_by_id", comment: "契約更新者ID"
+    t.index ["contract_end_date"], name: "index_users_on_contract_end_date"
+    t.index ["contract_start_date"], name: "index_users_on_contract_start_date"
+    t.index ["contract_updated_by_id"], name: "index_users_on_contract_updated_by_id"
     t.index ["department_id"], name: "index_users_on_department_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["google_uid"], name: "index_users_on_google_uid", unique: true
@@ -246,6 +253,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_05_060817) do
   add_foreign_key "time_records", "users"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
+  add_foreign_key "users", "users", column: "contract_updated_by_id"
   add_foreign_key "weekly_shifts", "users"
   add_foreign_key "weekly_shifts", "weeks"
 end

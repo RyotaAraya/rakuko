@@ -51,6 +51,10 @@ class User < ApplicationRecord
   has_many :daily_schedules, through: :weekly_shifts
   has_many :monthly_summaries, dependent: :destroy
 
+  # Contract management (self-referential)
+  belongs_to :contract_updater, class_name: 'User', foreign_key: 'contract_updated_by_id', optional: true
+  has_many :updated_contracts, class_name: 'User', foreign_key: 'contract_updated_by_id', dependent: :nullify
+
   # AASM状態管理
   aasm column: :status, enum: true do
     state :pending, initial: true
@@ -202,6 +206,52 @@ class User < ApplicationRecord
   def current_month_closing
     current_date = Date.current
     month_end_closings.find_by(year: current_date.year, month: current_date.month)
+  end
+
+  # ====== 契約期間管理 ======
+
+  # 契約期間内かチェック
+  def contract_active?(date = Date.current)
+    return false unless contract_start_date && contract_end_date
+
+    date.between?(contract_start_date, contract_end_date)
+  end
+
+  # シフト提出可能な月の一覧を取得
+  def available_months_for_shift
+    return [] unless contract_start_date && contract_end_date
+
+    months = []
+    current_date = contract_start_date.beginning_of_month
+    end_date = contract_end_date.beginning_of_month
+
+    while current_date <= end_date
+      months << { year: current_date.year, month: current_date.month }
+      current_date = current_date.next_month
+    end
+
+    months
+  end
+
+  # 指定月が編集可能かチェック
+  def can_edit_shift_for_month?(year, month)
+    target_date = Date.new(year, month, 1)
+    today = Date.current
+
+    # 1. 契約期間内チェック
+    return false unless contract_active?(target_date)
+
+    # 2. 過去月・当月は編集不可
+    target_date > today.beginning_of_month
+  end
+
+  # 締切日を過ぎているかチェック（25日締切）
+  def past_deadline_for_month?(year, month)
+    target_date = Date.new(year, month, 1)
+    today = Date.current
+
+    # 翌月分かつ25日を過ぎている
+    target_date == (today + 1.month).beginning_of_month && today.day > 25
   end
 
   # 承認権限を持つユーザーのスコープ
