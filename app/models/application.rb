@@ -13,9 +13,10 @@ class Application < ApplicationRecord
   }
 
   enum :status, {
-    pending: 0,
-    approved: 1,
-    rejected: 2,
+    draft: 0,
+    pending: 1,
+    approved: 2,
+    rejected: 3,
   }
 
   # Validations
@@ -47,6 +48,7 @@ class Application < ApplicationRecord
 
   def status_display_name
     {
+      'draft' => '下書き',
       'pending' => '承認待ち',
       'approved' => '承認済み',
       'rejected' => '却下',
@@ -108,7 +110,73 @@ class Application < ApplicationRecord
     for_month(current_date.year, current_date.month).where(user: user)
   end
 
+  # 並列承認システム関連メソッド
+  def department_approval
+    approvals.find_by(approval_type: :department)
+  end
+
+  def labor_approval
+    approvals.find_by(approval_type: :labor)
+  end
+
+  # 並列承認システム: 両方承認されたら approved に
+  def check_and_update_status!
+    return unless pending?
+
+    dept_approved = department_approval&.approved?
+    labor_approved = labor_approval&.approved?
+
+    if dept_approved && labor_approved
+      update!(status: :approved)
+    elsif department_approval&.rejected? || labor_approval&.rejected?
+      update!(status: :rejected)
+    end
+  end
+
+  # 申請提出（並列承認レコード作成）
+  def submit!
+    return false unless draft? || pending?
+
+    transaction do
+      update!(status: :pending) if draft?
+
+      # 既存の承認レコードがなければ作成
+      unless department_approval
+        approvals.create!(
+          approver_id: find_department_approver_id,
+          approval_type: :department,
+          status: :pending
+        )
+      end
+
+      unless labor_approval
+        approvals.create!(
+          approver_id: find_labor_approver_id,
+          approval_type: :labor,
+          status: :pending
+        )
+      end
+    end
+
+    true
+  rescue StandardError => e
+    Rails.logger.error("Application submit failed: #{e.message}")
+    false
+  end
+
   private
+
+  def find_department_approver_id
+    # 部署担当者（department_manager権限）を取得
+    user.department&.users&.joins(:user_roles)
+        &.where(user_roles: { role_id: Role.find_by(name: :department_manager)&.id })
+        &.first&.id || User.with_role(:department_manager).first&.id
+  end
+
+  def find_labor_approver_id
+    # 労務担当者（hr_manager権限）を取得
+    User.with_role(:hr_manager).first&.id
+  end
 
   def time_fields_for_type
     send("validate_#{application_type}_times")
