@@ -179,13 +179,20 @@
 - **6時間以上勤務時の休憩時間自動計算**（シフト予定時）
 
 **申請・承認ワークフロー**
-- **Application・Approvalモデル実装済み**：ポリモーフィック関連によるACTIVE承認システム
-- **AASM状態管理**：pending → approved/rejected の状態遷移
+- **Application・Approvalモデル実装済み**：ポリモーフィック関連による並列承認システム
+- **AASM状態管理実装済み**（Application、Attendance、Approvalの全モデル）
+  - Application: draft → pending → approved/rejected
+  - Attendance: pending → approved/rejected
+  - Approval: pending → approved/rejected
+  - イベント駆動の状態遷移（submit!, approve!, reject!）
+  - 不正な状態変更を防止する状態マシン設計
 - 各種申請機能（欠勤・遅刻・早退・シフト変更申請）
 - **並列二段階承認**（部署担当者・労務担当者が並行して承認可能）
   - シフト予定・各種申請: 部署承認 + 労務承認（両方必要）
   - 勤怠実績: 部署承認のみ
 - 承認後の自動ステータス更新（`check_and_update_status!`）
+  - Approval.after_approve/after_reject コールバックで自動実行
+  - 並列承認完了時に approvable の状態を自動更新
 - 一方の承認完了後に他方の承認を待たないボトルネック回避設計
 
 **システム管理機能**

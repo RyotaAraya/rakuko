@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddContractFieldsToUsers < ActiveRecord::Migration[7.1]
   def change
     add_column :users, :contract_start_date, :date, comment: '契約開始日'

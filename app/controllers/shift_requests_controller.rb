@@ -77,7 +77,7 @@ class ShiftRequestsController < ApplicationController
         isCrossMonth: week.is_cross_month?,
         daysInMonth: week.days_in_month(@target_month),
         days: build_week_days(week),
-        shifts: build_week_shifts_data(week)
+        shifts: build_week_shifts_data(week),
       }
     end
   end
@@ -88,7 +88,7 @@ class ShiftRequestsController < ApplicationController
         key: date.strftime('%a').downcase,
         label: "#{%w[日 月 火 水 木 金 土][date.wday]} #{date.strftime('%m/%d')}",
         inTargetMonth: date.month == @target_month,
-        date: date.iso8601
+        date: date.iso8601,
       }
     end
   end
@@ -113,14 +113,14 @@ class ShiftRequestsController < ApplicationController
 
       {
         company: { start: company_start, end: company_end },
-        sidejob: { start: sidejob_start, end: sidejob_end }
+        sidejob: { start: sidejob_start, end: sidejob_end },
       }
     else
       # 空のデータ
-      empty_times = %w[sun mon tue wed thu fri sat].each_with_object({}) { |day, hash| hash[day] = '' }
+      empty_times = %w[sun mon tue wed thu fri sat].index_with { |_day| '' }
       {
         company: { start: empty_times.dup, end: empty_times.dup },
-        sidejob: { start: empty_times.dup, end: empty_times.dup }
+        sidejob: { start: empty_times.dup, end: empty_times.dup },
       }
     end
   end
@@ -134,11 +134,11 @@ class ShiftRequestsController < ApplicationController
           user_weekly_shifts_for_month: {
             include: {
               daily_schedules: {},
-              week: {}
-            }
-          }
+              week: {},
+            },
+          },
         }
-      )
+      ),
     }
   end
 
@@ -175,22 +175,18 @@ class ShiftRequestsController < ApplicationController
         end
 
         # 制限チェック
-        unless weekly_shift.validate_working_hours
-          errors.concat(weekly_shift.violation_list)
-        end
+        errors.concat(weekly_shift.violation_list) unless weekly_shift.validate_working_hours
 
         success_count += 1
       end
 
-      if errors.any? && params[:submit_type] != 'draft'
-        raise ActiveRecord::Rollback
-      end
+      raise ActiveRecord::Rollback if errors.any? && params[:submit_type] != 'draft'
     end
 
     {
       success: errors.empty? || params[:submit_type] == 'draft',
       errors: errors,
-      saved_weeks: success_count
+      saved_weeks: success_count,
     }
   end
 
@@ -208,7 +204,7 @@ class ShiftRequestsController < ApplicationController
   def parse_time(time_string)
     return nil if time_string.blank?
 
-    Time.parse(time_string)
+    Time.zone.parse(time_string)
   rescue ArgumentError
     nil
   end

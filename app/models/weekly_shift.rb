@@ -17,7 +17,9 @@ class WeeklyShift < ApplicationRecord
   validates :user_id, uniqueness: { scope: :week_id }
 
   # Callbacks
-  before_validation :set_submission_date_from_week, if: -> { week.present? && (submission_month.blank? || submission_year.blank?) }
+  before_validation :set_submission_date_from_week, if: lambda {
+    week.present? && (submission_month.blank? || submission_year.blank?)
+  }
   after_create :create_daily_schedules
 
   # Scopes
@@ -77,21 +79,15 @@ class WeeklyShift < ApplicationRecord
 
     # 週20時間制限チェック（弊社のみ）
     company_hours = calculate_company_hours
-    if company_hours > 20
-      violations << "弊社勤務時間が週20時間を超過しています（#{company_hours}時間）"
-    end
+    violations << "弊社勤務時間が週20時間を超過しています（#{company_hours}時間）" if company_hours > 20
 
     # 週40時間制限チェック（弊社+掛け持ち）
     total_hours = calculate_total_hours
-    if total_hours > 40
-      violations << "総勤務時間が週40時間を超過しています（#{total_hours}時間）"
-    end
+    violations << "総勤務時間が週40時間を超過しています（#{total_hours}時間）" if total_hours > 40
 
     # 日別の重複チェック
     daily_schedules.each do |schedule|
-      if schedule.has_time_overlap?
-        violations << "#{schedule.schedule_date.strftime('%m/%d')}に弊社と掛け持ちの時間重複があります"
-      end
+      violations << "#{schedule.schedule_date.strftime('%m/%d')}に弊社と掛け持ちの時間重複があります" if schedule.has_time_overlap?
     end
 
     self.violation_warnings = violations.empty? ? nil : violations.join("\n")
@@ -126,7 +122,7 @@ class WeeklyShift < ApplicationRecord
 
   # Class methods
   def self.create_with_daily_schedules(user, week, submission_year, submission_month)
-    weekly_shift = create!(
+    create!(
       user: user,
       week: week,
       submission_year: submission_year,
@@ -134,8 +130,6 @@ class WeeklyShift < ApplicationRecord
     )
 
     # DailyScheduleはafter_createコールバックで自動作成される
-
-    weekly_shift
   end
 
   private

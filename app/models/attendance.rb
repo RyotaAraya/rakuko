@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Attendance < ApplicationRecord
+  include AASM
+
   belongs_to :user
   has_many :approvals, as: :approvable, dependent: :destroy
 
@@ -10,6 +12,21 @@ class Attendance < ApplicationRecord
     approved: 1,
     rejected: 2,
   }
+
+  # AASM 状態管理
+  aasm column: :status, enum: true do
+    state :pending, initial: true
+    state :approved
+    state :rejected
+
+    event :approve do
+      transitions from: :pending, to: :approved
+    end
+
+    event :reject do
+      transitions from: :pending, to: :rejected
+    end
+  end
 
   # Validations
   validates :date, presence: true
@@ -92,9 +109,9 @@ class Attendance < ApplicationRecord
     dept_approved = department_approval&.approved?
 
     if dept_approved
-      update!(status: :approved)
+      approve! if may_approve?
     elsif department_approval&.rejected?
-      update!(status: :rejected)
+      reject! if may_reject?
     end
   end
 
@@ -176,7 +193,7 @@ class Attendance < ApplicationRecord
         severity: 'error',
         message: "弊社での週20時間制限を超過する予測です（予測: #{breakdown[:predicted_company_hours]}時間）",
         actual: breakdown[:predicted_company_hours],
-        limit: 20
+        limit: 20,
       }
     end
 
@@ -186,7 +203,7 @@ class Attendance < ApplicationRecord
         severity: 'error',
         message: "週40時間制限を超過する予測です（予測: #{breakdown[:predicted_total_hours]}時間）",
         actual: breakdown[:predicted_total_hours],
-        limit: 40
+        limit: 40,
       }
     end
 
@@ -197,7 +214,7 @@ class Attendance < ApplicationRecord
         severity: 'warning',
         message: "弊社での週20時間制限に近づいています（予測: #{breakdown[:predicted_company_hours]}時間）",
         actual: breakdown[:predicted_company_hours],
-        limit: 20
+        limit: 20,
       }
     end
 
@@ -207,14 +224,14 @@ class Attendance < ApplicationRecord
         severity: 'warning',
         message: "週40時間制限に近づいています（予測: #{breakdown[:predicted_total_hours]}時間）",
         actual: breakdown[:predicted_total_hours],
-        limit: 40
+        limit: 40,
       }
     end
 
     {
       has_violations: violations.any?,
       violations: violations,
-      breakdown: breakdown
+      breakdown: breakdown,
     }
   end
 
@@ -266,7 +283,7 @@ class Attendance < ApplicationRecord
 
     {
       company: company_hours,
-      sidejob: sidejob_hours
+      sidejob: sidejob_hours,
     }
   end
 

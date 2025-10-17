@@ -5,7 +5,9 @@ class MonthlySummary < ApplicationRecord
 
   # Associations
   belongs_to :user
-  has_many :weekly_shifts, ->(summary) { where(submission_year: summary.target_year, submission_month: summary.target_month) }, through: :user
+  has_many :weekly_shifts, lambda { |summary|
+    where(submission_year: summary.target_year, submission_month: summary.target_month)
+  }, through: :user
   has_many :daily_schedules, through: :weekly_shifts
 
   # Enums
@@ -100,9 +102,9 @@ class MonthlySummary < ApplicationRecord
 
   def working_days_count
     daily_schedules.joins(:weekly_shift)
-                  .where(weekly_shift: { submission_year: target_year, submission_month: target_month })
-                  .select(&:has_working_hours?)
-                  .count
+                   .where(weekly_shift: { submission_year: target_year, submission_month: target_month })
+                   .select(&:has_working_hours?)
+                   .count
   end
 
   def average_daily_hours

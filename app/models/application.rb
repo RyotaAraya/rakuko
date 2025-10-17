@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Application < ApplicationRecord
+  include AASM
+
   belongs_to :user
   has_many :approvals, as: :approvable, dependent: :destroy
 
@@ -18,6 +20,30 @@ class Application < ApplicationRecord
     approved: 2,
     rejected: 3,
   }
+
+  # AASM 状態管理
+  aasm column: :status, enum: true do
+    state :draft, initial: true
+    state :pending
+    state :approved
+    state :rejected
+
+    event :submit do
+      transitions from: :draft, to: :pending, after: :create_approval_records
+    end
+
+    event :approve_final do
+      transitions from: :pending, to: :approved
+    end
+
+    event :reject_final do
+      transitions from: :pending, to: :rejected
+    end
+
+    event :return_to_draft do
+      transitions from: :pending, to: :draft
+    end
+  end
 
   # Validations
   validates :application_type, presence: true
@@ -127,44 +153,36 @@ class Application < ApplicationRecord
     labor_approved = labor_approval&.approved?
 
     if dept_approved && labor_approved
-      update!(status: :approved)
+      approve_final! if may_approve_final?
     elsif department_approval&.rejected? || labor_approval&.rejected?
-      update!(status: :rejected)
+      reject_final! if may_reject_final?
     end
-  end
-
-  # 申請提出（並列承認レコード作成）
-  def submit!
-    return false unless draft? || pending?
-
-    transaction do
-      update!(status: :pending) if draft?
-
-      # 既存の承認レコードがなければ作成
-      unless department_approval
-        approvals.create!(
-          approver_id: find_department_approver_id,
-          approval_type: :department,
-          status: :pending
-        )
-      end
-
-      unless labor_approval
-        approvals.create!(
-          approver_id: find_labor_approver_id,
-          approval_type: :labor,
-          status: :pending
-        )
-      end
-    end
-
-    true
-  rescue StandardError => e
-    Rails.logger.error("Application submit failed: #{e.message}")
-    false
   end
 
   private
+
+  # AASM submit イベント後に承認レコードを作成
+  def create_approval_records
+    # 既存の承認レコードがなければ作成
+    unless department_approval
+      approvals.create!(
+        approver_id: find_department_approver_id,
+        approval_type: :department,
+        status: :pending
+      )
+    end
+
+    unless labor_approval
+      approvals.create!(
+        approver_id: find_labor_approver_id,
+        approval_type: :labor,
+        status: :pending
+      )
+    end
+  rescue StandardError => e
+    Rails.logger.error("Application approval records creation failed: #{e.message}")
+    raise ActiveRecord::Rollback
+  end
 
   def find_department_approver_id
     # 部署担当者（department_manager権限）を取得

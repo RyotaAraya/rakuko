@@ -136,9 +136,7 @@ class DailySchedule < ApplicationRecord
     end_seconds = time_to_seconds(end_time)
 
     # 日をまたぐ場合の処理
-    if end_seconds < start_seconds
-      end_seconds += 24 * 3600
-    end
+    end_seconds += 24 * 3600 if end_seconds < start_seconds
 
     working_seconds = end_seconds - start_seconds
     working_hours = working_seconds / 3600.0
@@ -150,7 +148,7 @@ class DailySchedule < ApplicationRecord
   def time_to_seconds(time)
     return 0 if time.blank?
 
-    time.hour * 3600 + time.min * 60 + time.sec
+    (time.hour * 3600) + (time.min * 60) + time.sec
   end
 
   def time_range(start_time, end_time)
@@ -160,9 +158,7 @@ class DailySchedule < ApplicationRecord
     end_seconds = time_to_seconds(end_time)
 
     # 日をまたぐ場合の処理
-    if end_seconds < start_seconds
-      end_seconds += 24 * 3600
-    end
+    end_seconds += 24 * 3600 if end_seconds < start_seconds
 
     start_seconds..end_seconds
   end
@@ -213,12 +209,10 @@ class DailySchedule < ApplicationRecord
 
   def times_within_reasonable_range
     # 実労働時間が24時間を超えないことをチェック
-    if company_working_hours > 24
-      errors.add(:company_end_time, '弊社勤務時間が24時間を超えています')
-    end
+    errors.add(:company_end_time, '弊社勤務時間が24時間を超えています') if company_working_hours > 24
 
-    if sidejob_working_hours > 24
-      errors.add(:sidejob_end_time, '掛け持ち勤務時間が24時間を超えています')
-    end
+    return unless sidejob_working_hours > 24
+
+    errors.add(:sidejob_end_time, '掛け持ち勤務時間が24時間を超えています')
   end
 end

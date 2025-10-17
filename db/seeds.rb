@@ -145,7 +145,7 @@ if student_user
   # 今月と来月の月次サマリーを作成
   current_date = Date.current
   [current_date, current_date.next_month].each do |date|
-    monthly_summary = WeekManagementService.create_monthly_summary_with_shifts(
+    WeekManagementService.create_monthly_summary_with_shifts(
       student_user,
       date.year,
       date.month

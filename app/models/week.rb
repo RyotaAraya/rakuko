@@ -20,7 +20,9 @@ class Week < ApplicationRecord
 
   # Scopes
   scope :for_year, ->(year) { where(year: year) }
-  scope :for_month, ->(year, month) { where(year: year).joins(:daily_schedules).where(daily_schedules: { schedule_date: Date.new(year, month, 1)..Date.new(year, month, -1) }).distinct }
+  scope :for_month, lambda { |year, month|
+    where(year: year).joins(:daily_schedules).where(daily_schedules: { schedule_date: Date.new(year, month, 1)..Date.new(year, month, -1) }).distinct
+  }
   scope :cross_month, -> { where(is_cross_month: true) }
   scope :single_month, -> { where(is_cross_month: false) }
   scope :by_start_date, -> { order(:start_date) }
@@ -60,7 +62,7 @@ class Week < ApplicationRecord
 
   # Instance methods
   def contains_date?(date)
-    date >= start_date && date <= end_date
+    date.between?(start_date, end_date)
   end
 
   def month_for_date(date)

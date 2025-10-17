@@ -17,7 +17,7 @@ class WorkingHoursValidator
         valid: true,
         violations: [],
         warnings: [],
-        details: {}
+        details: {},
       }
 
       # 日別チェック
@@ -62,7 +62,7 @@ class WorkingHoursValidator
       {
         violations: violations,
         warnings: warnings,
-        details: details
+        details: details,
       }
     end
 
@@ -78,14 +78,10 @@ class WorkingHoursValidator
       date_str = schedule.schedule_date.strftime('%m/%d')
 
       # 時間重複チェック
-      if schedule.has_time_overlap?
-        violations << "#{date_str}: 弊社と掛け持ちの勤務時間が重複しています"
-      end
+      violations << "#{date_str}: 弊社と掛け持ちの勤務時間が重複しています" if schedule.has_time_overlap?
 
       # 日8時間制限チェック
-      if total_hours > DAILY_LIMIT
-        violations << "#{date_str}: 1日の総労働時間が#{DAILY_LIMIT}時間を超過（#{total_hours.round(1)}時間）"
-      end
+      violations << "#{date_str}: 1日の総労働時間が#{DAILY_LIMIT}時間を超過（#{total_hours.round(1)}時間）" if total_hours > DAILY_LIMIT
 
       # 弊社単日制限チェック
       if company_hours > DAILY_LIMIT
@@ -93,9 +89,7 @@ class WorkingHoursValidator
       end
 
       # 長時間労働の警告
-      if total_hours >= 10
-        warnings << "#{date_str}: 長時間労働です（#{total_hours.round(1)}時間）。体調管理にご注意ください"
-      end
+      warnings << "#{date_str}: 長時間労働です（#{total_hours.round(1)}時間）。体調管理にご注意ください" if total_hours >= 10
 
       # 深夜労働の確認
       night_work_warning = check_night_work(schedule)
@@ -107,7 +101,7 @@ class WorkingHoursValidator
         company_hours: company_hours,
         sidejob_hours: sidejob_hours,
         total_hours: total_hours,
-        has_overlap: schedule.has_time_overlap?
+        has_overlap: schedule.has_time_overlap?,
       }
     end
 
@@ -150,7 +144,7 @@ class WorkingHoursValidator
         sidejob_total: sidejob_total,
         grand_total: grand_total,
         company_limit_usage: (company_total / WEEKLY_COMPANY_LIMIT * 100).round(1),
-        total_limit_usage: (grand_total / WEEKLY_TOTAL_LIMIT * 100).round(1)
+        total_limit_usage: (grand_total / WEEKLY_TOTAL_LIMIT * 100).round(1),
       }
     end
 
@@ -191,8 +185,8 @@ class WorkingHoursValidator
           company_hours: total_company_hours,
           sidejob_hours: total_sidejob_hours,
           total_hours: total_monthly_hours,
-          limit_usage: (total_monthly_hours / monthly_limit * 100).round(1)
-        }
+          limit_usage: (total_monthly_hours / monthly_limit * 100).round(1),
+        },
       }
     end
 
@@ -204,8 +198,8 @@ class WorkingHoursValidator
 
       (start_date..end_date).each do |date|
         daily_schedules = user.daily_schedules.joins(:weekly_shift)
-                             .where(schedule_date: date)
-                             .where('company_actual_hours > 0 OR sidejob_actual_hours > 0')
+                              .where(schedule_date: date)
+                              .where('company_actual_hours > 0 OR sidejob_actual_hours > 0')
 
         if daily_schedules.exists?
           consecutive_days += 1
@@ -214,14 +208,12 @@ class WorkingHoursValidator
           consecutive_days = 0
         end
 
-        if consecutive_days >= 6
-          warnings << "#{date.strftime('%m/%d')}時点で#{consecutive_days}日連続勤務です。休息をお勧めします"
-        end
+        warnings << "#{date.strftime('%m/%d')}時点で#{consecutive_days}日連続勤務です。休息をお勧めします" if consecutive_days >= 6
       end
 
       {
         max_consecutive_days: max_consecutive,
-        warnings: warnings
+        warnings: warnings,
       }
     end
 
@@ -255,8 +247,8 @@ class WorkingHoursValidator
     def check_time_in_night_hours(start_time, end_time, work_type)
       return nil unless start_time && end_time
 
-      night_start = Time.parse('22:00')
-      night_end = Time.parse('05:00')
+      Time.zone.parse('22:00')
+      Time.zone.parse('05:00')
 
       # 簡易的な深夜時間帯チェック
       if (start_time.hour >= 22 || start_time.hour < 5) ||

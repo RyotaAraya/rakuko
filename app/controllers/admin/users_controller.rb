@@ -128,7 +128,7 @@ module Admin
         violations << {
           user: user,
           violations: result[:violations],
-          breakdown: result[:breakdown]
+          breakdown: result[:breakdown],
         }
       end
 
