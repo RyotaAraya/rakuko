@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ChangeTimeColumnsToStringInDailySchedules < ActiveRecord::Migration[7.1]
   def up
     # 既存データを文字列形式に変換してから型を変更

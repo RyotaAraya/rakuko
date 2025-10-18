@@ -21,7 +21,11 @@ class Week < ApplicationRecord
   # Scopes
   scope :for_year, ->(year) { where(year: year) }
   scope :for_month, lambda { |year, month|
-    where(year: year).joins(:daily_schedules).where(daily_schedules: { schedule_date: Date.new(year, month, 1)..Date.new(year, month, -1) }).distinct
+    month_start = Date.new(year, month, 1)
+    month_end = Date.new(year, month, -1)
+    where(year: year).joins(:daily_schedules)
+                     .where(daily_schedules: { schedule_date: month_start..month_end })
+                     .distinct
   }
   scope :cross_month, -> { where(is_cross_month: true) }
   scope :single_month, -> { where(is_cross_month: false) }

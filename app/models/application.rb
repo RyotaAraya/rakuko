@@ -186,9 +186,15 @@ class Application < ApplicationRecord
 
   def find_department_approver_id
     # 部署担当者（department_manager権限）を取得
-    user.department&.users&.joins(:user_roles)
-        &.where(user_roles: { role_id: Role.find_by(name: :department_manager)&.id })
-        &.first&.id || User.with_role(:department_manager).first&.id
+    department = user.department
+    return User.with_role(:department_manager).first&.id unless department
+
+    department_manager_role = Role.find_by(name: :department_manager)
+    return User.with_role(:department_manager).first&.id unless department_manager_role
+
+    department.users.joins(:user_roles)
+              .where(user_roles: { role_id: department_manager_role.id })
+              .first&.id || User.with_role(:department_manager).first&.id
   end
 
   def find_labor_approver_id

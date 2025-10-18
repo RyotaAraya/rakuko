@@ -95,35 +95,31 @@ class ShiftRequestsController < ApplicationController
 
   def build_week_shifts_data(week)
     weekly_shift = current_user.weekly_shifts.find_by(week: week)
+    weekly_shift ? build_existing_shifts_data(weekly_shift) : build_empty_shifts_data
+  end
 
-    if weekly_shift
-      # 既存データから復元
-      company_start = {}
-      company_end = {}
-      sidejob_start = {}
-      sidejob_end = {}
+  def build_existing_shifts_data(weekly_shift)
+    company_start = {}
+    company_end = {}
+    sidejob_start = {}
+    sidejob_end = {}
 
-      weekly_shift.daily_schedules.each do |schedule|
-        day_key = schedule.schedule_date.strftime('%a').downcase
-        # 時刻は既に文字列形式で保存されているのでそのまま使用
-        company_start[day_key] = schedule.company_start_time || ''
-        company_end[day_key] = schedule.company_end_time || ''
-        sidejob_start[day_key] = schedule.sidejob_start_time || ''
-        sidejob_end[day_key] = schedule.sidejob_end_time || ''
-      end
-
-      {
-        company: { start: company_start, end: company_end },
-        sidejob: { start: sidejob_start, end: sidejob_end },
-      }
-    else
-      # 空のデータ
-      empty_times = %w[sun mon tue wed thu fri sat].index_with { |_day| '' }
-      {
-        company: { start: empty_times.dup, end: empty_times.dup },
-        sidejob: { start: empty_times.dup, end: empty_times.dup },
-      }
+    weekly_shift.daily_schedules.each do |schedule|
+      day_key = schedule.schedule_date.strftime('%a').downcase
+      company_start[day_key] = schedule.company_start_time || ''
+      company_end[day_key] = schedule.company_end_time || ''
+      sidejob_start[day_key] = schedule.sidejob_start_time || ''
+      sidejob_end[day_key] = schedule.sidejob_end_time || ''
     end
+
+    { company: { start: company_start, end: company_end },
+      sidejob: { start: sidejob_start, end: sidejob_end } }
+  end
+
+  def build_empty_shifts_data
+    empty_times = %w[sun mon tue wed thu fri sat].index_with { |_day| '' }
+    { company: { start: empty_times.dup, end: empty_times.dup },
+      sidejob: { start: empty_times.dup, end: empty_times.dup } }
   end
 
   def build_initial_shift_data
@@ -146,85 +142,91 @@ class ShiftRequestsController < ApplicationController
   def save_weekly_shifts(weeks_data)
     errors = []
     success_count = 0
-
-    # JSON文字列をパース
-    parsed_weeks_data = weeks_data.is_a?(String) ? JSON.parse(weeks_data) : weeks_data
+    parsed_weeks_data = parse_weeks_data(weeks_data)
 
     ActiveRecord::Base.transaction do
       parsed_weeks_data.each do |week_data|
-        week = Week.find(week_data['id'])
-        weekly_shift = current_user.weekly_shifts.find_or_create_by(week: week) do |ws|
-          ws.submission_year = @target_year
-          ws.submission_month = @target_month
-        end
-
-        # 日別スケジュールの更新
-        week_data['days'].each do |day_data|
-          date = Date.parse(day_data['date'])
-          daily_schedule = weekly_shift.daily_schedules.find_or_create_by(schedule_date: date)
-
-          # 時間データの更新
-          shifts = week_data['shifts']
-          day_key = day_data['key']
-
-          daily_schedule.update!(
-            company_start_time: parse_time(shifts['company']['start'][day_key]),
-            company_end_time: parse_time(shifts['company']['end'][day_key]),
-            sidejob_start_time: parse_time(shifts['sidejob']['start'][day_key]),
-            sidejob_end_time: parse_time(shifts['sidejob']['end'][day_key])
-          )
-        end
-
-        # 制限チェック
+        weekly_shift = find_or_create_weekly_shift(week_data)
+        update_daily_schedules(weekly_shift, week_data)
         errors.concat(weekly_shift.violation_list) unless weekly_shift.validate_working_hours
-
         success_count += 1
       end
 
       raise ActiveRecord::Rollback if errors.any? && params[:submit_type] != 'draft'
     end
 
-    {
-      success: errors.empty? || params[:submit_type] == 'draft',
-      errors: errors,
-      saved_weeks: success_count,
-    }
+    build_save_result(errors, success_count)
   end
 
   def submit_monthly_shifts
-    # MonthlySummaryを取得または作成
-    @monthly_summary = MonthlySummary.find_or_create_by(
-      user: current_user,
-      target_year: @target_year,
-      target_month: @target_month
-    )
-
+    @monthly_summary = find_or_create_monthly_summary
     @monthly_summary.reload
-
-    # 提出済みの場合は一度下書きに戻す（再編集可能にするため）
     @monthly_summary.back_to_draft! if @monthly_summary.submitted?
 
     if @monthly_summary.can_submit?
       @monthly_summary.submit!
       { success: true }
     else
-      # 詳細なエラー情報を返す
-      violation_details = @monthly_summary.violation_summary
-
-      # デバッグ情報を追加
-      weekly_shifts = @monthly_summary.user_weekly_shifts_for_month
-      errors = []
-
-      if violation_details.any?
-        errors = violation_details
-      elsif weekly_shifts.empty?
-        errors << "提出対象の週次シフトが見つかりません（#{@target_year}年#{@target_month}月）"
-      else
-        errors << '制限違反があるため提出できません'
-      end
-
-      { success: false, errors: errors }
+      { success: false, errors: build_submission_errors }
     end
+  end
+
+  def find_or_create_monthly_summary
+    MonthlySummary.find_or_create_by(
+      user: current_user,
+      target_year: @target_year,
+      target_month: @target_month
+    )
+  end
+
+  def build_submission_errors
+    violation_details = @monthly_summary.violation_summary
+    weekly_shifts = @monthly_summary.user_weekly_shifts_for_month
+
+    if violation_details.any?
+      violation_details
+    elsif weekly_shifts.empty?
+      ["提出対象の週次シフトが見つかりません（#{@target_year}年#{@target_month}月）"]
+    else
+      ['制限違反があるため提出できません']
+    end
+  end
+
+  def parse_weeks_data(weeks_data)
+    weeks_data.is_a?(String) ? JSON.parse(weeks_data) : weeks_data
+  end
+
+  def find_or_create_weekly_shift(week_data)
+    week = Week.find(week_data['id'])
+    current_user.weekly_shifts.find_or_create_by(week: week) do |ws|
+      ws.submission_year = @target_year
+      ws.submission_month = @target_month
+    end
+  end
+
+  def update_daily_schedules(weekly_shift, week_data)
+    week_data['days'].each do |day_data|
+      date = Date.parse(day_data['date'])
+      daily_schedule = weekly_shift.daily_schedules.find_or_create_by(schedule_date: date)
+      update_schedule_times(daily_schedule, week_data['shifts'], day_data['key'])
+    end
+  end
+
+  def update_schedule_times(daily_schedule, shifts, day_key)
+    daily_schedule.update!(
+      company_start_time: parse_time(shifts['company']['start'][day_key]),
+      company_end_time: parse_time(shifts['company']['end'][day_key]),
+      sidejob_start_time: parse_time(shifts['sidejob']['start'][day_key]),
+      sidejob_end_time: parse_time(shifts['sidejob']['end'][day_key])
+    )
+  end
+
+  def build_save_result(errors, success_count)
+    {
+      success: errors.empty? || params[:submit_type] == 'draft',
+      errors: errors,
+      saved_weeks: success_count,
+    }
   end
 
   def parse_time(time_string)

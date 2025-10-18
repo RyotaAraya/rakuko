@@ -34,12 +34,11 @@ module Types
 
       # Timeオブジェクトを HH:MM:SS 形式の文字列に変換（データベース保存用）
       if value.respond_to?(:hour)
-        format('%02d:%02d:%02d', value.hour, value.min, value.sec)
+        format('%<hour>02d:%<min>02d:%<sec>02d',
+               hour: value.hour, min: value.min, sec: value.sec)
       elsif value.is_a?(String)
         # すでに文字列の場合はそのまま返す
         value
-      else
-        nil
       end
     end
 

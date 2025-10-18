@@ -119,13 +119,15 @@ class WorkingHoursValidator
       # 弊社週20時間制限チェック
       if company_total > WEEKLY_COMPANY_LIMIT
         excess = company_total - WEEKLY_COMPANY_LIMIT
-        violations << "#{week_title}: 弊社勤務時間が週#{WEEKLY_COMPANY_LIMIT}時間を#{excess.round(1)}時間超過（合計#{company_total.round(1)}時間）"
+        violations << "#{week_title}: 弊社勤務時間が週#{WEEKLY_COMPANY_LIMIT}時間を" \
+                      "#{excess.round(1)}時間超過（合計#{company_total.round(1)}時間）"
       end
 
       # 総労働週40時間制限チェック
       if grand_total > WEEKLY_TOTAL_LIMIT
         excess = grand_total - WEEKLY_TOTAL_LIMIT
-        violations << "#{week_title}: 総労働時間が週#{WEEKLY_TOTAL_LIMIT}時間を#{excess.round(1)}時間超過（合計#{grand_total.round(1)}時間）"
+        violations << "#{week_title}: 総労働時間が週#{WEEKLY_TOTAL_LIMIT}時間を" \
+                      "#{excess.round(1)}時間超過（合計#{grand_total.round(1)}時間）"
       end
 
       # 制限に近い場合の警告

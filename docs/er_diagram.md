@@ -73,10 +73,10 @@ erDiagram
         bigint id PK "主キー"
         bigint weekly_shift_id FK "週別シフトID"
         date date "対象日"
-        time company_start_time "自社開始時刻"
-        time company_end_time "自社終了時刻"
-        time sidejob_start_time "掛け持ち開始時刻"
-        time sidejob_end_time "掛け持ち終了時刻"
+        string company_start_time "自社開始時刻(HH:MM形式、文字列)"
+        string company_end_time "自社終了時刻(HH:MM形式、文字列)"
+        string sidejob_start_time "掛け持ち開始時刻(HH:MM形式、文字列)"
+        string sidejob_end_time "掛け持ち終了時刻(HH:MM形式、文字列)"
         boolean is_company_working "自社勤務フラグ"
         boolean is_sidejob_working "掛け持ち勤務フラグ"
         timestamp created_at "作成日時"
@@ -214,6 +214,14 @@ erDiagram
 - 外部キーも主キーと同じbigint型で統一することで、将来的なデータ移行時の問題を回避
 - PostgreSQLでは性能面でのペナルティはほとんどありません
 
+**時刻データのstring型採用理由**
+- `daily_schedules`の時刻カラム（company_start_time等）はstring型（limit: 8）を採用
+- PostgreSQLのtime型を使用すると、Railsのタイムゾーン設定により自動的にUTC/JSTの変換が発生
+- 「08:00」として保存したデータが読み込み時に「17:00」（JST→UTC→JSTの二重変換）になる問題を回避
+- HH:MM形式の文字列として保存することで、タイムゾーン変換の影響を完全に排除
+- シフト希望の「時刻」は日付に依存しない純粋な時間情報であり、タイムゾーン概念が不要
+- 実装の単純化: 入力値"08:00"がそのまま"08:00"として保存・表示される
+
 ### 1. AASM対応の状態管理
 - `applications`、`attendances`、`month_end_closings`でstatusカラムによる状態遷移管理
 - 承認が必要な機能に対する明確な制御
@@ -225,9 +233,10 @@ erDiagram
 
 ### 3. 週中心設計による月跨ぎ問題の解決
 - `weeks`テーブルを基軸とした設計で月境界を自然に処理
-- `weekly_shifts`で週単位のシフト提出管理（draft→submitted、再編集可能）
+- `weekly_shifts`で週単位のシフト提出管理（draft→submitted、**承認不要**で再編集可能）
 - `daily_schedules`で日別の詳細スケジュール管理
 - `monthly_summaries`で月単位の集約管理
+- **シフト希望は承認対象外**: 週20h/40h制限はバリデーションで保証済み、学業優先のため柔軟な変更を許可
 
 ### 4. 労働時間制限の自動チェック
 - 週20h/合計40h制限の自動検知機能
