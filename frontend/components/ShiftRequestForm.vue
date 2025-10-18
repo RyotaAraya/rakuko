@@ -287,8 +287,8 @@ export default {
         const result = await response.json()
         if (result.success) {
           alert('シフトを提出しました')
-          // 提出後はリダイレクトなどを行う
-          window.location.href = '/shift_requests'
+          // 提出後はホームにリダイレクト
+          window.location.href = '/'
         } else {
           console.error('提出エラー:', result.errors)
           alert(`提出に失敗しました: ${(result.errors || []).join(', ')}`)

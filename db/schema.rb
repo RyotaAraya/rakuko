@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_13_021235) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_18_053802) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -56,10 +56,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_13_021235) do
   create_table "daily_schedules", force: :cascade do |t|
     t.bigint "weekly_shift_id", null: false, comment: "週間シフトID"
     t.date "schedule_date", null: false, comment: "スケジュール日付"
-    t.time "company_start_time", comment: "弊社勤務開始時間"
-    t.time "company_end_time", comment: "弊社勤務終了時間"
-    t.time "sidejob_start_time", comment: "掛け持ち開始時間"
-    t.time "sidejob_end_time", comment: "掛け持ち終了時間"
+    t.string "company_start_time", limit: 8, comment: "弊社勤務開始時間 (HH:MM形式)"
+    t.string "company_end_time", limit: 8, comment: "弊社勤務終了時間 (HH:MM形式)"
+    t.string "sidejob_start_time", limit: 8, comment: "掛け持ち開始時間 (HH:MM形式)"
+    t.string "sidejob_end_time", limit: 8, comment: "掛け持ち終了時間 (HH:MM形式)"
     t.decimal "company_actual_hours", precision: 4, scale: 2, comment: "弊社実労働時間"
     t.decimal "sidejob_actual_hours", precision: 4, scale: 2, comment: "掛け持ち実労働時間"
     t.datetime "created_at", null: false
@@ -102,7 +102,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_13_021235) do
     t.decimal "total_company_hours", precision: 5, scale: 2, default: "0.0", comment: "月間弊社合計時間"
     t.decimal "total_sidejob_hours", precision: 5, scale: 2, default: "0.0", comment: "月間掛け持ち合計時間"
     t.decimal "total_hours", precision: 5, scale: 2, default: "0.0", comment: "月間合計時間"
-    t.integer "status", default: 0, comment: "draft, submitted, approved, rejected"
+    t.integer "status", default: 0, comment: "draft, submitted"
     t.datetime "submitted_at", comment: "提出日時"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -215,7 +215,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_13_021235) do
     t.bigint "week_id", null: false, comment: "週ID"
     t.integer "submission_month", null: false, comment: "提出対象月"
     t.integer "submission_year", null: false, comment: "提出対象年"
-    t.integer "status", default: 0, comment: "draft, tentative, confirmed, approved"
+    t.integer "status", default: 0, comment: "draft, submitted"
     t.text "violation_warnings", comment: "制限違反警告"
     t.datetime "submitted_at", comment: "提出日時"
     t.datetime "created_at", null: false

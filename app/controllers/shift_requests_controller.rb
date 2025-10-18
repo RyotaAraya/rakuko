@@ -105,10 +105,11 @@ class ShiftRequestsController < ApplicationController
 
       weekly_shift.daily_schedules.each do |schedule|
         day_key = schedule.schedule_date.strftime('%a').downcase
-        company_start[day_key] = schedule.company_start_time&.strftime('%H:%M') || ''
-        company_end[day_key] = schedule.company_end_time&.strftime('%H:%M') || ''
-        sidejob_start[day_key] = schedule.sidejob_start_time&.strftime('%H:%M') || ''
-        sidejob_end[day_key] = schedule.sidejob_end_time&.strftime('%H:%M') || ''
+        # 時刻は既に文字列形式で保存されているのでそのまま使用
+        company_start[day_key] = schedule.company_start_time || ''
+        company_end[day_key] = schedule.company_end_time || ''
+        sidejob_start[day_key] = schedule.sidejob_start_time || ''
+        sidejob_end[day_key] = schedule.sidejob_end_time || ''
       end
 
       {
@@ -191,22 +192,47 @@ class ShiftRequestsController < ApplicationController
   end
 
   def submit_monthly_shifts
+    # MonthlySummaryを取得または作成
+    @monthly_summary = MonthlySummary.find_or_create_by(
+      user: current_user,
+      target_year: @target_year,
+      target_month: @target_month
+    )
+
     @monthly_summary.reload
+
+    # 提出済みの場合は一度下書きに戻す（再編集可能にするため）
+    @monthly_summary.back_to_draft! if @monthly_summary.submitted?
 
     if @monthly_summary.can_submit?
       @monthly_summary.submit!
       { success: true }
     else
-      { success: false, errors: ['制限違反があるため提出できません'] }
+      # 詳細なエラー情報を返す
+      violation_details = @monthly_summary.violation_summary
+
+      # デバッグ情報を追加
+      weekly_shifts = @monthly_summary.user_weekly_shifts_for_month
+      errors = []
+
+      if violation_details.any?
+        errors = violation_details
+      elsif weekly_shifts.empty?
+        errors << "提出対象の週次シフトが見つかりません（#{@target_year}年#{@target_month}月）"
+      else
+        errors << '制限違反があるため提出できません'
+      end
+
+      { success: false, errors: errors }
     end
   end
 
   def parse_time(time_string)
     return nil if time_string.blank?
 
-    Time.zone.parse(time_string)
-  rescue ArgumentError
-    nil
+    # HH:MM形式の文字列をそのまま返す（タイムゾーン変換なし）
+    # データベースにはstring型で保存されるため、変換不要
+    time_string
   end
 
   def weekly_shift_params

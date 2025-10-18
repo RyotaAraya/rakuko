@@ -9,7 +9,7 @@ class WeeklyShift < ApplicationRecord
   has_many :daily_schedules, dependent: :destroy
 
   # Enums
-  enum :status, { draft: 0, tentative: 1, confirmed: 2, approved: 3 }
+  enum :status, { draft: 0, submitted: 1 }
 
   # Validations
   validates :submission_month, presence: true, inclusion: { in: 1..12 }
@@ -33,28 +33,18 @@ class WeeklyShift < ApplicationRecord
   # AASM state management
   aasm column: :status, enum: true do
     state :draft, initial: true
-    state :tentative
-    state :confirmed
-    state :approved
+    state :submitted
 
     event :submit do
-      transitions from: :draft, to: :tentative
+      transitions from: :draft, to: :submitted
       after do
         self.submitted_at = Time.current
         validate_working_hours
       end
     end
 
-    event :confirm do
-      transitions from: :tentative, to: :confirmed
-    end
-
-    event :approve do
-      transitions from: :confirmed, to: :approved
-    end
-
-    event :reject do
-      transitions from: [:tentative, :confirmed], to: :draft
+    event :back_to_draft do
+      transitions from: :submitted, to: :draft
       after do
         self.submitted_at = nil
       end

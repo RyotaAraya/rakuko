@@ -11,7 +11,7 @@ class MonthlySummary < ApplicationRecord
   has_many :daily_schedules, through: :weekly_shifts
 
   # Enums
-  enum :status, { draft: 0, submitted: 1, approved: 2, rejected: 3 }
+  enum :status, { draft: 0, submitted: 1 }
 
   # Validations
   validates :target_year, presence: true
@@ -31,8 +31,6 @@ class MonthlySummary < ApplicationRecord
   aasm column: :status, enum: true do
     state :draft, initial: true
     state :submitted
-    state :approved
-    state :rejected
 
     event :submit do
       transitions from: :draft, to: :submitted
@@ -41,16 +39,8 @@ class MonthlySummary < ApplicationRecord
       end
     end
 
-    event :approve do
-      transitions from: :submitted, to: :approved
-    end
-
-    event :reject do
-      transitions from: :submitted, to: :rejected
-    end
-
-    event :revert_to_draft do
-      transitions from: [:submitted, :rejected], to: :draft
+    event :back_to_draft do
+      transitions from: :submitted, to: :draft
       after do
         self.submitted_at = nil
       end
@@ -67,7 +57,10 @@ class MonthlySummary < ApplicationRecord
   end
 
   def user_weekly_shifts_for_month
-    user.weekly_shifts.for_month(target_year, target_month).includes(:week, :daily_schedules)
+    # target_monthに重なる週のweekly_shiftsを取得
+    # submission_monthではなく、週の日付範囲で判定する
+    week_ids = weeks_for_month.pluck(:id)
+    user.weekly_shifts.where(week_id: week_ids).includes(:week, :daily_schedules)
   end
 
   def calculate_company_hours

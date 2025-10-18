@@ -62,7 +62,7 @@ erDiagram
         bigint week_id FK "週ID"
         int submission_month "提出対象月"
         int submission_year "提出対象年"
-        enum status "承認状態(draft,tentative,confirmed,approved,rejected)"
+        enum status "ステータス(draft,submitted)"
         json violation_warnings "制限違反警告内容(JSON形式)"
         timestamp submitted_at "提出日時"
         timestamp created_at "作成日時"
@@ -91,7 +91,7 @@ erDiagram
         decimal total_company_hours "月間自社労働時間"
         decimal total_sidejob_hours "月間掛け持ち労働時間"
         decimal total_all_hours "月間合計労働時間"
-        enum status "承認状態(draft,submitted,approved,rejected)"
+        enum status "ステータス(draft,submitted)"
         timestamp submitted_at "提出日時"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
@@ -200,8 +200,6 @@ erDiagram
     users ||--o{ notifications : "has many"
 
     %% ポリモーフィック関連（approvalsテーブル）
-    weekly_shifts ||--o{ approvals : "approvable"
-    monthly_summaries ||--o{ approvals : "approvable"
     applications ||--o{ approvals : "approvable"
     attendances ||--o{ approvals : "approvable"
     month_end_closings ||--o{ approvals : "approvable"
@@ -217,16 +215,17 @@ erDiagram
 - PostgreSQLでは性能面でのペナルティはほとんどありません
 
 ### 1. AASM対応の状態管理
-- `shifts`、`month_end_closings`でstatusカラムによる状態遷移管理
-- 承認フローの明確な制御
+- `applications`、`attendances`、`month_end_closings`でstatusカラムによる状態遷移管理
+- 承認が必要な機能に対する明確な制御
 
 ### 2. 並列承認ワークフロー
 - ポリモーフィック`approvals`テーブルで部署・労務の独立承認を管理
+- `applications`、`attendances`、`month_end_closings`に対する承認プロセス
 - ボトルネックのない承認プロセス
 
 ### 3. 週中心設計による月跨ぎ問題の解決
 - `weeks`テーブルを基軸とした設計で月境界を自然に処理
-- `weekly_shifts`で週単位の段階的提出（draft→tentative→confirmed→approved）
+- `weekly_shifts`で週単位のシフト提出管理（draft→submitted、再編集可能）
 - `daily_schedules`で日別の詳細スケジュール管理
 - `monthly_summaries`で月単位の集約管理
 
