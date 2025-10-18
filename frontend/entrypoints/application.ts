@@ -5,22 +5,27 @@
 //    <%= vite_javascript_tag 'application' %>
 
 import '../styles/application.css'
+import type { App } from 'vue'
 import { createApp } from 'vue'
 import AttendanceToday from '../components/AttendanceToday.vue'
 import ShiftRequestForm from '../components/ShiftRequestForm.vue'
 import WelcomeMessage from '../components/WelcomeMessage.vue'
 
+interface VueAppElement extends HTMLElement {
+  _vueApp?: App
+}
+
 function initializeVueComponents() {
   // Welcome message component
-  const welcomeEl = document.getElementById('vue-app') as HTMLElement & { _vueApp?: any }
+  const welcomeEl = document.getElementById('vue-app') as VueAppElement | null
   if (welcomeEl && !welcomeEl._vueApp) {
-    welcomeEl._vueApp = createApp(WelcomeMessage).mount(welcomeEl)
+    const app = createApp(WelcomeMessage)
+    app.mount(welcomeEl)
+    welcomeEl._vueApp = app
   }
 
   // Shift request form component
-  const shiftFormEl = document.getElementById('shift-request-form') as HTMLElement & {
-    _vueApp?: any
-  }
+  const shiftFormEl = document.getElementById('shift-request-form') as VueAppElement | null
 
   if (shiftFormEl && !shiftFormEl._vueApp) {
     try {
@@ -57,14 +62,15 @@ function initializeVueComponents() {
         targetMonth,
       })
 
-      shiftFormEl._vueApp = app.mount(shiftFormEl)
+      app.mount(shiftFormEl)
+      shiftFormEl._vueApp = app
     } catch (error) {
       console.error('Error mounting Vue app:', error)
     }
   }
 
   // Attendance today component
-  const attendanceEl = document.getElementById('attendance-app') as HTMLElement & { _vueApp?: any }
+  const attendanceEl = document.getElementById('attendance-app') as VueAppElement | null
   if (attendanceEl && !attendanceEl._vueApp) {
     try {
       const loadingEl = document.getElementById('loading-message')
@@ -75,16 +81,15 @@ function initializeVueComponents() {
       const date = attendanceEl.dataset.date || new Date().toISOString().split('T')[0]
 
       const app = createApp(AttendanceToday, { date })
-      attendanceEl._vueApp = app.mount(attendanceEl)
+      app.mount(attendanceEl)
+      attendanceEl._vueApp = app
     } catch (error) {
       console.error('Error mounting Attendance app:', error)
     }
   }
 
   // Home page attendance component
-  const homeAttendanceEl = document.getElementById('home-attendance-app') as HTMLElement & {
-    _vueApp?: any
-  }
+  const homeAttendanceEl = document.getElementById('home-attendance-app') as VueAppElement | null
   if (homeAttendanceEl && !homeAttendanceEl._vueApp) {
     try {
       const loadingEl = document.getElementById('home-loading-message')
@@ -95,7 +100,8 @@ function initializeVueComponents() {
       const date = homeAttendanceEl.dataset.date || new Date().toISOString().split('T')[0]
 
       const app = createApp(AttendanceToday, { date })
-      homeAttendanceEl._vueApp = app.mount(homeAttendanceEl)
+      app.mount(homeAttendanceEl)
+      homeAttendanceEl._vueApp = app
     } catch (error) {
       console.error('Error mounting Home Attendance app:', error)
     }

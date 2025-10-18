@@ -59,9 +59,9 @@ class WeekManagementService
             start_date: week.start_date,
             end_date: week.end_date,
             primary_month: week.primary_month,
-            days_in_target_month: week.days_in_month(month)
+            days_in_target_month: week.days_in_month(month),
           }
-        end
+        end,
       }
     end
 
@@ -96,20 +96,20 @@ class WeekManagementService
           {
             month: week.start_date.month,
             year: week.start_date.year,
-            days_count: start_month_days
+            days_count: start_month_days,
           }
         else
           {
             month: week.end_date.month,
             year: week.end_date.year,
-            days_count: end_month_days
+            days_count: end_month_days,
           }
         end
       else
         {
           month: week.start_date.month,
           year: week.start_date.year,
-          days_count: 7
+          days_count: 7,
         }
       end
     end
@@ -129,7 +129,7 @@ class WeekManagementService
             year: current_year,
             month: current_month,
             summary: summary,
-            weeks_count: summary.weeks_for_month.count
+            weeks_count: summary.weeks_for_month.count,
           }
 
           current_month += 1
@@ -155,13 +155,13 @@ class WeekManagementService
           total_hours: weekly_shift.calculate_total_hours,
           is_cross_month: weekly_shift.week.is_cross_month?,
           days_in_month: weekly_shift.week.days_in_month(month),
-          has_violations: weekly_shift.has_violations?
+          has_violations: weekly_shift.has_violations?,
         }
       end
     end
 
     # シフト提出可能週の判定
-    def submittable_weeks_for_month(user, year, month)
+    def submittable_weeks_for_month(_user, year, month)
       weeks = generate_weeks_for_month(year, month)
       current_date = Date.current
 
@@ -175,27 +175,27 @@ class WeekManagementService
 
     # デバッグ用：月の週構成確認
     def debug_month_weeks(year, month)
-      puts "=== #{year}年#{month}月 週構成分析 ==="
+      Rails.logger.debug { "=== #{year}年#{month}月 週構成分析 ===" }
 
       weeks = generate_weeks_for_month(year, month)
       analysis = analyze_cross_month_weeks(year, month)
 
-      puts "合計週数: #{analysis[:total_weeks]}"
-      puts "月跨ぎ週数: #{analysis[:cross_month_weeks]}"
-      puts ""
+      Rails.logger.debug { "合計週数: #{analysis[:total_weeks]}" }
+      Rails.logger.debug { "月跨ぎ週数: #{analysis[:cross_month_weeks]}" }
+      Rails.logger.debug ''
 
       weeks.each.with_index(1) do |week, index|
-        puts "第#{index}週: #{week.display_range}"
-        puts "  - 週番号: #{week.week_number}"
-        puts "  - 月跨ぎ: #{week.is_cross_month? ? 'あり' : 'なし'}"
-        puts "  - #{month}月内日数: #{week.days_in_month(month)}日"
+        Rails.logger.debug { "第#{index}週: #{week.display_range}" }
+        Rails.logger.debug { "  - 週番号: #{week.week_number}" }
+        Rails.logger.debug { "  - 月跨ぎ: #{week.is_cross_month? ? 'あり' : 'なし'}" }
+        Rails.logger.debug { "  - #{month}月内日数: #{week.days_in_month(month)}日" }
 
         if week.is_cross_month?
           submission = determine_submission_month_for_week(week)
-          puts "  - 提出先: #{submission[:year]}年#{submission[:month]}月 (#{submission[:days_count]}日間)"
+          Rails.logger.debug { "  - 提出先: #{submission[:year]}年#{submission[:month]}月 (#{submission[:days_count]}日間)" }
         end
 
-        puts ""
+        Rails.logger.debug ''
       end
     end
   end

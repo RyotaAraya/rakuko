@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Application < ApplicationRecord
+  include AASM
+
   belongs_to :user
   has_many :approvals, as: :approvable, dependent: :destroy
 
@@ -13,10 +15,35 @@ class Application < ApplicationRecord
   }
 
   enum :status, {
-    pending: 0,
-    approved: 1,
-    rejected: 2,
+    draft: 0,
+    pending: 1,
+    approved: 2,
+    rejected: 3,
   }
+
+  # AASM 状態管理
+  aasm column: :status, enum: true do
+    state :draft, initial: true
+    state :pending
+    state :approved
+    state :rejected
+
+    event :submit do
+      transitions from: :draft, to: :pending, after: :create_approval_records
+    end
+
+    event :approve_final do
+      transitions from: :pending, to: :approved
+    end
+
+    event :reject_final do
+      transitions from: :pending, to: :rejected
+    end
+
+    event :return_to_draft do
+      transitions from: :pending, to: :draft
+    end
+  end
 
   # Validations
   validates :application_type, presence: true
@@ -47,6 +74,7 @@ class Application < ApplicationRecord
 
   def status_display_name
     {
+      'draft' => '下書き',
       'pending' => '承認待ち',
       'approved' => '承認済み',
       'rejected' => '却下',
@@ -108,7 +136,71 @@ class Application < ApplicationRecord
     for_month(current_date.year, current_date.month).where(user: user)
   end
 
+  # 並列承認システム関連メソッド
+  def department_approval
+    approvals.find_by(approval_type: :department)
+  end
+
+  def labor_approval
+    approvals.find_by(approval_type: :labor)
+  end
+
+  # 並列承認システム: 両方承認されたら approved に
+  def check_and_update_status!
+    return unless pending?
+
+    dept_approved = department_approval&.approved?
+    labor_approved = labor_approval&.approved?
+
+    if dept_approved && labor_approved
+      approve_final! if may_approve_final?
+    elsif department_approval&.rejected? || labor_approval&.rejected?
+      reject_final! if may_reject_final?
+    end
+  end
+
   private
+
+  # AASM submit イベント後に承認レコードを作成
+  def create_approval_records
+    # 既存の承認レコードがなければ作成
+    unless department_approval
+      approvals.create!(
+        approver_id: find_department_approver_id,
+        approval_type: :department,
+        status: :pending
+      )
+    end
+
+    unless labor_approval
+      approvals.create!(
+        approver_id: find_labor_approver_id,
+        approval_type: :labor,
+        status: :pending
+      )
+    end
+  rescue StandardError => e
+    Rails.logger.error("Application approval records creation failed: #{e.message}")
+    raise ActiveRecord::Rollback
+  end
+
+  def find_department_approver_id
+    # 部署担当者（department_manager権限）を取得
+    department = user.department
+    return User.with_role(:department_manager).first&.id unless department
+
+    department_manager_role = Role.find_by(name: :department_manager)
+    return User.with_role(:department_manager).first&.id unless department_manager_role
+
+    department.users.joins(:user_roles)
+              .where(user_roles: { role_id: department_manager_role.id })
+              .first&.id || User.with_role(:department_manager).first&.id
+  end
+
+  def find_labor_approver_id
+    # 労務担当者（hr_manager権限）を取得
+    User.with_role(:hr_manager).first&.id
+  end
 
   def time_fields_for_type
     send("validate_#{application_type}_times")

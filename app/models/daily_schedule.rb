@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class DailySchedule < ApplicationRecord
+  # 時刻カラムは文字列型（HH:MM形式）で管理
+  # タイムゾーン変換の問題を回避するため、stringを使用
+  # カスタム型は不要
+
   # Associations
   belongs_to :weekly_shift
   has_one :user, through: :weekly_shift
@@ -136,9 +140,7 @@ class DailySchedule < ApplicationRecord
     end_seconds = time_to_seconds(end_time)
 
     # 日をまたぐ場合の処理
-    if end_seconds < start_seconds
-      end_seconds += 24 * 3600
-    end
+    end_seconds += 24 * 3600 if end_seconds < start_seconds
 
     working_seconds = end_seconds - start_seconds
     working_hours = working_seconds / 3600.0
@@ -150,7 +152,17 @@ class DailySchedule < ApplicationRecord
   def time_to_seconds(time)
     return 0 if time.blank?
 
-    time.hour * 3600 + time.min * 60 + time.sec
+    # 文字列形式（HH:MM またはHH:MM:SS）から秒数に変換
+    if time.is_a?(String)
+      parts = time.split(':').map(&:to_i)
+      hour = parts[0] || 0
+      minute = parts[1] || 0
+      second = parts[2] || 0
+      (hour * 3600) + (minute * 60) + second
+    else
+      # 念のため Time オブジェクトにも対応
+      (time.hour * 3600) + (time.min * 60) + time.sec
+    end
   end
 
   def time_range(start_time, end_time)
@@ -160,9 +172,7 @@ class DailySchedule < ApplicationRecord
     end_seconds = time_to_seconds(end_time)
 
     # 日をまたぐ場合の処理
-    if end_seconds < start_seconds
-      end_seconds += 24 * 3600
-    end
+    end_seconds += 24 * 3600 if end_seconds < start_seconds
 
     start_seconds..end_seconds
   end
@@ -176,7 +186,10 @@ class DailySchedule < ApplicationRecord
   def format_time_range(start_time, end_time)
     return '' if start_time.blank? || end_time.blank?
 
-    "#{start_time.strftime('%H:%M')}-#{end_time.strftime('%H:%M')}"
+    # 文字列の場合はそのまま、Time オブジェクトの場合はフォーマット
+    start_str = start_time.is_a?(String) ? start_time : start_time.strftime('%H:%M')
+    end_str = end_time.is_a?(String) ? end_time : end_time.strftime('%H:%M')
+    "#{start_str}-#{end_str}"
   end
 
   def calculate_actual_hours
@@ -213,12 +226,10 @@ class DailySchedule < ApplicationRecord
 
   def times_within_reasonable_range
     # 実労働時間が24時間を超えないことをチェック
-    if company_working_hours > 24
-      errors.add(:company_end_time, '弊社勤務時間が24時間を超えています')
-    end
+    errors.add(:company_end_time, '弊社勤務時間が24時間を超えています') if company_working_hours > 24
 
-    if sidejob_working_hours > 24
-      errors.add(:sidejob_end_time, '掛け持ち勤務時間が24時間を超えています')
-    end
+    return unless sidejob_working_hours > 24
+
+    errors.add(:sidejob_end_time, '掛け持ち勤務時間が24時間を超えています')
   end
 end

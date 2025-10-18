@@ -31,7 +31,7 @@ class AttendancesController < ApplicationController
           date: @date.iso8601,
           time_records: @time_records.map { |r| time_record_json(r) },
           attendance: @attendance ? attendance_json(@attendance) : nil,
-          week_summary: @week_summary
+          week_summary: @week_summary,
         }
       end
     end
@@ -43,8 +43,8 @@ class AttendancesController < ApplicationController
     @end_date = @start_date.end_of_week
 
     @attendances = current_user.attendances
-                                .where(date: @start_date..@end_date)
-                                .order(date: :asc)
+                               .where(date: @start_date..@end_date)
+                               .order(date: :asc)
 
     # 週間サマリー
     @week_summary = Attendance.weekly_summary(current_user, @start_date)
@@ -56,7 +56,7 @@ class AttendancesController < ApplicationController
           start_date: @start_date.iso8601,
           end_date: @end_date.iso8601,
           attendances: @attendances.map { |a| attendance_json(a) },
-          week_summary: @week_summary
+          week_summary: @week_summary,
         }
       end
     end
@@ -71,7 +71,7 @@ class AttendancesController < ApplicationController
       record_type_display: record.record_type_display_name,
       recorded_at: record.recorded_at.iso8601,
       time_display: record.time_display,
-      break_sequence: record.break_sequence
+      break_sequence: record.break_sequence,
     }
   end
 
@@ -84,18 +84,18 @@ class AttendancesController < ApplicationController
       status: attendance.status,
       status_display: attendance.status_display_name,
       work_hours_display: attendance.work_hours_display,
-      break_time_display: attendance.break_time_display
+      break_time_display: attendance.break_time_display,
     }
   end
 
   def build_week_summary
     start_date = Date.current.beginning_of_week
-    end_date = Date.current.end_of_week
+    Date.current.end_of_week
 
     # 今週の実績（承認済み）
     completed_attendances = current_user.attendances
-                                         .where(date: start_date...Date.current)
-                                         .approved
+                                        .where(date: start_date...Date.current)
+                                        .approved
 
     actual_hours = completed_attendances.sum(:actual_hours)
 
@@ -108,7 +108,7 @@ class AttendancesController < ApplicationController
       remaining_scheduled_hours: remaining_scheduled_hours,
       predicted_total_hours: actual_hours + remaining_scheduled_hours,
       week_limit: 20,
-      over_limit: (actual_hours + remaining_scheduled_hours) > 20
+      over_limit: (actual_hours + remaining_scheduled_hours) > 20,
     }
   end
 end

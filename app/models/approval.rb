@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
 class Approval < ApplicationRecord
+  include AASM
+
   belongs_to :approvable, polymorphic: true
   belongs_to :approver, class_name: 'User'
 
   # Enums
   enum :approval_type, {
-    department_approval: 0,
-    labor_approval: 1,
+    department: 0,     # 部署承認
+    labor: 1,          # 労務承認
   }
 
   enum :status, {
@@ -15,6 +17,21 @@ class Approval < ApplicationRecord
     approved: 1,
     rejected: 2,
   }
+
+  # AASM 状態管理
+  aasm column: :status, enum: true do
+    state :pending, initial: true
+    state :approved
+    state :rejected
+
+    event :approve do
+      transitions from: :pending, to: :approved, after: :after_approve
+    end
+
+    event :reject do
+      transitions from: :pending, to: :rejected, after: :after_reject
+    end
+  end
 
   # Validations
   validates :approval_type, presence: true
@@ -31,16 +48,16 @@ class Approval < ApplicationRecord
   # Scopes
   scope :pending_approval, -> { where(status: :pending) }
   scope :completed, -> { where(status: [:approved, :rejected]) }
-  scope :department_approvals, -> { where(approval_type: :department_approval) }
-  scope :labor_approvals, -> { where(approval_type: :labor_approval) }
+  scope :department_approvals, -> { where(approval_type: :department) }
+  scope :labor_approvals, -> { where(approval_type: :labor) }
   scope :recent, -> { order(created_at: :desc) }
 
   # Helper methods
   def approval_type_display_name
     case approval_type
-    when 'department_approval'
+    when 'department'
       '部署承認'
-    when 'labor_approval'
+    when 'labor'
       '労務承認'
     end
   end
@@ -85,9 +102,9 @@ class Approval < ApplicationRecord
   # Class methods
   def self.pending_for_approver(user)
     if user.department_manager?
-      where(approval_type: :department_approval, status: :pending)
+      where(approval_type: :department, status: :pending)
     elsif user.hr_manager?
-      where(approval_type: :labor_approval, status: :pending)
+      where(approval_type: :labor, status: :pending)
     elsif user.system_admin?
       where(status: :pending)
     else
@@ -107,7 +124,7 @@ class Approval < ApplicationRecord
 
     [new(
       approvable: approvable,
-      approval_type: :department_approval,
+      approval_type: :department,
       status: :pending
     )]
   end
@@ -117,7 +134,7 @@ class Approval < ApplicationRecord
 
     [new(
       approvable: approvable,
-      approval_type: :labor_approval,
+      approval_type: :labor,
       status: :pending
     )]
   end
@@ -140,5 +157,22 @@ class Approval < ApplicationRecord
 
   def set_approved_at
     self.approved_at = Time.current
+  end
+
+  # AASM イベント後の処理
+  def after_approve
+    self.approved_at = Time.current
+    save!
+
+    # 並列承認システム: approvableの状態を更新
+    approvable.check_and_update_status! if approvable.respond_to?(:check_and_update_status!)
+  end
+
+  def after_reject
+    self.approved_at = Time.current
+    save!
+
+    # 並列承認システム: approvableの状態を更新
+    approvable.check_and_update_status! if approvable.respond_to?(:check_and_update_status!)
   end
 end

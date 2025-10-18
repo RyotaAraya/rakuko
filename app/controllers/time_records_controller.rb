@@ -17,10 +17,10 @@ class TimeRecordsController < ApplicationController
           record_type_display: record.record_type_display_name,
           recorded_at: record.recorded_at.iso8601,
           time_display: record.time_display,
-          break_sequence: record.break_sequence
+          break_sequence: record.break_sequence,
         }
       end,
-      summary: build_today_summary(@records)
+      summary: build_today_summary(@records),
     }
   end
 
@@ -55,7 +55,7 @@ class TimeRecordsController < ApplicationController
       render json: {
         success: true,
         record: record_json(@record),
-        attendance: attendance_json(attendance)
+        attendance: attendance_json(attendance),
       }
     else
       render json: { success: false, errors: @record.errors.full_messages }, status: :unprocessable_entity
@@ -66,9 +66,9 @@ class TimeRecordsController < ApplicationController
   def break_start
     # 次の休憩シーケンス番号を取得
     last_break = current_user.time_records
-                              .for_date(Date.current)
-                              .break_records
-                              .maximum(:break_sequence) || 0
+                             .for_date(Date.current)
+                             .break_records
+                             .maximum(:break_sequence) || 0
     next_sequence = last_break + 1
 
     @record = current_user.time_records.new(
@@ -89,10 +89,10 @@ class TimeRecordsController < ApplicationController
   def break_end
     # 最新の休憩開始のシーケンス番号を取得
     last_break_start = current_user.time_records
-                                    .for_date(Date.current)
-                                    .where(record_type: :break_start)
-                                    .order(break_sequence: :desc)
-                                    .first
+                                   .for_date(Date.current)
+                                   .where(record_type: :break_start)
+                                   .order(break_sequence: :desc)
+                                   .first
 
     unless last_break_start
       render json: { success: false, errors: ['休憩開始の打刻がありません'] }, status: :unprocessable_entity
@@ -101,9 +101,8 @@ class TimeRecordsController < ApplicationController
 
     # 同じシーケンスで休憩終了が既にあるかチェック
     existing_break_end = current_user.time_records
-                                      .for_date(Date.current)
-                                      .where(record_type: :break_end, break_sequence: last_break_start.break_sequence)
-                                      .exists?
+                                     .for_date(Date.current)
+                                     .exists?(record_type: :break_end, break_sequence: last_break_start.break_sequence)
 
     if existing_break_end
       render json: { success: false, errors: ['この休憩は既に終了しています'] }, status: :unprocessable_entity
@@ -133,7 +132,7 @@ class TimeRecordsController < ApplicationController
       record_type_display: record.record_type_display_name,
       recorded_at: record.recorded_at.iso8601,
       time_display: record.time_display,
-      break_sequence: record.break_sequence
+      break_sequence: record.break_sequence,
     }
   end
 
@@ -143,7 +142,7 @@ class TimeRecordsController < ApplicationController
       date: attendance.date.iso8601,
       actual_hours: attendance.actual_hours,
       total_break_time: attendance.total_break_time,
-      status: attendance.status
+      status: attendance.status,
     }
   end
 
@@ -169,7 +168,7 @@ class TimeRecordsController < ApplicationController
       clock_out_time: clock_out&.time_display,
       work_hours: work_hours,
       break_minutes: break_minutes,
-      is_working: clock_in.present? && clock_out.blank?
+      is_working: clock_in.present? && clock_out.blank?,
     }
   end
 end

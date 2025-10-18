@@ -3,12 +3,8 @@
 class ExtendUsersForUserManagement < ActiveRecord::Migration[7.1]
   def change
     # カラムが既に存在する場合はスキップ
-    unless column_exists?(:users, :first_name)
-      add_column :users, :first_name, :string
-    end
-    unless column_exists?(:users, :last_name)
-      add_column :users, :last_name, :string
-    end
+    add_column :users, :first_name, :string unless column_exists?(:users, :first_name)
+    add_column :users, :last_name, :string unless column_exists?(:users, :last_name)
 
     # ユーザー状態管理（pending, active, inactive）
     unless column_exists?(:users, :status)

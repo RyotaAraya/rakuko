@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Attendance < ApplicationRecord
+  include AASM
+
   belongs_to :user
   has_many :approvals, as: :approvable, dependent: :destroy
 
@@ -10,6 +12,21 @@ class Attendance < ApplicationRecord
     approved: 1,
     rejected: 2,
   }
+
+  # AASM 状態管理
+  aasm column: :status, enum: true do
+    state :pending, initial: true
+    state :approved
+    state :rejected
+
+    event :approve do
+      transitions from: :pending, to: :approved
+    end
+
+    event :reject do
+      transitions from: :pending, to: :rejected
+    end
+  end
 
   # Validations
   validates :date, presence: true
@@ -78,6 +95,24 @@ class Attendance < ApplicationRecord
     messages << '1日8時間の労働時間を超過しています' if over_work_hours?
     messages << '必要な休憩時間が不足しています' if insufficient_break?
     messages
+  end
+
+  # 承認フロー関連メソッド（Attendanceは部署承認のみ）
+  def department_approval
+    approvals.find_by(approval_type: :department)
+  end
+
+  def check_and_update_status!
+    return unless pending?
+
+    # Attendanceは部署承認のみ（労務承認不要）
+    dept_approved = department_approval&.approved?
+
+    if dept_approved
+      approve! if may_approve?
+    elsif department_approval&.rejected?
+      reject! if may_reject?
+    end
   end
 
   # Class methods
@@ -158,7 +193,7 @@ class Attendance < ApplicationRecord
         severity: 'error',
         message: "弊社での週20時間制限を超過する予測です（予測: #{breakdown[:predicted_company_hours]}時間）",
         actual: breakdown[:predicted_company_hours],
-        limit: 20
+        limit: 20,
       }
     end
 
@@ -168,7 +203,7 @@ class Attendance < ApplicationRecord
         severity: 'error',
         message: "週40時間制限を超過する予測です（予測: #{breakdown[:predicted_total_hours]}時間）",
         actual: breakdown[:predicted_total_hours],
-        limit: 40
+        limit: 40,
       }
     end
 
@@ -179,7 +214,7 @@ class Attendance < ApplicationRecord
         severity: 'warning',
         message: "弊社での週20時間制限に近づいています（予測: #{breakdown[:predicted_company_hours]}時間）",
         actual: breakdown[:predicted_company_hours],
-        limit: 20
+        limit: 20,
       }
     end
 
@@ -189,35 +224,66 @@ class Attendance < ApplicationRecord
         severity: 'warning',
         message: "週40時間制限に近づいています（予測: #{breakdown[:predicted_total_hours]}時間）",
         actual: breakdown[:predicted_total_hours],
-        limit: 40
+        limit: 40,
       }
     end
 
     {
       has_violations: violations.any?,
       violations: violations,
-      breakdown: breakdown
+      breakdown: breakdown,
     }
   end
 
   private_class_method def self.calculate_sidejob_hours(user, start_date, end_date)
-    # TODO: 掛け持ちバイトの実績記録テーブルが実装されたら、そこから取得
-    # 現時点ではシフト予定から推測
-    0.0
+    # 掛け持ちバイトの実績記録はせず、予定時間を実績として扱う
+    # 理由: 掛け持ち先の実績を記録する労力が大きく、管理コストに見合わない
+
+    week = Week.find_by(start_date: start_date)
+    return 0.0 unless week
+
+    weekly_shift = user.weekly_shifts
+                       .where(week: week)
+                       .where(status: [:confirmed, :approved])
+                       .first
+
+    return 0.0 unless weekly_shift
+
+    # 該当期間（start_date ~ end_date）の掛け持ちバイト予定時間を取得
+    sidejob_schedules = weekly_shift.daily_schedules
+                                    .where(schedule_date: start_date..end_date)
+
+    sidejob_schedules.sum(&:sidejob_actual_hours).to_f
   end
 
   private_class_method def self.fetch_remaining_shifts(user, start_date, end_date)
     # 今週の残り日数のシフト予定を取得
     today = Date.current
-    remaining_dates = (today..end_date).to_a
+    remaining_dates = ((today + 1.day)..end_date).to_a
 
-    # ShiftRequestから該当週のデータを取得
-    # TODO: ShiftRequestモデルとの連携実装
-    # 現時点では簡易的にゼロを返す
+    return { company: 0.0, sidejob: 0.0 } if remaining_dates.empty?
+
+    # 該当週のWeeklyShiftとDailyScheduleを取得
+    week = Week.find_by(start_date: start_date)
+    return { company: 0.0, sidejob: 0.0 } unless week
+
+    weekly_shift = user.weekly_shifts
+                       .where(week: week)
+                       .where(status: [:tentative, :confirmed, :approved])
+                       .first
+
+    return { company: 0.0, sidejob: 0.0 } unless weekly_shift
+
+    # 残りの日付のシフト予定時間を集計
+    remaining_schedules = weekly_shift.daily_schedules
+                                      .where(schedule_date: remaining_dates)
+
+    company_hours = remaining_schedules.sum(&:company_actual_hours).to_f
+    sidejob_hours = remaining_schedules.sum(&:sidejob_actual_hours).to_f
 
     {
-      company: 0.0,
-      sidejob: 0.0
+      company: company_hours,
+      sidejob: sidejob_hours,
     }
   end
 

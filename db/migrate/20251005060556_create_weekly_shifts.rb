@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateWeeklyShifts < ActiveRecord::Migration[7.1]
   def change
     create_table :weekly_shifts do |t|

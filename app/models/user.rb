@@ -241,8 +241,9 @@ class User < ApplicationRecord
     # 1. 契約期間内チェック
     return false unless contract_active?(target_date)
 
-    # 2. 過去月・当月は編集不可
-    target_date > today.beginning_of_month
+    # 2. 過去月は編集不可、当月・来月以降は編集可能
+    # （学業優先のため、当月も柔軟に変更可能）
+    target_date >= today.beginning_of_month
   end
 
   # 締切日を過ぎているかチェック（25日締切）
