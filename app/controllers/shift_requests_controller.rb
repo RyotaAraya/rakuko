@@ -28,6 +28,12 @@ class ShiftRequestsController < ApplicationController
   end
 
   def create
+    # 編集権限チェック
+    unless @can_edit
+      render json: { success: false, errors: ['この月のシフトは編集できません（過去月または契約期間外）'] }, status: :forbidden
+      return
+    end
+
     # 週間シフトデータの保存または更新
     result = save_weekly_shifts(params[:weeks_data])
 
@@ -49,6 +55,12 @@ class ShiftRequestsController < ApplicationController
   end
 
   def update
+    # 編集権限チェック
+    unless @can_edit
+      render json: { success: false, errors: ['この月のシフトは編集できません（過去月または契約期間外）'] }, status: :forbidden
+      return
+    end
+
     # 週間シフトの個別更新
     weekly_shift = current_user.weekly_shifts.find_by(id: params[:weekly_shift_id])
 
@@ -62,6 +74,7 @@ class ShiftRequestsController < ApplicationController
   private
 
   def set_target_date
+    # デフォルトは今月（当月も編集可能）
     @target_year = params[:year]&.to_i || Date.current.year
     @target_month = params[:month]&.to_i || Date.current.month
     @target_date = Date.new(@target_year, @target_month, 1)
