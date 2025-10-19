@@ -72,13 +72,13 @@ erDiagram
     daily_schedules["daily_schedules<br/>(日別スケジュール)"] {
         bigint id PK "主キー"
         bigint weekly_shift_id FK "週別シフトID"
-        date date "対象日"
-        string company_start_time "自社開始時刻(HH:MM形式、文字列)"
-        string company_end_time "自社終了時刻(HH:MM形式、文字列)"
-        string sidejob_start_time "掛け持ち開始時刻(HH:MM形式、文字列)"
-        string sidejob_end_time "掛け持ち終了時刻(HH:MM形式、文字列)"
-        boolean is_company_working "自社勤務フラグ"
-        boolean is_sidejob_working "掛け持ち勤務フラグ"
+        date schedule_date "対象日"
+        string company_start_time "弊社勤務開始時間(HH:MM形式、文字列)"
+        string company_end_time "弊社勤務終了時間(HH:MM形式、文字列)"
+        string sidejob_start_time "掛け持ち開始時間(HH:MM形式、文字列)"
+        string sidejob_end_time "掛け持ち終了時間(HH:MM形式、文字列)"
+        decimal company_actual_hours "弊社実労働時間"
+        decimal sidejob_actual_hours "掛け持ち実労働時間"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
     }
@@ -242,6 +242,7 @@ erDiagram
 - 週20h/合計40h制限の自動検知機能
 - `violation_warnings`(JSON)で制限違反の詳細記録
 - 週単位での前月データ参照による正確な制限チェック
+- `daily_schedules`の`company_actual_hours`/`sidejob_actual_hours`で実労働時間を自動計算・保存
 
 ### 5. 外部システム連携の詳細化
 - ジョブカン・ラクローの完了状況とタイムスタンプを管理
