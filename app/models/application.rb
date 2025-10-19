@@ -15,7 +15,6 @@ class Application < ApplicationRecord
   }
 
   enum :status, {
-    draft: 0,
     pending: 1,
     approved: 2,
     rejected: 3,
@@ -23,14 +22,9 @@ class Application < ApplicationRecord
 
   # AASM 状態管理
   aasm column: :status, enum: true do
-    state :draft, initial: true
-    state :pending
+    state :pending, initial: true
     state :approved
     state :rejected
-
-    event :submit do
-      transitions from: :draft, to: :pending, after: :create_approval_records
-    end
 
     event :approve_final do
       transitions from: :pending, to: :approved
@@ -39,16 +33,15 @@ class Application < ApplicationRecord
     event :reject_final do
       transitions from: :pending, to: :rejected
     end
-
-    event :return_to_draft do
-      transitions from: :pending, to: :draft
-    end
   end
+
+  # Callbacks
+  after_create :create_approval_records
 
   # Validations
   validates :application_type, presence: true
   validates :application_date, presence: true
-  validates :reason, presence: true, length: { minimum: 10, maximum: 500 }
+  validates :reason, presence: true, length: { minimum: 5, maximum: 500 }
   validates :status, presence: true
   validate :time_fields_for_type
   validate :application_date_not_past
@@ -74,7 +67,6 @@ class Application < ApplicationRecord
 
   def status_display_name
     {
-      'draft' => '下書き',
       'pending' => '承認待ち',
       'approved' => '承認済み',
       'rejected' => '却下',
@@ -84,26 +76,26 @@ class Application < ApplicationRecord
   def time_display
     case application_type
     when 'absence'
-      '終日'
+      '終日欠勤'
     when 'late'
-      "#{start_time.strftime('%H:%M')}から出勤"
+      '遅刻'
     when 'early_leave'
-      "#{end_time.strftime('%H:%M')}に早退"
+      '早退'
     when 'shift_change'
-      "#{start_time.strftime('%H:%M')} - #{end_time.strftime('%H:%M')}"
+      start_time && end_time ? "#{start_time.strftime('%H:%M')} - #{end_time.strftime('%H:%M')}" : 'シフト変更'
     end
   end
 
   def requires_times?
-    %w[late early_leave shift_change].include?(application_type)
+    %w[shift_change].include?(application_type)
   end
 
   def requires_start_time?
-    %w[late shift_change].include?(application_type)
+    %w[shift_change].include?(application_type)
   end
 
   def requires_end_time?
-    %w[early_leave shift_change].include?(application_type)
+    %w[shift_change].include?(application_type)
   end
 
   def affects_attendance?
@@ -195,15 +187,15 @@ class Application < ApplicationRecord
   end
 
   def validate_late_times
-    # 遅刻は開始時刻のみ必要
-    errors.add(:start_time, '遅刻申請では開始時刻が必要です') if start_time.blank?
+    # 遅刻は時刻入力不要（理由欄に記載）
+    errors.add(:start_time, '遅刻申請では開始時刻は不要です') if start_time.present?
     errors.add(:end_time, '遅刻申請では終了時刻は不要です') if end_time.present?
   end
 
   def validate_early_leave_times
-    # 早退は終了時刻のみ必要
+    # 早退は時刻入力不要（理由欄に記載）
     errors.add(:start_time, '早退申請では開始時刻は不要です') if start_time.present?
-    errors.add(:end_time, '早退申請では終了時刻が必要です') if end_time.blank?
+    errors.add(:end_time, '早退申請では終了時刻は不要です') if end_time.present?
   end
 
   def validate_shift_change_times
