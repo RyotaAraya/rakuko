@@ -1,5 +1,7 @@
 <% content_for :title, "新規申請" %>
 
+<%= render 'shared/header' %>
+
 <style>
   .container {
     max-width: 700px;
@@ -188,7 +190,7 @@
         <% end %>
         <div class="radio-group">
           <div class="radio-item">
-            <%= f.radio_button :application_type, "absence", id: "type-absence", required: true %>
+            <%= f.radio_button :application_type, "absence", id: "type-absence", required: true, checked: true %>
             <%= f.label :application_type, "欠勤", value: "absence", for: "type-absence" %>
           </div>
           <div class="radio-item">
@@ -208,7 +210,6 @@
           対象日<span class="required">*</span>
         <% end %>
         <%= f.date_field :application_date, class: "form-input", required: true %>
-        <div class="helper-text">申請の対象となる日付を選択してください</div>
       </div>
 
       <!-- 理由 -->
@@ -216,8 +217,7 @@
         <%= f.label :reason, class: "form-label" do %>
           理由<span class="required">*</span>
         <% end %>
-        <%= f.text_area :reason, class: "form-textarea", placeholder: "例: 体調不良のため、本日は欠勤させていただきます。", required: true %>
-        <div class="helper-text">申請理由を具体的に記入してください（10文字以上500文字以内）</div>
+        <%= f.text_area :reason, class: "form-textarea", placeholder: "例: 体調不良のため、本日は欠勤させていただきます。", required: true, minlength: 5, maxlength: 500 %>
       </div>
 
       <!-- ボタン -->

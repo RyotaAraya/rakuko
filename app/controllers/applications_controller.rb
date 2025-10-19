@@ -6,7 +6,7 @@ class ApplicationsController < ApplicationController
 
   # GET /applications
   def index
-    @applications = current_user.applications.recent.page(params[:page])
+    @applications = current_user.applications.recent
   end
 
   # GET /applications/:id
@@ -15,6 +15,7 @@ class ApplicationsController < ApplicationController
   # GET /applications/new
   def new
     @application = current_user.applications.build(
+      application_type: :absence,
       application_date: Date.current
     )
   end
@@ -27,12 +28,7 @@ class ApplicationsController < ApplicationController
     @application = current_user.applications.build(application_params)
 
     if @application.save
-      # 申請を提出状態に変更（承認レコード作成）
-      if @application.submit
-        redirect_to applications_path, notice: '申請を提出しました。'
-      else
-        redirect_to applications_path, notice: '申請を保存しました。'
-      end
+      redirect_to applications_path, notice: '申請を提出しました。'
     else
       render :new, status: :unprocessable_entity
     end

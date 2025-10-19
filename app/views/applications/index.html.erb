@@ -1,5 +1,7 @@
 <% content_for :title, "申請一覧" %>
 
+<%= render 'shared/header' %>
+
 <style>
   .container {
     max-width: 1200px;
@@ -68,10 +70,6 @@
     font-size: 12px;
     font-weight: 600;
     display: inline-block;
-  }
-  .status-draft {
-    background: #e0e0e0;
-    color: #666;
   }
   .status-pending {
     background: #fff3e0;
