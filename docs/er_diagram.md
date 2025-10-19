@@ -226,10 +226,10 @@ erDiagram
 - `applications`、`attendances`、`month_end_closings`でstatusカラムによる状態遷移管理
 - 承認が必要な機能に対する明確な制御
 
-### 2. 並列承認ワークフロー
-- ポリモーフィック`approvals`テーブルで部署・労務の独立承認を管理
+### 2. 承認ワークフロー
+- ポリモーフィック`approvals`テーブルで部署担当者による承認を管理
 - `applications`、`attendances`、`month_end_closings`に対する承認プロセス
-- ボトルネックのない承認プロセス
+- 部署担当者の承認のみでシンプルに完結
 
 ### 3. 週中心設計による月跨ぎ問題の解決
 - `weeks`テーブルを基軸とした設計で月境界を自然に処理

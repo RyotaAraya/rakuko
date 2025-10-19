@@ -103,10 +103,8 @@ class Notification < ApplicationRecord
   # Class methods
   def self.create_approval_request(approval)
     approver = case approval.approval_type
-               when 'department_approval'
+               when 'department'
                  User.department_managers.first
-               when 'labor_approval'
-                 User.hr_managers.first
                end
 
     return unless approver

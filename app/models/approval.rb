@@ -8,8 +8,7 @@ class Approval < ApplicationRecord
 
   # Enums
   enum :approval_type, {
-    department: 0,     # 部署承認
-    labor: 1,          # 労務承認
+    department: 0, # 部署承認
   }
 
   enum :status, {
@@ -49,7 +48,6 @@ class Approval < ApplicationRecord
   scope :pending_approval, -> { where(status: :pending) }
   scope :completed, -> { where(status: [:approved, :rejected]) }
   scope :department_approvals, -> { where(approval_type: :department) }
-  scope :labor_approvals, -> { where(approval_type: :labor) }
   scope :recent, -> { order(created_at: :desc) }
 
   # Helper methods
@@ -57,8 +55,6 @@ class Approval < ApplicationRecord
     case approval_type
     when 'department'
       '部署承認'
-    when 'labor'
-      '労務承認'
     end
   end
 
@@ -103,8 +99,6 @@ class Approval < ApplicationRecord
   def self.pending_for_approver(user)
     if user.department_manager?
       where(approval_type: :department, status: :pending)
-    elsif user.hr_manager?
-      where(approval_type: :labor, status: :pending)
     elsif user.system_admin?
       where(status: :pending)
     else
@@ -115,7 +109,6 @@ class Approval < ApplicationRecord
   def self.create_for_approvable(approvable)
     approvals = []
     approvals.concat(create_department_approvals(approvable))
-    approvals.concat(create_labor_approvals(approvable))
     approvals
   end
 
@@ -129,24 +122,10 @@ class Approval < ApplicationRecord
     )]
   end
 
-  def self.create_labor_approvals(approvable)
-    return [] unless requires_labor_approval?(approvable)
-
-    [new(
-      approvable: approvable,
-      approval_type: :labor,
-      status: :pending
-    )]
-  end
-
   def self.requires_department_approval?(approvable)
-    # シフト、申請、勤怠は部署承認が必要
-    %w[Shift Application Attendance].include?(approvable.class.name)
-  end
-
-  def self.requires_labor_approval?(approvable)
-    # シフト、申請は労務承認も必要
-    %w[Shift Application].include?(approvable.class.name)
+    # Application（申請）、Attendance（勤怠）、MonthEndClosing（月末締め）は部署承認が必要
+    # Shift（シフト希望）は承認不要
+    %w[Application Attendance MonthEndClosing].include?(approvable.class.name)
   end
 
   private
@@ -164,7 +143,7 @@ class Approval < ApplicationRecord
     self.approved_at = Time.current
     save!
 
-    # 並列承認システム: approvableの状態を更新
+    # 承認システム: approvableの状態を更新
     approvable.check_and_update_status! if approvable.respond_to?(:check_and_update_status!)
   end
 
@@ -172,7 +151,7 @@ class Approval < ApplicationRecord
     self.approved_at = Time.current
     save!
 
-    # 並列承認システム: approvableの状態を更新
+    # 承認システム: approvableの状態を更新
     approvable.check_and_update_status! if approvable.respond_to?(:check_and_update_status!)
   end
 end

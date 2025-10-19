@@ -21,6 +21,9 @@ Rails.application.routes.draw do
   # 部署管理（管理者権限のみ）
   resources :departments
 
+  # 各種申請（欠勤・遅刻・早退）
+  resources :applications
+
   # シフト希望提出
   resources :shift_requests, only: [:new, :create, :update]
 

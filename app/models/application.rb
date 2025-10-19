@@ -136,46 +136,33 @@ class Application < ApplicationRecord
     for_month(current_date.year, current_date.month).where(user: user)
   end
 
-  # 並列承認システム関連メソッド
+  # 承認システム関連メソッド
   def department_approval
     approvals.find_by(approval_type: :department)
   end
 
-  def labor_approval
-    approvals.find_by(approval_type: :labor)
-  end
-
-  # 並列承認システム: 両方承認されたら approved に
+  # 部署承認のみで完了
   def check_and_update_status!
     return unless pending?
 
     dept_approved = department_approval&.approved?
-    labor_approved = labor_approval&.approved?
 
-    if dept_approved && labor_approved
+    if dept_approved
       approve_final! if may_approve_final?
-    elsif department_approval&.rejected? || labor_approval&.rejected?
+    elsif department_approval&.rejected?
       reject_final! if may_reject_final?
     end
   end
 
   private
 
-  # AASM submit イベント後に承認レコードを作成
+  # AASM submit イベント後に承認レコードを作成（部署承認のみ）
   def create_approval_records
     # 既存の承認レコードがなければ作成
     unless department_approval
       approvals.create!(
         approver_id: find_department_approver_id,
         approval_type: :department,
-        status: :pending
-      )
-    end
-
-    unless labor_approval
-      approvals.create!(
-        approver_id: find_labor_approver_id,
-        approval_type: :labor,
         status: :pending
       )
     end
@@ -195,11 +182,6 @@ class Application < ApplicationRecord
     department.users.joins(:user_roles)
               .where(user_roles: { role_id: department_manager_role.id })
               .first&.id || User.with_role(:department_manager).first&.id
-  end
-
-  def find_labor_approver_id
-    # 労務担当者（hr_manager権限）を取得
-    User.with_role(:hr_manager).first&.id
   end
 
   def time_fields_for_type
@@ -233,6 +215,7 @@ class Application < ApplicationRecord
   def application_date_not_past
     return if application_date.blank?
 
+    # 当日以降のみ申請可能（当日を含む）
     errors.add(:application_date, '過去の日付は申請できません') if application_date < Date.current
   end
 

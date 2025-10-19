@@ -1,0 +1,168 @@
+<% content_for :title, "申請一覧" %>
+
+<style>
+  .container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .btn-new {
+    padding: 10px 24px;
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+  .btn-new:hover {
+    background: #1565c0;
+  }
+  .applications-table {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead {
+    background: #f5f5f5;
+  }
+  th {
+    text-align: left;
+    padding: 16px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #666;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  td {
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+  }
+  tbody tr:hover {
+    background: #f9f9f9;
+  }
+  .status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .status-draft {
+    background: #e0e0e0;
+    color: #666;
+  }
+  .status-pending {
+    background: #fff3e0;
+    color: #e65100;
+  }
+  .status-approved {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  .status-rejected {
+    background: #ffebee;
+    color: #c62828;
+  }
+  .type-badge {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .type-absence {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+  .type-late {
+    background: #fff3e0;
+    color: #f57c00;
+  }
+  .type-early_leave {
+    background: #fce4ec;
+    color: #c2185b;
+  }
+  .empty-state {
+    padding: 60px 24px;
+    text-align: center;
+    color: #999;
+  }
+  .empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+  .empty-state-text {
+    font-size: 16px;
+  }
+</style>
+
+<div class="container">
+  <div class="page-header">
+    <h2 class="page-title">申請一覧</h2>
+    <%= link_to "新規申請", new_application_path, class: "btn-new" %>
+  </div>
+
+  <% if @applications.any? %>
+    <div class="applications-table">
+      <table>
+        <thead>
+          <tr>
+            <th>申請種別</th>
+            <th>対象日</th>
+            <th>理由</th>
+            <th>ステータス</th>
+            <th>申請日時</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @applications.each do |application| %>
+            <tr>
+              <td>
+                <span class="type-badge type-<%= application.application_type %>">
+                  <%= application.application_type_display_name %>
+                </span>
+              </td>
+              <td><%= application.application_date.strftime('%Y年%m月%d日') %></td>
+              <td><%= truncate(application.reason, length: 50) %></td>
+              <td>
+                <span class="status-badge status-<%= application.status %>">
+                  <%= application.status_display_name %>
+                </span>
+              </td>
+              <td><%= application.created_at.strftime('%Y/%m/%d %H:%M') %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="applications-table">
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">申請がありません</div>
+      </div>
+    </div>
+  <% end %>
+</div>
