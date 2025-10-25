@@ -7,16 +7,19 @@
   }
   .header {
     border-bottom: 1px solid #ddd;
-    padding: 15px 0;
     background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
   .header-content {
     max-width: 1200px;
     margin: 0 auto;
+    padding: 0 20px;
+  }
+  .header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
+    padding: 15px 0;
   }
   .header h1 {
     margin: 0;
@@ -32,6 +35,18 @@
     align-items: center;
     gap: 15px;
   }
+  .user-name {
+    font-size: 14px;
+    color: #333;
+  }
+  .user-role {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #e3f2fd;
+    color: #1976d2;
+    font-weight: 600;
+  }
   .logout-btn {
     padding: 8px 16px;
     border: 1px solid #ccc;
@@ -40,18 +55,102 @@
     font-size: 14px;
     text-decoration: none;
     color: black;
+    border-radius: 4px;
+    transition: background 0.2s;
   }
   .logout-btn:hover {
     background: #e8e8e8;
+  }
+  .nav-menu {
+    display: flex;
+    gap: 0;
+    border-top: 1px solid #e0e0e0;
+  }
+  .nav-item {
+    padding: 12px 20px;
+    text-decoration: none;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .nav-item:hover {
+    color: #1976d2;
+    background: #f5f5f5;
+  }
+  .nav-item.active {
+    color: #1976d2;
+    border-bottom-color: #1976d2;
+  }
+  .badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #f44336;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
   }
 </style>
 
 <header class="header">
   <div class="header-content">
-    <h1><%= link_to "勤怠管理システム", root_path %></h1>
-    <div class="user-info">
-      <span style="font-size: 14px;"><%= current_user.display_name %></span>
-      <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
+    <div class="header-top">
+      <h1><%= link_to "勤怠管理システム", root_path %></h1>
+      <div class="user-info">
+        <div>
+          <div class="user-name"><%= current_user.display_name %></div>
+          <div class="user-role"><%= current_user.primary_role_display_name %></div>
+        </div>
+        <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
+      </div>
     </div>
+
+    <!-- 権限別ナビゲーション -->
+    <nav class="nav-menu">
+      <!-- 全ユーザー共通 -->
+      <%= link_to "ホーム", root_path, class: "nav-item #{'active' if current_page?(root_path)}" %>
+
+      <% if current_user.student? %>
+        <!-- 学生用メニュー -->
+        <%= link_to "シフト提出", new_shift_request_path, class: "nav-item #{'active' if current_page?(new_shift_request_path)}" %>
+        <%= link_to "勤怠登録", today_attendances_path, class: "nav-item #{'active' if current_page?(today_attendances_path)}" %>
+        <%= link_to "各種申請", new_application_path, class: "nav-item #{'active' if current_page?(new_application_path)}" %>
+        <%= link_to "申請履歴", applications_path, class: "nav-item #{'active' if current_page?(applications_path)}" %>
+      <% end %>
+
+      <% if current_user.department_manager? %>
+        <!-- 部署担当者用メニュー -->
+        <%= link_to "シフト提出", new_shift_request_path, class: "nav-item #{'active' if current_page?(new_shift_request_path)}" %>
+        <%= link_to "勤怠登録", today_attendances_path, class: "nav-item #{'active' if current_page?(today_attendances_path)}" %>
+        <%= link_to "各種申請", new_application_path, class: "nav-item #{'active' if current_page?(new_application_path)}" %>
+        <%= link_to approvals_path, class: "nav-item #{'active' if current_page?(approvals_path)}", style: "position: relative;" do %>
+          承認待ち
+          <% pending_count = Approval.pending_for_approver(current_user).count %>
+          <% if pending_count > 0 %>
+            <span class="badge"><%= pending_count %></span>
+          <% end %>
+        <% end %>
+      <% end %>
+
+      <% if current_user.system_admin? %>
+        <!-- システム管理者用メニュー -->
+        <%= link_to "ユーザー管理", admin_users_path, class: "nav-item #{'active' if current_page?(admin_users_path)}" %>
+        <%= link_to "部署管理", departments_path, class: "nav-item #{'active' if current_page?(departments_path)}" %>
+        <% pending_users_count = User.where(status: :pending).count %>
+        <%= link_to pending_approvals_index_path, class: "nav-item #{'active' if current_page?(pending_approvals_index_path)}", style: "position: relative;" do %>
+          承認待ちユーザー
+          <% if pending_users_count > 0 %>
+            <span class="badge"><%= pending_users_count %></span>
+          <% end %>
+        <% end %>
+      <% end %>
+    </nav>
   </div>
 </header>
