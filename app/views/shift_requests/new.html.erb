@@ -48,17 +48,6 @@
   }
 </style>
 
-<!-- ヘッダー -->
-<header class="header">
-  <div class="header-content">
-    <h1>勤怠管理システム > シフト希望提出</h1>
-    <div class="user-info">
-      <span style="font-size: 14px;"><%= current_user.display_name %></span>
-      <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
-    </div>
-  </div>
-</header>
-
 <div class="container">
   <!-- 月選択UI -->
   <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px;">

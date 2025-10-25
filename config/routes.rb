@@ -24,6 +24,14 @@ Rails.application.routes.draw do
   # 各種申請（欠勤・遅刻・早退）
   resources :applications
 
+  # 承認管理（部署担当者用）
+  resources :approvals, only: [:index] do
+    member do
+      post :approve
+      post :reject
+    end
+  end
+
   # シフト希望提出
   resources :shift_requests, only: [:new, :create, :update]
 
