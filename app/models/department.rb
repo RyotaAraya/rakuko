@@ -2,7 +2,7 @@
 
 class Department < ApplicationRecord
   # Enums
-  enum :department_type, { general: 0, labor: 1, management: 2 }
+  enum :department_type, { general: 0, management: 1 }
 
   # Associations
   has_many :users, dependent: :nullify
@@ -22,7 +22,6 @@ class Department < ApplicationRecord
   def type_display_name
     {
       'general' => '一般部署',
-      'labor' => '労務部署',
       'management' => '管理部署',
     }[department_type]
   end

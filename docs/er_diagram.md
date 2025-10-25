@@ -22,7 +22,7 @@ erDiagram
     departments["departments<br/>(部署)"] {
         bigint id PK "主キー"
         varchar name "部署名"
-        enum type "部署種別(一般,労務,管理)"
+        enum type "部署種別(一般,管理)"
         text description "部署説明"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
@@ -30,7 +30,7 @@ erDiagram
 
     roles["roles<br/>(権限)"] {
         bigint id PK "主キー"
-        enum name "権限名(学生,部署管理者,労務,システム管理者)"
+        enum name "権限名(学生,部署管理者,システム管理者)"
         varchar description "権限説明"
         timestamp created_at "作成日時"
         timestamp updated_at "更新日時"
@@ -156,7 +156,7 @@ erDiagram
         varchar approvable_type "承認対象タイプ(ポリモーフィック関連)"
         bigint approvable_id "承認対象ID(ポリモーフィック関連)"
         bigint approver_id FK "承認者ID"
-        enum approval_type "承認種別(部署承認,労務承認)"
+        enum approval_type "承認種別(部署承認)"
         enum status "承認状態(承認待ち,承認済み,却下)"
         text comment "承認コメント"
         timestamp approved_at "承認日時"
@@ -259,7 +259,7 @@ erDiagram
 
 ### 8. 権限の柔軟性
 - `user_roles`テーブルで複数権限の兼任を可能に
-- 部署担当者かつ労務担当者などの複雑な権限構成に対応
+- 部署担当者とシステム管理者などの複雑な権限構成に対応
 
 ### 9. 契約期間管理
 - `users`テーブルで学生アルバイトの契約期間を管理

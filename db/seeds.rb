@@ -19,7 +19,6 @@ end
 Rails.logger.debug 'Creating departments...'
 initial_departments = [
   { name: '情報システム部', department_type: :management, description: 'システム管理・運用を担当' },
-  { name: '人事労務部', department_type: :labor, description: '労務管理・人事業務を担当' },
   { name: '営業部', department_type: :general, description: '営業活動を担当する一般事業部' },
   { name: '開発部', department_type: :general, description: 'プロダクト開発を担当する一般事業部' },
 ]
@@ -53,28 +52,12 @@ development_users = [
     department: '営業部',
   },
   {
-    email: 'hr.manager@example.com',
-    first_name: '労務',
-    last_name: '担当者',
-    roles: [:hr_manager],
-    status: :active,
-    department: '人事労務部',
-  },
-  {
     email: 'system.admin@example.com',
     first_name: 'システム',
     last_name: '管理者',
     roles: [:system_admin],
     status: :active,
     department: '情報システム部',
-  },
-  {
-    email: 'multi.role@example.com',
-    first_name: '複数権限',
-    last_name: 'ユーザー',
-    roles: [:department_manager, :hr_manager],
-    status: :active,
-    department: '人事労務部',
   },
   {
     email: 'pending.user@example.com',
@@ -230,7 +213,7 @@ end
 # 7. 月末締めデータの作成
 Rails.logger.debug 'Creating sample month-end closing data...'
 if student_user
-  hr_manager = User.find_by(email: 'hr.manager@example.com')
+  department_manager = User.find_by(email: 'department.manager@example.com')
   last_month = Date.current.last_month
 
   student_user.month_end_closings.find_or_create_by(
@@ -241,7 +224,7 @@ if student_user
     closing.total_work_hours = 80
     closing.total_work_days = 20
     closing.overtime_hours = 0
-    closing.closed_by = hr_manager
+    closing.closed_by = department_manager
     closing.closed_at = last_month.end_of_month
   end
 
@@ -315,7 +298,6 @@ Rails.logger.debug 'Available test accounts:'
 Rails.logger.debug '========================'
 Rails.logger.debug '学生ユーザー: student@example.com'
 Rails.logger.debug '部署管理者: department.manager@example.com'
-Rails.logger.debug '労務担当者: hr.manager@example.com'
 Rails.logger.debug 'システム管理者: system.admin@example.com'
 Rails.logger.debug '承認待ちユーザー: pending.user@example.com'
 Rails.logger.debug ''

@@ -99,8 +99,6 @@ class Approval < ApplicationRecord
   def self.pending_for_approver(user)
     if user.department_manager?
       where(approval_type: :department, status: :pending)
-    elsif user.system_admin?
-      where(status: :pending)
     else
       none
     end
