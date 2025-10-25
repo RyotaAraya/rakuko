@@ -8,7 +8,11 @@ module Admin
     def index
       authorize [:admin, User]
       @pending_users = policy_scope([:admin, User]).pending.includes(:department, :roles).order(:created_at)
-      @active_users = policy_scope([:admin, User]).active.includes(:department, :roles).order(:first_name, :last_name)
+
+      # 検索・フィルタリング
+      @active_users = filter_active_users
+      @departments = Department.order(:name)
+      @roles = Role.order(:name)
 
       # 週次労働時間の制限違反チェック
       @weekly_violations = check_all_users_violations(@active_users)
@@ -112,6 +116,34 @@ module Admin
       new_roles.each do |role|
         @user.add_role(role.name)
       end
+    end
+
+    def filter_active_users
+      users = policy_scope([:admin, User]).active.includes(:department, :roles)
+      users = apply_search_filter(users)
+      users = apply_department_filter(users)
+      users = apply_role_filter(users)
+      users.order(:first_name, :last_name)
+    end
+
+    def apply_search_filter(users)
+      return users if params[:search].blank?
+
+      search_term = "%#{params[:search]}%"
+      users.where('first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ?',
+                  search_term, search_term, search_term)
+    end
+
+    def apply_department_filter(users)
+      return users if params[:department_id].blank?
+
+      users.where(department_id: params[:department_id])
+    end
+
+    def apply_role_filter(users)
+      return users if params[:role_id].blank?
+
+      users.joins(:user_roles).where(user_roles: { role_id: params[:role_id] }).distinct
     end
 
     def check_all_users_violations(users)

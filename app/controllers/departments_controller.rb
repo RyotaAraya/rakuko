@@ -11,7 +11,8 @@ class DepartmentsController < ApplicationController
 
   def show
     authorize @department
-    @users = @department.users.includes(:department).order(:first_name, :last_name)
+    @users = @department.users.includes(:roles).order(:first_name, :last_name)
+    calculate_department_statistics
   end
 
   def new
@@ -63,5 +64,26 @@ class DepartmentsController < ApplicationController
 
   def department_params
     params.require(:department).permit(:name, :description, :department_type)
+  end
+
+  def calculate_department_statistics
+    @statistics = {
+      total_members: @users.count,
+      active_members: count_by_status(:active),
+      pending_members: count_by_status(:pending),
+      students_count: count_by_role(:student),
+      managers_count: count_by_role(:department_manager),
+    }
+  end
+
+  def count_by_status(status)
+    @users.where(status: status).count
+  end
+
+  def count_by_role(role_name)
+    role = Role.find_by(name: role_name)
+    return 0 unless role
+
+    @users.joins(:user_roles).where(user_roles: { role: role }).distinct.count
   end
 end
