@@ -45,6 +45,40 @@
       </div>
     </div>
 
+    <!-- 部署統計情報 -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-8">
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dt class="text-sm font-medium text-gray-500 truncate">所属メンバー</dt>
+          <dd class="mt-1 text-3xl font-semibold text-gray-900"><%= @statistics[:total_members] %>名</dd>
+        </div>
+      </div>
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dt class="text-sm font-medium text-gray-500 truncate">アクティブ</dt>
+          <dd class="mt-1 text-3xl font-semibold text-green-600"><%= @statistics[:active_members] %>名</dd>
+        </div>
+      </div>
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dt class="text-sm font-medium text-gray-500 truncate">承認待ち</dt>
+          <dd class="mt-1 text-3xl font-semibold text-yellow-600"><%= @statistics[:pending_members] %>名</dd>
+        </div>
+      </div>
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dt class="text-sm font-medium text-gray-500 truncate">アルバイト</dt>
+          <dd class="mt-1 text-3xl font-semibold text-blue-600"><%= @statistics[:students_count] %>名</dd>
+        </div>
+      </div>
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <dt class="text-sm font-medium text-gray-500 truncate">部署担当者</dt>
+          <dd class="mt-1 text-3xl font-semibold text-purple-600"><%= @statistics[:managers_count] %>名</dd>
+        </div>
+      </div>
+    </div>
+
     <!-- 部署詳細情報 -->
     <div class="bg-white shadow sm:rounded-lg mb-8">
       <div class="px-4 py-5 sm:p-6">
@@ -127,24 +161,9 @@
                           <div class="text-sm text-gray-900"><%= user.email %></div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                          <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                            <%= case user.role
-                                when 'student'
-                                  'bg-blue-100 text-blue-800'
-                                when 'department_manager'
-                                  'bg-green-100 text-green-800'
-                                when 'system_admin'
-                                  'bg-red-100 text-red-800'
-                                end %>">
-                            <%= case user.role
-                                when 'student'
-                                  'アルバイト'
-                                when 'department_manager'
-                                  '部署担当者'
-                                when 'system_admin'
-                                  'システム管理者'
-                                end %>
-                          </span>
+                          <div class="text-sm text-gray-900">
+                            <%= user.role_display_names %>
+                          </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full

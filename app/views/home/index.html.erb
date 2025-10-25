@@ -259,17 +259,11 @@
           <div class="menu-title">承認待ち一覧</div>
           <div class="menu-desc">部署メンバーの申請を承認</div>
         <% end %>
-        <%= link_to new_shift_request_path, class: "menu-item" do %>
-          <div class="menu-title">シフト希望提出</div>
-          <div class="menu-desc">自分のシフトを入力</div>
-        <% end %>
-        <%= link_to today_attendances_path, class: "menu-item" do %>
-          <div class="menu-title">勤怠登録</div>
-          <div class="menu-desc">自分の出退勤を記録</div>
-        <% end %>
-        <%= link_to new_application_path, class: "menu-item" do %>
-          <div class="menu-title">各種申請</div>
-          <div class="menu-desc">自分の欠勤・遅刻・早退申請</div>
+        <% if current_user.department.present? %>
+          <%= link_to department_path(current_user.department), class: "menu-item" do %>
+            <div class="menu-title">部署メンバー管理</div>
+            <div class="menu-desc">所属メンバーの確認</div>
+          <% end %>
         <% end %>
       </div>
     <% end %>

@@ -64,7 +64,6 @@
   .nav-menu {
     display: flex;
     gap: 0;
-    border-top: 1px solid #e0e0e0;
   }
   .nav-item {
     padding: 12px 20px;
@@ -103,13 +102,6 @@
   <div class="header-content">
     <div class="header-top">
       <h1><%= link_to "勤怠管理システム", root_path %></h1>
-      <div class="user-info">
-        <div>
-          <div class="user-name"><%= current_user.display_name %></div>
-          <div class="user-role"><%= current_user.primary_role_display_name %></div>
-        </div>
-        <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
-      </div>
     </div>
 
     <!-- 権限別ナビゲーション -->
@@ -127,9 +119,6 @@
 
       <% if current_user.department_manager? %>
         <!-- 部署担当者用メニュー -->
-        <%= link_to "シフト提出", new_shift_request_path, class: "nav-item #{'active' if current_page?(new_shift_request_path)}" %>
-        <%= link_to "勤怠登録", today_attendances_path, class: "nav-item #{'active' if current_page?(today_attendances_path)}" %>
-        <%= link_to "各種申請", new_application_path, class: "nav-item #{'active' if current_page?(new_application_path)}" %>
         <%= link_to approvals_path, class: "nav-item #{'active' if current_page?(approvals_path)}", style: "position: relative;" do %>
           承認待ち
           <% pending_count = Approval.pending_for_approver(current_user).count %>
@@ -137,6 +126,7 @@
             <span class="badge"><%= pending_count %></span>
           <% end %>
         <% end %>
+        <%= link_to "部署メンバー", department_path(current_user.department), class: "nav-item" if current_user.department.present? %>
       <% end %>
 
       <% if current_user.system_admin? %>
@@ -152,5 +142,13 @@
         <% end %>
       <% end %>
     </nav>
+
+    <div class="user-info">
+    <div>
+      <div class="user-name"><%= current_user.display_name %></div>
+      <div class="user-role"><%= current_user.primary_role_display_name %></div>
+    </div>
+    <%= link_to "ログアウト", destroy_user_session_path, class: "logout-btn" %>
+  </div>
   </div>
 </header>
