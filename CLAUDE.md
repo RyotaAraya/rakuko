@@ -43,7 +43,7 @@ The project uses standard Rails testing conventions. Check for test files in `te
 #### Rails Application Structure
 - **Models**: Standard Rails models in `app/models/`
   - `User` model with Devise and OAuth integration
-  - Role-based system with enum (student, department_manager, hr_manager, system_admin)
+  - Role-based system with enum (student, department_manager, system_admin)
 - **Controllers**:
   - `HomeController` for main application entry
   - `Users::OmniauthCallbacksController` for Google OAuth

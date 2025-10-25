@@ -54,7 +54,6 @@
               <%= form.select :department_type,
                               options_for_select([
                                 ['一般部署', 'general'],
-                                ['労務部署', 'labor'],
                                 ['管理部署', 'management']
                               ], @department.department_type),
                               { prompt: '部署種別を選択してください' },
@@ -62,7 +61,6 @@
             </div>
             <p class="mt-2 text-sm text-gray-500">
               <strong>一般部署:</strong> 通常の事業部署（アルバイトと部署担当者が所属）<br>
-              <strong>労務部署:</strong> 労務担当者が所属する部署<br>
               <strong>管理部署:</strong> システム管理者が所属する部署（情報システム部など）
             </p>
           </div>

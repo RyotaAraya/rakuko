@@ -155,23 +155,18 @@ class User < ApplicationRecord
     has_role?(:department_manager)
   end
 
-  def hr_manager?
-    has_role?(:hr_manager)
-  end
-
   def system_admin?
     has_role?(:system_admin)
   end
 
-  # 管理者権限チェック（労務担当者 or システム管理者）
+  # 管理者権限チェック（システム管理者のみ）
   def admin?
-    hr_manager? || system_admin?
+    system_admin?
   end
 
   # 最高レベル権限の取得（表示用）
   def primary_role_display_name
     return 'システム管理者' if system_admin?
-    return '労務担当者' if hr_manager?
     return '部署担当者' if department_manager?
     return 'アルバイト' if student?
 
@@ -257,7 +252,6 @@ class User < ApplicationRecord
 
   # 承認権限を持つユーザーのスコープ
   scope :department_managers, -> { joins(:roles).where(roles: { name: 'department_manager' }) }
-  scope :hr_managers, -> { joins(:roles).where(roles: { name: 'hr_manager' }) }
   scope :system_admins, -> { joins(:roles).where(roles: { name: 'system_admin' }) }
   scope :students, -> { joins(:roles).where(roles: { name: 'student' }) }
 end

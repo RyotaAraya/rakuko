@@ -105,7 +105,7 @@ class Attendance < ApplicationRecord
   def check_and_update_status!
     return unless pending?
 
-    # Attendanceは部署承認のみ（労務承認不要）
+    # Attendanceは部署承認のみ
     dept_approved = department_approval&.approved?
 
     if dept_approved

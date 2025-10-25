@@ -2,7 +2,7 @@
 
 class DepartmentPolicy < ApplicationPolicy
   def index?
-    user.admin? # 労務担当者 or システム管理者のみ
+    user.admin? # システム管理者のみ
   end
 
   def show?
