@@ -24,11 +24,11 @@ class Approval < ApplicationRecord
     state :rejected
 
     event :approve do
-      transitions from: :pending, to: :approved, after: :after_approve
+      transitions from: :pending, to: :approved, after_commit: :after_approve
     end
 
     event :reject do
-      transitions from: :pending, to: :rejected, after: :after_reject
+      transitions from: :pending, to: :rejected, after_commit: :after_reject
     end
   end
 
@@ -138,17 +138,13 @@ class Approval < ApplicationRecord
 
   # AASM イベント後の処理
   def after_approve
-    self.approved_at = Time.current
-    save!
-
+    # approved_atはbefore_saveで設定されるので不要
     # 承認システム: approvableの状態を更新
     approvable.check_and_update_status! if approvable.respond_to?(:check_and_update_status!)
   end
 
   def after_reject
-    self.approved_at = Time.current
-    save!
-
+    # approved_atはbefore_saveで設定されるので不要
     # 承認システム: approvableの状態を更新
     approvable.check_and_update_status! if approvable.respond_to?(:check_and_update_status!)
   end

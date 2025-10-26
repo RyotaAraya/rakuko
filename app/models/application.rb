@@ -37,7 +37,7 @@ class Application < ApplicationRecord
     end
 
     event :cancel do
-      transitions from: :pending, to: :canceled
+      transitions from: :pending, to: :canceled, after: :cancel_pending_approvals
     end
 
     event :resubmit do
@@ -108,11 +108,13 @@ class Application < ApplicationRecord
   def check_and_update_status!
     return unless pending?
 
-    dept_approved = department_approval&.approved?
+    # approvals関連をリロードして最新の状態を取得
+    approvals.reload
+    dept_approval = department_approval
 
-    if dept_approved
+    if dept_approval&.approved?
       approve_final! if may_approve_final?
-    elsif department_approval&.rejected?
+    elsif dept_approval&.rejected?
       reject_final! if may_reject_final?
     end
   end
@@ -126,6 +128,11 @@ class Application < ApplicationRecord
   end
 
   private
+
+  # 取り消し時に承認待ちの承認レコードを削除
+  def cancel_pending_approvals
+    approvals.where(status: :pending).destroy_all
+  end
 
   # AASM submit イベント後に承認レコードを作成（部署承認のみ）
   def create_approval_records

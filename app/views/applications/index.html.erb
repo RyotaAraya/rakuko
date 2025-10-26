@@ -162,6 +162,7 @@
             <th>対象日</th>
             <th>理由</th>
             <th>ステータス</th>
+            <th>承認者・日時</th>
             <th>コメント</th>
             <th>申請日時</th>
             <th>操作</th>
@@ -181,6 +182,21 @@
                 <span class="status-badge status-<%= application.status %>">
                   <%= application.status_display_name %>
                 </span>
+              </td>
+              <td>
+                <% approval = application.department_approval %>
+                <% if approval&.approved? || approval&.rejected? %>
+                  <div style="font-size: 13px;">
+                    <div style="font-weight: 500; color: #333;">
+                      <%= approval.approver&.display_name || '-' %>
+                    </div>
+                    <div style="color: #666; font-size: 12px; margin-top: 2px;">
+                      <%= approval.approved_at&.strftime('%Y/%m/%d %H:%M') || '-' %>
+                    </div>
+                  </div>
+                <% else %>
+                  <span style="color: #999; font-size: 13px;">-</span>
+                <% end %>
               </td>
               <td>
                 <% approval = application.department_approval %>

@@ -152,6 +152,28 @@
     <h2 class="page-title">承認待ち一覧</h2>
   </div>
 
+  <!-- フィルタ・ソートUI -->
+  <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; gap: 16px; align-items: center;">
+    <div style="flex: 1;">
+      <label style="font-size: 13px; color: #666; margin-right: 8px;">種別でフィルタ:</label>
+      <select id="type-filter" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+        <option value="">すべて</option>
+        <option value="application" <%= 'selected' if @filter_type == 'application' %>>各種申請</option>
+        <option value="month_end_closing" <%= 'selected' if @filter_type == 'month_end_closing' %>>月末締め</option>
+      </select>
+    </div>
+    <div style="flex: 1;">
+      <label style="font-size: 13px; color: #666; margin-right: 8px;">並び替え:</label>
+      <select id="sort-select" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+        <option value="created_at" <%= 'selected' if @sort_by == 'created_at' %>>申請日時（新しい順）</option>
+        <option value="applicant" <%= 'selected' if @sort_by == 'applicant' %>>申請者名（五十音順）</option>
+      </select>
+    </div>
+    <div style="color: #666; font-size: 14px;">
+      合計: <strong><%= @pending_approvals.count %></strong>件
+    </div>
+  </div>
+
   <% if @pending_approvals.any? %>
     <div class="approvals-table">
       <table>
@@ -219,19 +241,24 @@
               </td>
               <td><%= approval.created_at.strftime('%Y/%m/%d %H:%M') %></td>
               <td>
-                <div class="approval-form">
-                  <%= form_with url: approve_approval_path(approval), method: :post do |f| %>
-                    <%= f.text_area :comment, placeholder: "コメント（任意）", class: "comment-input" %>
-                    <div class="btn-group">
-                      <%= f.submit "承認", class: "btn btn-approve" %>
-                    </div>
-                  <% end %>
-                  <%= form_with url: reject_approval_path(approval), method: :post do |f| %>
-                    <%= f.text_area :comment, placeholder: "却下理由を入力してください", class: "comment-input", required: true %>
-                    <div class="btn-group">
-                      <%= f.submit "却下", class: "btn btn-reject" %>
-                    </div>
-                  <% end %>
+                <div class="approval-form" data-approval-id="<%= approval.id %>">
+                  <textarea
+                    class="comment-input"
+                    id="comment-<%= approval.id %>"
+                    name="comment"
+                    placeholder="コメントを入力してください"></textarea>
+                  <div class="btn-group">
+                    <%= button_to "承認", approve_approval_path(approval),
+                        method: :post,
+                        class: "btn btn-approve",
+                        data: { approval_id: approval.id },
+                        form: { onsubmit: "return submitApproval(event, #{approval.id}, 'approve')" } %>
+                    <%= button_to "却下", reject_approval_path(approval),
+                        method: :post,
+                        class: "btn btn-reject",
+                        data: { approval_id: approval.id },
+                        form: { onsubmit: "return submitApproval(event, #{approval.id}, 'reject')" } %>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -248,3 +275,55 @@
     </div>
   <% end %>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const typeFilter = document.getElementById('type-filter');
+    const sortSelect = document.getElementById('sort-select');
+
+    function updateFilters() {
+      const type = typeFilter.value;
+      const sort = sortSelect.value;
+      const params = new URLSearchParams();
+      if (type) params.append('type', type);
+      if (sort && sort !== 'created_at') params.append('sort', sort);
+
+      window.location.href = `/approvals${params.toString() ? '?' + params.toString() : ''}`;
+    }
+
+    if (typeFilter) {
+      typeFilter.addEventListener('change', updateFilters);
+    }
+
+    if (sortSelect) {
+      sortSelect.addEventListener('change', updateFilters);
+    }
+  });
+
+  function submitApproval(event, approvalId, action) {
+    const commentTextarea = document.getElementById('comment-' + approvalId);
+    let comment = commentTextarea.value.trim();
+
+    // 承認の場合は空でもOK、デフォルトで「承認します。」を挿入
+    if (action === 'approve' && comment === '') {
+      comment = '承認します。';
+    }
+
+    // 却下の場合はコメント必須
+    if (action === 'reject' && comment === '') {
+      alert('却下する場合は理由を入力してください。');
+      event.preventDefault();
+      return false;
+    }
+
+    // コメントをフォームに追加
+    const form = event.target;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'comment';
+    input.value = comment;
+    form.appendChild(input);
+
+    return true;
+  }
+</script>

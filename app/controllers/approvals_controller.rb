@@ -7,31 +7,50 @@ class ApprovalsController < ApplicationController
   # GET /approvals
   def index
     authorize Approval
+
+    # フィルタパラメータ
+    @filter_type = params[:type] # 'application', 'month_end_closing', または nil（全て）
+    @sort_by = params[:sort] || 'created_at' # 'created_at' または 'applicant'
+
     # Application の承認待ちを取得（approvableもpendingのもののみ）
-    application_approvals = Approval
-                            .joins(<<-SQL.squish)
-        INNER JOIN applications
-        ON approvals.approvable_type = 'Application'
-        AND approvals.approvable_id = applications.id
-                            SQL
-                            .where(approval_type: :department, status: :pending)
-                            .where(applications: { status: 0 }) # pending
-                            .includes(:approvable, :approver)
+    application_approvals = if @filter_type.nil? || @filter_type == 'application'
+                              Approval
+                                .joins(<<-SQL.squish)
+          INNER JOIN applications
+          ON approvals.approvable_type = 'Application'
+          AND approvals.approvable_id = applications.id
+                                SQL
+                                .where(approval_type: :department, status: :pending)
+                                .where(applications: { status: 0 }) # pending
+                                .includes(:approvable, :approver)
+                            else
+                              []
+                            end
 
     # MonthEndClosing の承認待ちを取得（approvableもpending_approvalのもののみ）
-    month_end_closing_approvals = Approval
-                                  .joins(<<-SQL.squish)
-        INNER JOIN month_end_closings
-        ON approvals.approvable_type = 'MonthEndClosing'
-        AND approvals.approvable_id = month_end_closings.id
-                                  SQL
-                                  .where(approval_type: :department, status: :pending)
-                                  .where(month_end_closings: { status: 0 }) # pending_approval
-                                  .includes(:approvable, :approver)
+    month_end_closing_approvals = if @filter_type.nil? || @filter_type == 'month_end_closing'
+                                    Approval
+                                      .joins(<<-SQL.squish)
+          INNER JOIN month_end_closings
+          ON approvals.approvable_type = 'MonthEndClosing'
+          AND approvals.approvable_id = month_end_closings.id
+                                      SQL
+                                      .where(approval_type: :department, status: :pending)
+                                      .where(month_end_closings: { status: 0 }) # pending_approval
+                                      .includes(:approvable, :approver)
+                                  else
+                                    []
+                                  end
 
     # Attendance は自動承認なので承認待ち一覧から除外
-    @pending_approvals = (application_approvals + month_end_closing_approvals)
-                         .sort_by(&:created_at).reverse
+    all_approvals = application_approvals + month_end_closing_approvals
+
+    # ソート
+    @pending_approvals = if @sort_by == 'applicant'
+                           all_approvals.sort_by { |a| a.approvable.user.display_name }
+                         else
+                           all_approvals.sort_by(&:created_at).reverse
+                         end
   end
 
   # POST /approvals/:id/approve
@@ -57,6 +76,8 @@ class ApprovalsController < ApplicationController
       @approval.comment = params[:comment] if params[:comment].present?
 
       if @approval.public_send(action)
+        # AASMのafter_commitが機能しないため、明示的にapprovableの状態を更新
+        @approval.approvable.check_and_update_status! if @approval.approvable.respond_to?(:check_and_update_status!)
         redirect_to approvals_path, notice: success_message
       else
         redirect_to approvals_path, alert: failure_message
