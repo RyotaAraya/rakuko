@@ -115,6 +115,21 @@
   <h1 style="font-size: 28px; font-weight: bold; margin-bottom: 24px;">月末締め処理</h1>
 
   <% if current_user.student? %>
+    <!-- 月選択UI -->
+    <div class="section-card" style="margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <label style="font-weight: bold; font-size: 14px;">対象月:</label>
+        <select id="month-selector" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+          <% @available_months.each do |month_data| %>
+            <% selected = (month_data[:year] == @year && month_data[:month] == @month) %>
+            <option value="<%= month_data[:year] %>-<%= month_data[:month] %>" <%= 'selected' if selected %>>
+              <%= month_data[:year] %>年<%= month_data[:month] %>月
+            </option>
+          <% end %>
+        </select>
+      </div>
+    </div>
+
     <!-- 学生用：自分の締め処理 + チェックリスト -->
     <div class="section-card">
       <div class="section-title"><%= @year %>年<%= @month %>月の締め処理</div>
@@ -355,6 +370,16 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // 月選択の変更時にページ遷移
+    const monthSelector = document.getElementById('month-selector');
+    if (monthSelector) {
+      monthSelector.addEventListener('change', function() {
+        const [year, month] = this.value.split('-');
+        window.location.href = `/month_end_closings?year=${year}&month=${month}`;
+      });
+    }
+
+    // チェックリスト機能
     const checkboxes = document.querySelectorAll('.checklist-checkbox');
     const submitBtn = document.getElementById('submit-approval-btn');
     const warning = document.getElementById('checklist-warning');
