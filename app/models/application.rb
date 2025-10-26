@@ -15,16 +15,18 @@ class Application < ApplicationRecord
   }
 
   enum :status, {
-    pending: 1,
-    approved: 2,
-    rejected: 3,
+    pending: 0,
+    approved: 1,
+    rejected: 2,
+    canceled: 3,
   }
 
   # AASM 状態管理
-  aasm column: :status, enum: true do
+  aasm column: :status, enum: true, whiny_persistence: true do
     state :pending, initial: true
     state :approved
     state :rejected
+    state :canceled
 
     event :approve_final do
       transitions from: :pending, to: :approved
@@ -32,6 +34,14 @@ class Application < ApplicationRecord
 
     event :reject_final do
       transitions from: :pending, to: :rejected
+    end
+
+    event :cancel do
+      transitions from: :pending, to: :canceled
+    end
+
+    event :resubmit do
+      transitions from: [:rejected, :canceled], to: :pending, after: :recreate_approval_records
     end
   end
 
@@ -43,9 +53,6 @@ class Application < ApplicationRecord
   validates :application_date, presence: true
   validates :reason, presence: true, length: { minimum: 5, maximum: 500 }
   validates :status, presence: true
-  validate :time_fields_for_type
-  validate :application_date_not_past
-  validate :logical_time_order
 
   # Scopes
   scope :for_date, ->(date) { where(application_date: date) }
@@ -70,48 +77,12 @@ class Application < ApplicationRecord
       'pending' => '承認待ち',
       'approved' => '承認済み',
       'rejected' => '却下',
+      'canceled' => '取り消し',
     }[status]
   end
 
-  def time_display
-    case application_type
-    when 'absence'
-      '終日欠勤'
-    when 'late'
-      '遅刻'
-    when 'early_leave'
-      '早退'
-    when 'shift_change'
-      start_time && end_time ? "#{start_time.strftime('%H:%M')} - #{end_time.strftime('%H:%M')}" : 'シフト変更'
-    end
-  end
-
-  def requires_times?
-    %w[shift_change].include?(application_type)
-  end
-
-  def requires_start_time?
-    %w[shift_change].include?(application_type)
-  end
-
-  def requires_end_time?
-    %w[shift_change].include?(application_type)
-  end
-
-  def affects_attendance?
-    %w[absence late early_leave].include?(application_type)
-  end
-
   def summary
-    "#{application_type_display_name} - #{application_date.strftime('%Y/%m/%d')} (#{time_display})"
-  end
-
-  def can_be_edited?
-    pending? && application_date > Date.current
-  end
-
-  def can_be_cancelled?
-    pending? && application_date > Date.current
+    "#{application_type_display_name} - #{application_date.strftime('%Y/%m/%d')}"
   end
 
   # Class methods
@@ -146,6 +117,14 @@ class Application < ApplicationRecord
     end
   end
 
+  def can_resubmit?
+    rejected? || canceled?
+  end
+
+  def can_cancel?
+    pending?
+  end
+
   private
 
   # AASM submit イベント後に承認レコードを作成（部署承認のみ）
@@ -163,6 +142,12 @@ class Application < ApplicationRecord
     raise ActiveRecord::Rollback
   end
 
+  # 再申請時に古い承認レコードを削除して新しいものを作成
+  def recreate_approval_records
+    approvals.destroy_all
+    create_approval_records
+  end
+
   def find_department_approver_id
     # 部署担当者（department_manager権限）を取得
     department = user.department
@@ -174,47 +159,5 @@ class Application < ApplicationRecord
     department.users.joins(:user_roles)
               .where(user_roles: { role_id: department_manager_role.id })
               .first&.id || User.with_role(:department_manager).first&.id
-  end
-
-  def time_fields_for_type
-    send("validate_#{application_type}_times")
-  end
-
-  def validate_absence_times
-    # 欠勤は時刻不要
-    errors.add(:start_time, '欠勤申請では開始時刻は不要です') if start_time.present?
-    errors.add(:end_time, '欠勤申請では終了時刻は不要です') if end_time.present?
-  end
-
-  def validate_late_times
-    # 遅刻は時刻入力不要（理由欄に記載）
-    errors.add(:start_time, '遅刻申請では開始時刻は不要です') if start_time.present?
-    errors.add(:end_time, '遅刻申請では終了時刻は不要です') if end_time.present?
-  end
-
-  def validate_early_leave_times
-    # 早退は時刻入力不要（理由欄に記載）
-    errors.add(:start_time, '早退申請では開始時刻は不要です') if start_time.present?
-    errors.add(:end_time, '早退申請では終了時刻は不要です') if end_time.present?
-  end
-
-  def validate_shift_change_times
-    # シフト変更は両方必要
-    errors.add(:start_time, 'シフト変更申請では開始時刻が必要です') if start_time.blank?
-    errors.add(:end_time, 'シフト変更申請では終了時刻が必要です') if end_time.blank?
-  end
-
-  def application_date_not_past
-    return if application_date.blank?
-
-    # 当日以降のみ申請可能（当日を含む）
-    errors.add(:application_date, '過去の日付は申請できません') if application_date < Date.current
-  end
-
-  def logical_time_order
-    return unless start_time.present? && end_time.present?
-    return if start_time < end_time
-
-    errors.add(:end_time, '終了時刻は開始時刻より後に設定してください')
   end
 end

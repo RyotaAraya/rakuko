@@ -216,6 +216,7 @@ if student_user
   department_manager = User.find_by(email: 'department.manager@example.com')
   last_month = Date.current.last_month
 
+  # 承認済みの月末締め
   student_user.month_end_closings.find_or_create_by(
     year: last_month.year,
     month: last_month.month
@@ -226,6 +227,18 @@ if student_user
     closing.overtime_hours = 0
     closing.closed_by = department_manager
     closing.closed_at = last_month.end_of_month
+  end
+
+  # 今月の承認待ち締め
+  current_month = Date.current
+  student_user.month_end_closings.find_or_create_by(
+    year: current_month.year,
+    month: current_month.month
+  ) do |closing|
+    closing.status = :pending_approval
+    closing.total_work_hours = 60
+    closing.total_work_days = 15
+    closing.overtime_hours = 0
   end
 
   Rails.logger.debug { "✓ Created month-end closing for #{last_month.strftime('%Y年%m月')}" }

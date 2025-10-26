@@ -22,13 +22,27 @@ Rails.application.routes.draw do
   resources :departments
 
   # 各種申請（欠勤・遅刻・早退）
-  resources :applications
+  resources :applications do
+    member do
+      post :cancel
+    end
+  end
 
   # 承認管理（部署担当者用）
   resources :approvals, only: [:index] do
     member do
       post :approve
       post :reject
+    end
+  end
+
+  # 月末締め処理
+  resources :month_end_closings, only: [:index, :show] do
+    member do
+      post :submit_for_approval
+      post :approve
+      post :reject
+      post :reopen
     end
   end
 

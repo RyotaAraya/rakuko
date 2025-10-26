@@ -2,13 +2,14 @@
 
 class MonthEndClosing < ApplicationRecord
   belongs_to :user
-  belongs_to :closed_by, class_name: 'User'
+  belongs_to :closed_by, class_name: 'User', optional: true
 
   # Enums
   enum :status, {
     open: 0,
-    closed: 1,
-    locked: 2,
+    pending_approval: 1,
+    closed: 2,
+    locked: 3,
   }
 
   # Validations
@@ -24,8 +25,8 @@ class MonthEndClosing < ApplicationRecord
                               numericality: { greater_than_or_equal_to: 0 }
   validates :overtime_hours, presence: true,
                              numericality: { greater_than_or_equal_to: 0 }
-  validates :closed_at, presence: true, if: :closed_or_locked?
-  validates :closed_by_id, presence: true, if: :closed_or_locked?
+  validates :closed_at, presence: true, if: :approved_or_locked?
+  validates :closed_by_id, presence: true, if: :approved_or_locked?
 
   # Callbacks
   before_save :set_closed_at, if: :status_changed_to_closed?
@@ -45,12 +46,14 @@ class MonthEndClosing < ApplicationRecord
   }
   scope :recent, -> { order(year: :desc, month: :desc) }
   scope :closed_records, -> { where(status: [:closed, :locked]) }
+  scope :pending_approvals, -> { where(status: :pending_approval) }
 
   # Helper methods
   def status_display_name
     {
-      'open' => '編集可能',
-      'closed' => '締め済み',
+      'open' => '作業中',
+      'pending_approval' => '承認待ち',
+      'closed' => '承認済み',
       'locked' => '確定済み',
     }[status]
   end
@@ -71,12 +74,24 @@ class MonthEndClosing < ApplicationRecord
     closed? || locked?
   end
 
+  def approved_or_locked?
+    closed? || locked?
+  end
+
   def can_edit?
     open?
   end
 
-  def can_close?
+  def can_submit_for_approval?
     open? && all_attendances_approved?
+  end
+
+  def can_approve?
+    pending_approval?
+  end
+
+  def can_reject?
+    pending_approval?
   end
 
   def can_lock?
