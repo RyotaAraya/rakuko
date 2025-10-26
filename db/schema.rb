@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_19_005817) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_25_224853) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -88,7 +88,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_19_005817) do
     t.integer "total_work_days"
     t.decimal "overtime_hours"
     t.datetime "closed_at"
-    t.bigint "closed_by_id", null: false
+    t.bigint "closed_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["closed_by_id"], name: "index_month_end_closings_on_closed_by_id"

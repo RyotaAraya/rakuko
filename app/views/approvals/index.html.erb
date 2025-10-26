@@ -126,6 +126,25 @@
     background: #e8eaf6;
     color: #3f51b5;
   }
+  .approval-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .comment-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    resize: vertical;
+    min-height: 50px;
+    font-family: inherit;
+  }
+  .btn-group {
+    display: flex;
+    gap: 8px;
+  }
 </style>
 
 <div class="container">
@@ -139,9 +158,9 @@
         <thead>
           <tr>
             <th>申請者</th>
-            <th>申請種別</th>
+            <th>種別</th>
             <th>対象日</th>
-            <th>理由</th>
+            <th>詳細</th>
             <th>承認種別</th>
             <th>ステータス</th>
             <th>申請日時</th>
@@ -156,12 +175,38 @@
             <tr>
               <td><%= approvable.user.display_name %></td>
               <td>
-                <span class="type-badge type-<%= approvable.application_type %>">
-                  <%= approvable.application_type_display_name %>
-                </span>
+                <% if approvable.is_a?(Application) %>
+                  <span class="type-badge type-<%= approvable.application_type %>">
+                    <%= approvable.application_type_display_name %>
+                  </span>
+                <% elsif approvable.is_a?(Attendance) %>
+                  <span class="type-badge" style="background: #e8f5e9; color: #2e7d32;">
+                    勤怠
+                  </span>
+                <% elsif approvable.is_a?(MonthEndClosing) %>
+                  <span class="type-badge" style="background: #fff3e0; color: #e65100;">
+                    月末締め
+                  </span>
+                <% end %>
               </td>
-              <td><%= approvable.application_date.strftime('%Y年%m月%d日') %></td>
-              <td><%= truncate(approvable.reason, length: 40) %></td>
+              <td>
+                <% if approvable.is_a?(Application) %>
+                  <%= approvable.application_date.strftime('%Y年%m月%d日') %>
+                <% elsif approvable.is_a?(Attendance) %>
+                  <%= approvable.date.strftime('%Y年%m月%d日') %>
+                <% elsif approvable.is_a?(MonthEndClosing) %>
+                  <%= approvable.year %>年<%= approvable.month %>月
+                <% end %>
+              </td>
+              <td>
+                <% if approvable.is_a?(Application) %>
+                  <%= truncate(approvable.reason, length: 40) %>
+                <% elsif approvable.is_a?(Attendance) %>
+                  実労働時間: <%= approvable.actual_hours %>時間
+                <% elsif approvable.is_a?(MonthEndClosing) %>
+                  月末締め申請
+                <% end %>
+              </td>
               <td>
                 <span class="approval-type">
                   <%= approval.approval_type == 'department' ? '部署承認' : approval.approval_type %>
@@ -174,9 +219,19 @@
               </td>
               <td><%= approval.created_at.strftime('%Y/%m/%d %H:%M') %></td>
               <td>
-                <div class="action-buttons">
-                  <%= button_to "承認", approve_approval_path(approval), method: :post, class: "btn btn-approve", data: { confirm: "この申請を承認しますか?" } %>
-                  <%= button_to "却下", reject_approval_path(approval), method: :post, class: "btn btn-reject", data: { confirm: "この申請を却下しますか?" } %>
+                <div class="approval-form">
+                  <%= form_with url: approve_approval_path(approval), method: :post do |f| %>
+                    <%= f.text_area :comment, placeholder: "コメント（任意）", class: "comment-input" %>
+                    <div class="btn-group">
+                      <%= f.submit "承認", class: "btn btn-approve" %>
+                    </div>
+                  <% end %>
+                  <%= form_with url: reject_approval_path(approval), method: :post do |f| %>
+                    <%= f.text_area :comment, placeholder: "却下理由を入力してください", class: "comment-input", required: true %>
+                    <div class="btn-group">
+                      <%= f.submit "却下", class: "btn btn-reject" %>
+                    </div>
+                  <% end %>
                 </div>
               </td>
             </tr>

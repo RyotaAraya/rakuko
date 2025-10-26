@@ -86,7 +86,7 @@
 | 業務 | アルバイト | 部署担当者 | 改善効果 |
 |------|------------|------------|----------|
 | **①シフト提出** | アプリで希望・掛け持ち情報を一元入力<br/>（システムが制限違反を自動検知・入力時点でブロック） | **承認不要**<br/>（制限はバリデーションで保証済み）<br/>自部署のシフトを閲覧可能 | ✅ 手計算作業削減<br/>✅ 承認作業完全削減<br/>✅ ミス防止 |
-| **②勤怠登録** | アプリで出退勤・休憩を入力 | アプリで一覧確認・一括承認 | ✅ 転記ミス防止<br/>✅ 確認効率化 |
+| **②勤怠登録** | アプリで出退勤・休憩を入力<br/>（自動承認、実際の勤務時間はRakuroのPCログで確認） | アプリで一覧閲覧<br/>（実勤務時間はRakuroで確認） | ✅ 転記ミス防止<br/>✅ 承認作業削減 |
 | **③欠勤等** | アプリで欠勤・遅刻・早退を登録<br/>（ラクローへは別途登録が必要） | アプリで確認・承認 | ✅ 管理の一元化<br/>✅ 承認フロー明確化 |
 | **④月次締め** | アプリでチェックリスト確認・完了報告 | チェックリスト確認・承認 | ✅ 目視確認作業削減<br/>✅ チェック漏れ防止 |
 | **⑤交通費** | アプリからジョブカン遷移<br/>**承認ルート設定をリマインド表示** | アプリで申請状況一覧確認 | ✅ 設定漏れ防止<br/>✅ 確認作業効率化 |
@@ -177,17 +177,17 @@
 
 **申請・承認ワークフロー**
 - **Application・Approvalモデル実装済み**：ポリモーフィック関連による並列承認システム
-- **AASM状態管理実装済み**（Application、Attendance、Approvalの全モデル）
-  - Application: draft → pending → approved/rejected
-  - Attendance: pending → approved/rejected
+- **AASM状態管理実装済み**（Application、Approval等）
+  - Application: pending → approved/rejected/canceled
+  - Attendance: approved（自動承認）
   - Approval: pending → approved/rejected
   - WeeklyShift: draft → submitted（**承認不要** - 再編集可能）
-  - イベント駆動の状態遷移（submit!, approve!, reject!）
+  - イベント駆動の状態遷移（submit!, approve!, reject!, cancel!）
   - 不正な状態変更を防止する状態マシン設計
-- 各種申請機能（欠勤・遅刻・早退・シフト変更申請）
+- 各種申請機能（欠勤・遅刻・早退）
 - **承認フロー**
   - 各種申請（Application）: 部署承認のみ
-  - 勤怠実績（Attendance）: 部署承認のみ
+  - **勤怠実績（Attendance）: 自動承認**（打刻データは参考用、実際の勤務時間はRakuroのPCログで確認）
   - **シフト予定（WeeklyShift）: 承認不要**（週20h/40h制限はバリデーションで保証済み、学業優先のため柔軟な変更を許可）
 - 承認後の自動ステータス更新（`check_and_update_status!`）
   - Approval.after_approve/after_reject コールバックで自動実行

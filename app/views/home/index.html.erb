@@ -12,19 +12,6 @@
     margin: 0 auto;
     padding: 30px 20px;
   }
-  .welcome-section {
-    margin-bottom: 30px;
-  }
-  .welcome-title {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1a1a1a;
-    margin-bottom: 8px;
-  }
-  .welcome-subtitle {
-    font-size: 14px;
-    color: #666;
-  }
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -154,11 +141,6 @@
   <%= render 'shared/header' %>
 
   <main class="container">
-    <div class="welcome-section">
-      <h2 class="welcome-title">こんにちは、<%= current_user.display_name %>さん</h2>
-      <p class="welcome-subtitle"><%= current_user.primary_role_display_name %>としてログインしています</p>
-    </div>
-
     <% if current_user.student? %>
       <!-- 学生用ホーム画面 -->
 
@@ -189,26 +171,6 @@
           <div class="progress-bar">
             <div class="progress-fill" style="width: 0%"></div>
           </div>
-        <% end %>
-      </div>
-
-      <!-- 機能メニュー -->
-      <div class="menu-grid">
-        <%= link_to new_shift_request_path, class: "menu-item" do %>
-          <div class="menu-title">シフト希望提出</div>
-          <div class="menu-desc">月間予定を入力</div>
-        <% end %>
-        <%= link_to today_attendances_path, class: "menu-item" do %>
-          <div class="menu-title">勤怠登録</div>
-          <div class="menu-desc">出退勤を記録</div>
-        <% end %>
-        <%= link_to new_application_path, class: "menu-item" do %>
-          <div class="menu-title">各種申請</div>
-          <div class="menu-desc">欠勤・遅刻・早退</div>
-        <% end %>
-        <%= link_to applications_path, class: "menu-item" do %>
-          <div class="menu-title">申請履歴確認</div>
-          <div class="menu-desc">状況確認</div>
         <% end %>
       </div>
 
@@ -252,20 +214,6 @@
           </div>
         <% end %>
       </div>
-
-      <!-- 機能メニュー -->
-      <div class="menu-grid">
-        <%= link_to approvals_path, class: "menu-item" do %>
-          <div class="menu-title">承認待ち一覧</div>
-          <div class="menu-desc">部署メンバーの申請を承認</div>
-        <% end %>
-        <% if current_user.department.present? %>
-          <%= link_to department_path(current_user.department), class: "menu-item" do %>
-            <div class="menu-title">部署メンバー管理</div>
-            <div class="menu-desc">所属メンバーの確認</div>
-          <% end %>
-        <% end %>
-      </div>
     <% end %>
 
     <% if current_user.system_admin? %>
@@ -298,22 +246,6 @@
             <span class="stat-unit">部署</span>
           </div>
         </div>
-      </div>
-
-      <!-- 機能メニュー -->
-      <div class="menu-grid">
-        <%= link_to pending_approvals_index_path, class: "menu-item" do %>
-          <div class="menu-title">承認待ちユーザー</div>
-          <div class="menu-desc">新規登録ユーザーを承認</div>
-        <% end %>
-        <%= link_to admin_users_path, class: "menu-item" do %>
-          <div class="menu-title">ユーザー管理</div>
-          <div class="menu-desc">ユーザー情報の管理</div>
-        <% end %>
-        <%= link_to departments_path, class: "menu-item" do %>
-          <div class="menu-title">部署管理</div>
-          <div class="menu-desc">部署情報の管理</div>
-        <% end %>
       </div>
     <% end %>
   </main>

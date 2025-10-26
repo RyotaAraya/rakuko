@@ -1,0 +1,224 @@
+<% content_for :title, "申請編集" %>
+
+<%= render 'shared/header' %>
+
+<style>
+  .container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #1a1a1a;
+  }
+  .card {
+    background: white;
+    border-radius: 8px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .form-group {
+    margin-bottom: 28px;
+  }
+  .form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #333;
+  }
+  .required {
+    color: #e53935;
+    margin-left: 4px;
+  }
+  .radio-group {
+    display: flex;
+    gap: 24px;
+  }
+  .radio-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .radio-item input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #1976d2;
+  }
+  .radio-item label {
+    cursor: pointer;
+    font-size: 15px;
+    color: #333;
+  }
+  .form-input {
+    width: 100%;
+    max-width: 280px;
+    padding: 10px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    font-size: 15px;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus {
+    outline: none;
+    border-color: #1976d2;
+  }
+  .form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    font-size: 15px;
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .form-textarea:focus {
+    outline: none;
+    border-color: #1976d2;
+  }
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e0e0e0;
+  }
+  .btn {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 4px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary {
+    background: #1976d2;
+    color: white;
+  }
+  .btn-primary:hover {
+    background: #1565c0;
+  }
+  .btn-secondary {
+    background: white;
+    color: #333;
+    border: 1px solid #d0d0d0;
+  }
+  .btn-secondary:hover {
+    background: #f8f8f8;
+  }
+  .info-box {
+    background: #fff3e0;
+    border-left: 4px solid #f57c00;
+    padding: 16px;
+    border-radius: 4px;
+    margin-bottom: 24px;
+  }
+  .info-box-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #e65100;
+  }
+  .info-box-text {
+    font-size: 14px;
+    color: #e65100;
+    line-height: 1.6;
+  }
+  .error-messages {
+    background: #ffebee;
+    border-left: 4px solid #e53935;
+    padding: 16px;
+    border-radius: 4px;
+    margin-bottom: 24px;
+  }
+  .error-messages h3 {
+    color: #c62828;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .error-messages ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #c62828;
+    font-size: 14px;
+  }
+</style>
+
+<div class="container">
+  <h2 class="page-title">申請編集（<%= @application.rejected? ? '却下' : '取り消し' %>された申請）</h2>
+
+  <div class="info-box">
+    <div class="info-box-title">この申請は<%= @application.rejected? ? '却下' : '取り消し' %>されました</div>
+    <div class="info-box-text">
+      内容を修正して「再申請する」ボタンを押してください。修正した内容で再度承認申請が提出されます。
+    </div>
+  </div>
+
+  <% if @application.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(@application.errors.count, "error") %> prohibited this application from being saved:</h3>
+      <ul>
+        <% @application.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="card">
+    <%= form_with model: @application, local: true do |f| %>
+      <!-- 申請種別 -->
+      <div class="form-group">
+        <%= f.label :application_type, class: "form-label" do %>
+          申請種別<span class="required">*</span>
+        <% end %>
+        <div class="radio-group">
+          <div class="radio-item">
+            <%= f.radio_button :application_type, "absence", id: "type-absence", required: true %>
+            <%= f.label :application_type, "欠勤", value: "absence", for: "type-absence" %>
+          </div>
+          <div class="radio-item">
+            <%= f.radio_button :application_type, "late", id: "type-late" %>
+            <%= f.label :application_type, "遅刻", value: "late", for: "type-late" %>
+          </div>
+          <div class="radio-item">
+            <%= f.radio_button :application_type, "early_leave", id: "type-early" %>
+            <%= f.label :application_type, "早退", value: "early_leave", for: "type-early" %>
+          </div>
+        </div>
+      </div>
+
+      <!-- 対象日 -->
+      <div class="form-group">
+        <%= f.label :application_date, class: "form-label" do %>
+          対象日<span class="required">*</span>
+        <% end %>
+        <%= f.date_field :application_date, class: "form-input", required: true %>
+      </div>
+
+      <!-- 理由 -->
+      <div class="form-group">
+        <%= f.label :reason, class: "form-label" do %>
+          理由<span class="required">*</span>
+        <% end %>
+        <%= f.text_area :reason, class: "form-textarea", placeholder: "例: 体調不良のため、本日は欠勤させていただきます。", required: true, minlength: 5, maxlength: 500 %>
+      </div>
+
+      <!-- ボタン -->
+      <div class="btn-group">
+        <%= f.submit "再申請する", class: "btn btn-primary" %>
+        <%= link_to "キャンセル", applications_path, class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

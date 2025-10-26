@@ -115,24 +115,27 @@
         <%= link_to "勤怠登録", today_attendances_path, class: "nav-item #{'active' if current_page?(today_attendances_path)}" %>
         <%= link_to "各種申請", new_application_path, class: "nav-item #{'active' if current_page?(new_application_path)}" %>
         <%= link_to "申請履歴", applications_path, class: "nav-item #{'active' if current_page?(applications_path)}" %>
+        <%= link_to "月末締め", month_end_closings_path, class: "nav-item #{'active' if current_page?(month_end_closings_path)}" %>
       <% end %>
 
       <% if current_user.department_manager? %>
         <!-- 部署担当者用メニュー -->
         <%= link_to approvals_path, class: "nav-item #{'active' if current_page?(approvals_path)}", style: "position: relative;" do %>
           承認待ち
-          <% pending_count = Approval.pending_for_approver(current_user).count %>
+          <% pending_count = pending_approvals_count_for(current_user) %>
           <% if pending_count > 0 %>
             <span class="badge"><%= pending_count %></span>
           <% end %>
         <% end %>
         <%= link_to "部署メンバー", department_path(current_user.department), class: "nav-item" if current_user.department.present? %>
+        <%= link_to "月末締め", month_end_closings_path, class: "nav-item #{'active' if current_page?(month_end_closings_path)}" %>
       <% end %>
 
       <% if current_user.system_admin? %>
         <!-- システム管理者用メニュー -->
         <%= link_to "ユーザー管理", admin_users_path, class: "nav-item #{'active' if current_page?(admin_users_path)}" %>
         <%= link_to "部署管理", departments_path, class: "nav-item #{'active' if current_page?(departments_path)}" %>
+        <%= link_to "月末締め", month_end_closings_path, class: "nav-item #{'active' if current_page?(month_end_closings_path)}" %>
         <% pending_users_count = User.where(status: :pending).count %>
         <%= link_to pending_approvals_index_path, class: "nav-item #{'active' if current_page?(pending_approvals_index_path)}", style: "position: relative;" do %>
           承認待ちユーザー

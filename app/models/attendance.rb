@@ -13,10 +13,10 @@ class Attendance < ApplicationRecord
     rejected: 2,
   }
 
-  # AASM 状態管理
-  aasm column: :status, enum: true do
-    state :pending, initial: true
-    state :approved
+  # AASM 状態管理（勤怠は自動承認）
+  aasm column: :status, enum: true, whiny_persistence: true do
+    state :approved, initial: true # 自動承認
+    state :pending
     state :rejected
 
     event :approve do
@@ -126,7 +126,7 @@ class Attendance < ApplicationRecord
     find_or_initialize_by(user: user, date: date, is_auto_generated: true).tap do |attendance|
       attendance.actual_hours = work_hours
       attendance.total_break_time = break_minutes
-      attendance.status = :pending
+      # status は initial state (approved) が自動設定される
     end
   end
 

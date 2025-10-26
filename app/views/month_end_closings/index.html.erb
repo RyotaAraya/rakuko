@@ -1,0 +1,385 @@
+<% content_for :title, "月末締め処理 - 勤怠管理システム" %>
+
+<%= render 'shared/header' %>
+
+<style>
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+  .section-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+  }
+  .checklist-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .checklist-item:last-child {
+    border-bottom: none;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status-open { background: #e3f2fd; color: #1976d2; }
+  .status-pending_approval { background: #fff3e0; color: #f57c00; }
+  .status-closed { background: #e8f5e9; color: #2e7d32; }
+  .status-locked { background: #f3e5f5; color: #7b1fa2; }
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: #1976d2;
+    color: white;
+  }
+  .btn-primary:hover {
+    background: #1565c0;
+  }
+  .btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+  }
+  .btn-secondary:hover {
+    background: #e8e8e8;
+  }
+  .btn-success {
+    background: #2e7d32;
+    color: white;
+  }
+  .btn-success:hover {
+    background: #1b5e20;
+  }
+  .btn-warning {
+    background: #f57c00;
+    color: white;
+  }
+  .btn-warning:hover {
+    background: #e65100;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-item {
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: #1a1a1a;
+  }
+  .external-link {
+    color: #1976d2;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .external-link:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="container">
+  <h1 style="font-size: 28px; font-weight: bold; margin-bottom: 24px;">月末締め処理</h1>
+
+  <% if current_user.student? %>
+    <!-- 学生用：自分の締め処理 + チェックリスト -->
+    <div class="section-card">
+      <div class="section-title"><%= @year %>年<%= @month %>月の締め処理</div>
+
+      <% if @current_closing.persisted? %>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">総労働時間</div>
+            <div class="stat-value"><%= @current_closing.total_work_hours %><span style="font-size: 16px; font-weight: normal;">h</span></div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">出勤日数</div>
+            <div class="stat-value"><%= @current_closing.total_work_days %><span style="font-size: 16px; font-weight: normal;">日</span></div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">ステータス</div>
+            <div style="margin-top: 12px;">
+              <span class="status-badge status-<%= @current_closing.status %>">
+                <%= @current_closing.status_display_name %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <% if @current_closing.can_submit_for_approval? %>
+          <div style="margin-top: 20px;">
+            <%= button_to "承認申請を提出", submit_for_approval_month_end_closing_path(@current_closing),
+                          method: :post,
+                          form: { data: { turbo_confirm: "#{@year}年#{@month}月の月末締めを承認申請しますか？\n部署担当者の承認をお待ちください。" }, id: "submit-approval-form" },
+                          class: "btn btn-success",
+                          id: "submit-approval-btn",
+                          style: "pointer-events: none; opacity: 0.5;" %>
+            <div style="margin-top: 8px; font-size: 13px; color: #e65100;" id="checklist-warning">
+              ⚠️ ラクローとジョブカンの確認を完了してください
+            </div>
+          </div>
+        <% elsif @current_closing.pending_approval? %>
+          <div style="margin-top: 20px; padding: 12px; background: #e3f2fd; border: 1px solid #64b5f6; border-radius: 4px; color: #1976d2;">
+            ℹ️ 承認申請済みです。部署担当者の承認をお待ちください。
+          </div>
+        <% elsif @current_closing.pending_attendances_count > 0 %>
+          <div style="margin-top: 20px; padding: 12px; background: #fff3e0; border: 1px solid #ffb74d; border-radius: 4px; color: #e65100;">
+            ⚠️ 承認待ちの勤怠が <%= @current_closing.pending_attendances_count %> 件あります。すべて承認されてから承認申請を提出してください。
+          </div>
+        <% end %>
+
+        <% if @current_closing.closed_or_locked? && @current_closing.closed_at %>
+          <div style="margin-top: 20px; font-size: 14px; color: #666;">
+            締め実行日時: <%= @current_closing.closed_at.strftime('%Y年%m月%d日 %H:%M') %>
+            <% if @current_closing.closed_by %>
+              （実行者: <%= @current_closing.closed_by.display_name %>）
+            <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <p style="color: #666;">この月の締め処理データがまだ作成されていません。</p>
+      <% end %>
+    </div>
+
+    <!-- 外部システム連携チェックリスト -->
+    <div class="section-card">
+      <div class="section-title">外部システム連携チェックリスト</div>
+
+      <div class="checklist-item">
+        <input type="checkbox" id="rakuro_check" class="checklist-checkbox"
+               style="margin-top: 4px; margin-right: 12px;">
+        <label for="rakuro_check" style="flex: 1;">
+          <div style="font-weight: 500; margin-bottom: 4px;">📊 ラクロー（給与計算システム）の確認完了</div>
+          <div style="font-size: 13px; color: #666;">
+            <%= link_to "ラクローを開く", "https://rakuro.example.com",
+                        target: "_blank", class: "external-link" %>
+            で勤怠データ・給与計算を確認してください
+          </div>
+        </label>
+      </div>
+
+      <div class="checklist-item">
+        <input type="checkbox" id="jobcan_check" class="checklist-checkbox"
+               style="margin-top: 4px; margin-right: 12px;">
+        <label for="jobcan_check" style="flex: 1;">
+          <div style="font-weight: 500; margin-bottom: 4px;">🚗 ジョブカン（交通費精算システム）の確認完了</div>
+          <div style="font-size: 13px; color: #666;">
+            <%= link_to "ジョブカンを開く", "https://jobcan.example.com",
+                        target: "_blank", class: "external-link" %>
+            で交通費申請・承認ルートを確認してください
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 締め履歴 -->
+    <div class="section-card">
+      <div class="section-title">締め履歴（直近12ヶ月）</div>
+
+      <% if @closings.any? %>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid #e0e0e0;">
+              <th style="padding: 12px; text-align: left; font-size: 13px; color: #666;">対象月</th>
+              <th style="padding: 12px; text-align: right; font-size: 13px; color: #666;">労働時間</th>
+              <th style="padding: 12px; text-align: right; font-size: 13px; color: #666;">出勤日数</th>
+              <th style="padding: 12px; text-align: center; font-size: 13px; color: #666;">ステータス</th>
+              <th style="padding: 12px; text-align: center; font-size: 13px; color: #666;">締め日時</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @closings.each do |closing| %>
+              <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 12px; font-weight: 500;"><%= closing.period_display %></td>
+                <td style="padding: 12px; text-align: right;"><%= closing.total_work_hours %>h</td>
+                <td style="padding: 12px; text-align: right;"><%= closing.total_work_days %>日</td>
+                <td style="padding: 12px; text-align: center;">
+                  <span class="status-badge status-<%= closing.status %>">
+                    <%= closing.status_display_name %>
+                  </span>
+                </td>
+                <td style="padding: 12px; text-align: center; font-size: 13px; color: #666;">
+                  <% if closing.closed_at %>
+                    <%= closing.closed_at.strftime('%m/%d %H:%M') %>
+                  <% else %>
+                    -
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p style="text-align: center; padding: 40px; color: #666;">締め履歴がありません</p>
+      <% end %>
+    </div>
+
+  <% else %>
+    <!-- 部署担当者用：承認待ち一覧 -->
+    <% if current_user.department_manager? && @pending_approvals.present? %>
+      <div class="section-card">
+        <div class="section-title">承認待ちの月末締め</div>
+
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid #e0e0e0;">
+              <th style="padding: 12px; text-align: left; font-size: 13px; color: #666;">対象月</th>
+              <th style="padding: 12px; text-align: left; font-size: 13px; color: #666;">ユーザー</th>
+              <th style="padding: 12px; text-align: right; font-size: 13px; color: #666;">労働時間</th>
+              <th style="padding: 12px; text-align: right; font-size: 13px; color: #666;">出勤日数</th>
+              <th style="padding: 12px; text-align: center; font-size: 13px; color: #666;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @pending_approvals.each do |closing| %>
+              <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 12px; font-weight: 500;"><%= closing.period_display %></td>
+                <td style="padding: 12px;"><%= closing.user.display_name %></td>
+                <td style="padding: 12px; text-align: right;"><%= closing.total_work_hours %>h</td>
+                <td style="padding: 12px; text-align: right;"><%= closing.total_work_days %>日</td>
+                <td style="padding: 12px; text-align: center;">
+                  <%= button_to "承認", approve_month_end_closing_path(closing),
+                                method: :post,
+                                form: { data: { turbo_confirm: "#{closing.user.display_name}さんの#{closing.period_display}の月末締めを承認しますか？" } },
+                                class: "btn btn-success",
+                                style: "display: inline-block; margin-right: 8px; padding: 6px 12px; font-size: 13px;" %>
+                  <%= button_to "却下", reject_month_end_closing_path(closing),
+                                method: :post,
+                                form: { data: { turbo_confirm: "#{closing.user.display_name}さんの#{closing.period_display}の月末締めを却下しますか？\n却下すると作業中に戻ります。" } },
+                                class: "btn btn-warning",
+                                style: "display: inline-block; padding: 6px 12px; font-size: 13px;" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+
+    <!-- 部署担当者・システム管理者用：メンバーの締め状況一覧 -->
+    <div class="section-card">
+      <div class="section-title"><%= @year %>年<%= @month %>月の締め状況一覧</div>
+
+      <% if @closings.any? %>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid #e0e0e0;">
+              <th style="padding: 12px; text-align: left; font-size: 13px; color: #666;">対象月</th>
+              <th style="padding: 12px; text-align: left; font-size: 13px; color: #666;">ユーザー</th>
+              <th style="padding: 12px; text-align: left; font-size: 13px; color: #666;">部署</th>
+              <th style="padding: 12px; text-align: right; font-size: 13px; color: #666;">労働時間</th>
+              <th style="padding: 12px; text-align: right; font-size: 13px; color: #666;">出勤日数</th>
+              <th style="padding: 12px; text-align: center; font-size: 13px; color: #666;">ステータス</th>
+              <th style="padding: 12px; text-align: center; font-size: 13px; color: #666;">承認者</th>
+              <% if current_user.department_manager? %>
+                <th style="padding: 12px; text-align: center; font-size: 13px; color: #666;">操作</th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% @closings.each do |closing| %>
+              <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 12px;"><%= closing.period_display %></td>
+                <td style="padding: 12px;"><%= closing.user.display_name %></td>
+                <td style="padding: 12px;"><%= closing.user.department&.name || '-' %></td>
+                <td style="padding: 12px; text-align: right;"><%= closing.total_work_hours %>h</td>
+                <td style="padding: 12px; text-align: right;"><%= closing.total_work_days %>日</td>
+                <td style="padding: 12px; text-align: center;">
+                  <span class="status-badge status-<%= closing.status %>">
+                    <%= closing.status_display_name %>
+                  </span>
+                </td>
+                <td style="padding: 12px; text-align: center; font-size: 13px;">
+                  <% if closing.closed_by %>
+                    <%= closing.closed_by.display_name %>
+                  <% else %>
+                    -
+                  <% end %>
+                </td>
+                <% if current_user.department_manager? %>
+                  <td style="padding: 12px; text-align: center;">
+                    <% if closing.can_reopen? %>
+                      <%= button_to "再開", reopen_month_end_closing_path(closing),
+                                    method: :post,
+                                    form: { data: { turbo_confirm: "#{closing.user.display_name}さんの#{closing.period_display}の月末締めを再開しますか？\n再開すると作業中に戻ります。" } },
+                                    class: "btn btn-secondary",
+                                    style: "display: inline-block; padding: 6px 12px; font-size: 13px;" %>
+                    <% else %>
+                      -
+                    <% end %>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p style="text-align: center; padding: 40px; color: #666;">締め状況がありません</p>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.checklist-checkbox');
+    const submitBtn = document.getElementById('submit-approval-btn');
+    const warning = document.getElementById('checklist-warning');
+
+    if (!submitBtn) return; // ボタンが存在しない場合は何もしない
+
+    function checkAllChecked() {
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+      if (allChecked) {
+        submitBtn.style.pointerEvents = 'auto';
+        submitBtn.style.opacity = '1';
+        if (warning) warning.style.display = 'none';
+      } else {
+        submitBtn.style.pointerEvents = 'none';
+        submitBtn.style.opacity = '0.5';
+        if (warning) warning.style.display = 'block';
+      }
+    }
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', checkAllChecked);
+    });
+
+    // 初期状態をチェック
+    checkAllChecked();
+  });
+</script>
