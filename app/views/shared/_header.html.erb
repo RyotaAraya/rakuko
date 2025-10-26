@@ -113,8 +113,7 @@
         <!-- 学生用メニュー -->
         <%= link_to "シフト提出", new_shift_request_path, class: "nav-item #{'active' if current_page?(new_shift_request_path)}" %>
         <%= link_to "勤怠登録", today_attendances_path, class: "nav-item #{'active' if current_page?(today_attendances_path)}" %>
-        <%= link_to "各種申請", new_application_path, class: "nav-item #{'active' if current_page?(new_application_path)}" %>
-        <%= link_to "申請履歴", applications_path, class: "nav-item #{'active' if current_page?(applications_path)}" %>
+        <%= link_to "各種申請", applications_path, class: "nav-item #{'active' if current_page?(applications_path)}" %>
         <%= link_to "月末締め", month_end_closings_path, class: "nav-item #{'active' if current_page?(month_end_closings_path)}" %>
       <% end %>
 

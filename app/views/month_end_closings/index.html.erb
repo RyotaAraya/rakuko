@@ -190,35 +190,37 @@
     </div>
 
     <!-- 外部システム連携チェックリスト -->
-    <div class="section-card">
-      <div class="section-title">外部システム連携チェックリスト</div>
+    <%if @current_closing.can_submit_for_approval?  %>
+      <div class="section-card">
+        <div class="section-title">外部システム連携チェックリスト</div>
 
-      <div class="checklist-item">
-        <input type="checkbox" id="rakuro_check" class="checklist-checkbox"
-               style="margin-top: 4px; margin-right: 12px;">
-        <label for="rakuro_check" style="flex: 1;">
-          <div style="font-weight: 500; margin-bottom: 4px;">📊 ラクロー（給与計算システム）の確認完了</div>
-          <div style="font-size: 13px; color: #666;">
-            <%= link_to "ラクローを開く", "https://rakuro.example.com",
-                        target: "_blank", class: "external-link" %>
-            で勤怠データ・給与計算を確認してください
-          </div>
-        </label>
-      </div>
+        <div class="checklist-item">
+          <input type="checkbox" id="rakuro_check" class="checklist-checkbox"
+                style="margin-top: 4px; margin-right: 12px;">
+          <label for="rakuro_check" style="flex: 1;">
+            <div style="font-weight: 500; margin-bottom: 4px;">📊 ラクロー（給与計算システム）の確認完了</div>
+            <div style="font-size: 13px; color: #666;">
+              <%= link_to "ラクローを開く", "https://rakuro.example.com",
+                          target: "_blank", class: "external-link" %>
+              で勤怠データ・給与計算を確認してください
+            </div>
+          </label>
+        </div>
 
-      <div class="checklist-item">
-        <input type="checkbox" id="jobcan_check" class="checklist-checkbox"
-               style="margin-top: 4px; margin-right: 12px;">
-        <label for="jobcan_check" style="flex: 1;">
-          <div style="font-weight: 500; margin-bottom: 4px;">🚗 ジョブカン（交通費精算システム）の確認完了</div>
-          <div style="font-size: 13px; color: #666;">
-            <%= link_to "ジョブカンを開く", "https://jobcan.example.com",
-                        target: "_blank", class: "external-link" %>
-            で交通費申請・承認ルートを確認してください
-          </div>
-        </label>
+        <div class="checklist-item">
+          <input type="checkbox" id="jobcan_check" class="checklist-checkbox"
+                style="margin-top: 4px; margin-right: 12px;">
+          <label for="jobcan_check" style="flex: 1;">
+            <div style="font-weight: 500; margin-bottom: 4px;">🚗 ジョブカン（交通費精算システム）の確認完了</div>
+            <div style="font-size: 13px; color: #666;">
+              <%= link_to "ジョブカンを開く", "https://jobcan.example.com",
+                          target: "_blank", class: "external-link" %>
+              で交通費申請・承認ルートを確認してください
+            </div>
+          </label>
+        </div>
       </div>
-    </div>
+    <% end %>
 
     <!-- 締め履歴 -->
     <div class="section-card">
