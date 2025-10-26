@@ -30,7 +30,7 @@ class MonthEndClosing < ApplicationRecord
 
   # Callbacks
   before_save :set_closed_at, if: :status_changed_to_closed?
-  before_save :calculate_totals, if: :open?
+  before_save :calculate_totals, if: -> { open? || status_changed_to_closed? }
 
   # Scopes
   scope :for_year, ->(year) { where(year: year) }
