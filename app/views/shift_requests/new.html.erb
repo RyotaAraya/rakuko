@@ -93,15 +93,22 @@
 
 <script>
   // 月選択の変更時にページ遷移
-  document.addEventListener('DOMContentLoaded', function() {
+  function initMonthSelector() {
     const selector = document.getElementById('month-selector');
-    if (selector) {
+    if (selector && !selector.dataset.initialized) {
+      selector.dataset.initialized = 'true';
       selector.addEventListener('change', function() {
         const [year, month] = this.value.split('-');
         window.location.href = `/shift_requests/new?year=${year}&month=${month}`;
       });
     }
-  });
+  }
+
+  // 通常のページロード
+  document.addEventListener('DOMContentLoaded', initMonthSelector);
+
+  // Turboページ遷移時
+  document.addEventListener('turbo:load', initMonthSelector);
 </script>
 
 <style>

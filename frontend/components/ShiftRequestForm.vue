@@ -17,10 +17,9 @@
     <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-5">
       <div class="font-bold mb-2 text-base text-gray-800">{{ monthYear }} 月間シフト希望</div>
       <div class="mb-4">
-        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="bulkInput" :disabled="!canEdit">一括入力</button>
-        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="clearAll" :disabled="!canEdit">クリア</button>
-        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="saveShifts" :disabled="!canEdit">下書き保存</button>
         <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="submitShifts" :disabled="!canSubmit || !canEdit">提出</button>
+        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="saveShifts" :disabled="!canEdit">下書き保存</button>
+        <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="clearAll" :disabled="!canEdit">クリア</button>
       </div>
 
       <!-- 各週のシフト入力 -->
@@ -77,8 +76,9 @@
 
     <!-- 提出ボタン -->
     <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-5">
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="submitForm" :disabled="!canSubmit">最終提出</button>
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="submitForm" :disabled="!canSubmit">提出</button>
       <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700" @click="saveDraft">下書き保存</button>
+      <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded mr-2 text-sm hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed" @click="clearAll" :disabled="!canEdit">クリア</button>
     </div>
   </div>
 </template>

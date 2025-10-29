@@ -8,7 +8,6 @@ class ShiftRequestsController < ApplicationController
     authorize :shift_request, :new?
     # 利用可能な月のリストを取得
     @available_months = current_user.available_months_for_shift
-    @can_edit = current_user.can_edit_shift_for_month?(@target_year, @target_month)
     @past_deadline = current_user.past_deadline_for_month?(@target_year, @target_month)
 
     # 月次サマリーとシフトデータを作成または取得
@@ -83,6 +82,7 @@ class ShiftRequestsController < ApplicationController
     @target_year = params[:year]&.to_i || Date.current.year
     @target_month = params[:month]&.to_i || Date.current.month
     @target_date = Date.new(@target_year, @target_month, 1)
+    @can_edit = current_user.can_edit_shift_for_month?(@target_year, @target_month)
   end
 
   def build_weeks_data_for_vue
