@@ -148,6 +148,16 @@ window.addEventListener('load', () => {
   }
 })
 
+// Turbo対応: ページ遷移時にVueコンポーネントを初期化
+document.addEventListener('turbo:load', () => {
+  setTimeout(tryInitialize, 50)
+})
+
+// Turbo対応: フレーム読み込み時にもVueコンポーネントを初期化
+document.addEventListener('turbo:frame-load', () => {
+  setTimeout(tryInitialize, 50)
+})
+
 // フォールバック: 定期的にチェック（Vue.jsを使用するページのみ）
 const isShiftRequestPage = window.location.pathname.includes('/shift_requests/new')
 const isAttendancePage = window.location.pathname.includes('/attendances/today')

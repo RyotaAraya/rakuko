@@ -5,6 +5,7 @@ class TimeRecordsController < ApplicationController
 
   # 今日の打刻記録を取得
   def today
+    authorize :time_record, :today?
     @date = Date.current
     @records = current_user.time_records.for_date(@date).ordered_by_time
 
@@ -26,6 +27,7 @@ class TimeRecordsController < ApplicationController
 
   # 出勤打刻
   def clock_in
+    authorize :time_record, :clock_in?
     @record = current_user.time_records.new(
       date: Date.current,
       record_type: :clock_in,
@@ -41,6 +43,7 @@ class TimeRecordsController < ApplicationController
 
   # 退勤打刻
   def clock_out
+    authorize :time_record, :clock_out?
     @record = current_user.time_records.new(
       date: Date.current,
       record_type: :clock_out,
@@ -64,6 +67,7 @@ class TimeRecordsController < ApplicationController
 
   # 休憩開始打刻
   def break_start
+    authorize :time_record, :break_start?
     # 次の休憩シーケンス番号を取得
     last_break = current_user.time_records
                              .for_date(Date.current)
@@ -87,6 +91,7 @@ class TimeRecordsController < ApplicationController
 
   # 休憩終了打刻
   def break_end
+    authorize :time_record, :break_end?
     # 最新の休憩開始のシーケンス番号を取得
     last_break_start = current_user.time_records
                                    .for_date(Date.current)

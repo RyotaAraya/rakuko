@@ -132,16 +132,14 @@
 
       <% if current_user.system_admin? %>
         <!-- システム管理者用メニュー -->
-        <%= link_to "ユーザー管理", admin_users_path, class: "nav-item #{'active' if current_page?(admin_users_path)}" %>
-        <%= link_to "部署管理", departments_path, class: "nav-item #{'active' if current_page?(departments_path)}" %>
-        <%= link_to "月末締め", month_end_closings_path, class: "nav-item #{'active' if current_page?(month_end_closings_path)}" %>
         <% pending_users_count = User.where(status: :pending).count %>
-        <%= link_to pending_approvals_index_path, class: "nav-item #{'active' if current_page?(pending_approvals_index_path)}", style: "position: relative;" do %>
-          承認待ちユーザー
+        <%= link_to admin_users_path, class: "nav-item #{'active' if current_page?(admin_users_path)}", style: "position: relative;" do %>
+          ユーザー管理
           <% if pending_users_count > 0 %>
             <span class="badge"><%= pending_users_count %></span>
           <% end %>
         <% end %>
+        <%= link_to "部署管理", departments_path, class: "nav-item #{'active' if current_page?(departments_path)}" %>
       <% end %>
     </nav>
 

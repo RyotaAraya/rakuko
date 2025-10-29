@@ -2,9 +2,11 @@
 
 class AttendancesController < ApplicationController
   before_action :authenticate_user!
+  before_action :set_attendance, only: [:show]
 
   # 勤怠一覧
   def index
+    authorize Attendance
     @year = params[:year]&.to_i || Date.current.year
     @month = params[:month]&.to_i || Date.current.month
     @attendances = current_user.attendances.for_month(@year, @month).order(date: :asc)
@@ -12,11 +14,12 @@ class AttendancesController < ApplicationController
 
   # 勤怠詳細
   def show
-    @attendance = current_user.attendances.find(params[:id])
+    authorize @attendance
   end
 
   # 今日の勤怠画面
   def today
+    authorize Attendance, :today?
     @date = Date.current
     @time_records = current_user.time_records.for_date(@date).ordered_by_time
     @attendance = current_user.attendances.find_by(date: @date)
@@ -39,6 +42,7 @@ class AttendancesController < ApplicationController
 
   # 週間勤怠一覧
   def weekly
+    authorize Attendance, :weekly?
     @start_date = params[:start_date]&.to_date || Date.current.beginning_of_week
     @end_date = @start_date.end_of_week
 
@@ -63,6 +67,10 @@ class AttendancesController < ApplicationController
   end
 
   private
+
+  def set_attendance
+    @attendance = current_user.attendances.find(params[:id])
+  end
 
   def time_record_json(record)
     {

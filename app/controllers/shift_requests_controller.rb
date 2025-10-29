@@ -5,6 +5,7 @@ class ShiftRequestsController < ApplicationController
   before_action :set_target_date, only: [:new, :create, :update]
 
   def new
+    authorize :shift_request, :new?
     # 利用可能な月のリストを取得
     @available_months = current_user.available_months_for_shift
     @can_edit = current_user.can_edit_shift_for_month?(@target_year, @target_month)
@@ -28,6 +29,8 @@ class ShiftRequestsController < ApplicationController
   end
 
   def create
+    authorize :shift_request, :create?
+
     # 編集権限チェック
     unless @can_edit
       render json: { success: false, errors: ['この月のシフトは編集できません（過去月または契約期間外）'] }, status: :forbidden
@@ -55,6 +58,8 @@ class ShiftRequestsController < ApplicationController
   end
 
   def update
+    authorize :shift_request, :update?
+
     # 編集権限チェック
     unless @can_edit
       render json: { success: false, errors: ['この月のシフトは編集できません（過去月または契約期間外）'] }, status: :forbidden

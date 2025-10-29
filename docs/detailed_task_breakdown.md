@@ -220,32 +220,37 @@
 
 ---
 
-### 2-3. 権限管理システム実装 - 3SP
+### 2-3. 権限管理システム実装 - 3SP ✅
 
-**概要**: 3つの権限レベル（アルバイト/部署担当者/システム管理者）の実装
+**概要**: 3つの権限レベル（学生/部署担当者/システム管理者）の実装
+
+**重要**: 各ユーザーは必ず1つのロールのみを持ちます（単一ロール制約）
 
 **詳細タスク**:
 - [x] Roles, UserRoles モデル作成
   - [x] Rolesテーブル設計・作成
-  - [x] UserRolesテーブル設計・作成（多対多関係）
-  - [x] 初期ロールデータ作成（4つの権限レベル）
+  - [x] UserRolesテーブル設計・作成（多対多関係テーブル構造だが、運用上は単一ロールのみ）
+  - [x] 初期ロールデータ作成（3つの権限レベル: student, department_manager, system_admin）
   - [x] モデル関連付け設定
+  - [x] **単一ロール制約の実装**（ユーザーごとに1つのロールのみ保持）
 - [x] Pundit gem権限制御
   - [x] ApplicationPolicy基底クラス作成
   - [x] 各機能別Policy作成
   - [x] 権限チェックメソッド実装
   - [x] ビューでの権限別表示制御
 - [x] 管理者による新規ユーザー承認機能
-  - [x] ユーザー承認画面作成
-  - [x] 権限割り当て機能
+  - [x] ユーザー承認画面作成（show.html.erb）
+  - [x] 権限割り当て機能（ラジオボタンによる単一選択）
+  - [x] ユーザー編集機能（edit.html.erb）
   - [x] 一括承認・拒否機能
   - [x] 承認履歴管理
 
 **完了条件**:
-- 4つの権限レベルが正しく設定されている
-- Punditによる権限制御が機能している
-- 管理者がユーザーを承認・権限設定できる
-- 権限に応じた画面表示制御が動作している
+- ✅ 3つの権限レベルが正しく設定されている
+- ✅ 各ユーザーは必ず1つのロールのみを保持している
+- ✅ Punditによる権限制御が機能している
+- ✅ 管理者がユーザーを承認・権限設定できる（単一ロール選択）
+- ✅ 権限に応じた画面表示制御が動作している
 
 ---
 
@@ -713,7 +718,59 @@ UI実装はダッシュボード実装後にまとめて行う方が効率的な
 
 ## Phase 6: 品質向上・完成
 
-### 6-1. 最終調整・バグ修正 - 4SP
+### 6-1. コード品質向上 - 2SP ✅
+
+**概要**: RuboCop違反修正、TypeScript型エラー修正、フロントエンドlint対応
+
+**実装状況**: ✅ **実装済み**
+- ✅ RuboCop違反修正（95件 → 12件、メトリクス警告のみ残存）
+- ✅ TypeScript型エラー修正済み
+- ✅ フロントエンドlint対応（Biome）完了
+
+---
+
+### 6-2. セキュリティ強化 - 1SP ✅
+
+**概要**: Pundit認可チェックの実装とStrong Parametersの確認
+
+**詳細タスク**:
+- [x] ShiftRequestsPolicy作成
+  - [x] 学生のみシフト提出・編集可能
+  - [x] 部署担当者は自部署のシフトを閲覧可能
+  - [x] システム管理者は全シフトを閲覧可能
+- [x] TimeRecordsPolicy作成
+  - [x] 学生のみ打刻（出勤・退勤・休憩）可能
+  - [x] 部署担当者・システム管理者は自部署/全打刻記録を閲覧可能
+- [x] ApplicationRecordPolicy作成（Applicationsモデル用）
+  - [x] 学生のみ申請作成・編集・削除可能
+  - [x] 学生は自分の未承認申請のみ編集可能
+  - [x] 部署担当者は自部署の申請を閲覧可能
+  - [x] システム管理者は全申請を閲覧可能
+- [x] AttendancePolicy作成
+  - [x] 学生のみ今日の勤怠画面にアクセス可能
+  - [x] 学生は自分の勤怠のみ閲覧可能
+  - [x] 部署担当者は自部署の勤怠を閲覧可能
+  - [x] システム管理者は全勤怠を閲覧可能
+- [x] 各コントローラーへの認可チェック追加
+  - [x] ShiftRequestsController: new, create, update アクションに authorize 追加
+  - [x] TimeRecordsController: today, clock_in, clock_out, break_start, break_end アクションに authorize 追加
+  - [x] ApplicationsController: 全アクションに authorize 追加、after_action :verify_authorized で認可漏れ防止
+  - [x] AttendancesController: index, show, today, weekly アクションに authorize 追加
+- [x] Strong Parameters確認
+  - [x] ShiftRequestsController: weekly_shift_params - 適切に設定
+  - [x] ApplicationsController: application_params - 適切に設定
+  - [x] Admin::UsersController: user_params - 適切に設定
+
+**完了条件**:
+- ✅ 全コントローラーでPundit認可チェックが実装されている
+- ✅ 学生は自分のデータのみアクセス可能
+- ✅ 部署担当者は自部署のデータのみアクセス可能
+- ✅ システム管理者は全データを閲覧可能（承認権限は部署担当者のみ）
+- ✅ Strong Parametersで不正なパラメータ入力を防止
+
+---
+
+### 6-3. 最終調整・バグ修正 - 4SP
 
 **概要**: UI/UX改善、総合テスト、パフォーマンス最適化
 

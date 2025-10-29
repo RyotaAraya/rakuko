@@ -20,6 +20,8 @@ module Admin
 
     def show
       authorize [:admin, @user]
+      @departments = Department.order(:name)
+      @roles = Role.order(:name)
     end
 
     def edit
@@ -32,8 +34,8 @@ module Admin
       authorize [:admin, @user]
 
       if @user.update(user_params)
-        # 権限の更新
-        update_user_roles if params[:user][:role_ids]
+        # 権限の更新（単一権限）
+        update_user_role if params[:user][:role_id]
         redirect_to admin_user_path(@user), notice: 'ユーザー情報が更新されました。'
       else
         @departments = Department.order(:name)
@@ -45,12 +47,33 @@ module Admin
     def approve
       authorize [:admin, @user]
 
+      # 部署選択のバリデーション
+      if params[:user][:department_id].blank?
+        @departments = Department.order(:name)
+        @roles = Role.order(:name)
+        flash.now[:alert] = '部署を選択してください。'
+        render :show, status: :unprocessable_entity
+        return
+      end
+
+      # 部署の設定
+      @user.department_id = params[:user][:department_id]
+
       if @user.approve!
-        # デフォルト権限を付与（学生権限）
-        @user.add_role(:student) unless @user.roles.exists?
+        # 権限の設定（単一権限）
+        if params[:user][:role_id].present?
+          update_user_role
+        else
+          # デフォルト権限を付与（学生権限）
+          @user.add_role(:student) unless @user.roles.exists?
+        end
+
         redirect_to admin_users_path, notice: "#{@user.display_name}さんを承認しました。"
       else
-        redirect_to admin_users_path, alert: '承認に失敗しました。'
+        @departments = Department.order(:name)
+        @roles = Role.order(:name)
+        flash.now[:alert] = '承認に失敗しました。'
+        render :show, status: :unprocessable_entity
       end
     end
 
@@ -105,17 +128,17 @@ module Admin
       params.require(:user).permit(:first_name, :last_name, :department_id, :status)
     end
 
-    def update_user_roles
-      role_ids = params[:user][:role_ids].compact_blank
-      new_roles = Role.where(id: role_ids)
+    def update_user_role
+      role_id = params[:user][:role_id]
+      new_role = Role.find_by(id: role_id)
+
+      return unless new_role
 
       # 現在の権限を削除
       @user.user_roles.destroy_all
 
-      # 新しい権限を追加
-      new_roles.each do |role|
-        @user.add_role(role.name)
-      end
+      # 新しい権限を追加（単一）
+      @user.add_role(new_role.name)
     end
 
     def filter_active_users

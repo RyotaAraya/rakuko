@@ -138,12 +138,14 @@
     - ✅ 部署担当者用ダッシュボード（承認待ち件数、部署メンバー数）
     - ✅ システム管理者用ダッシュボード（承認待ちユーザー、統計情報）
 
-~~5-3. **新規ユーザー承認・部署管理機能実装** - 3SP~~ ⚠️ **大部分実装済み（残り0.5SP）**
+~~5-3. **新規ユーザー承認・部署管理機能実装** - 3SP~~ ✅ **実装済み**
     - ✅ 新規ユーザー承認機能（一覧・個別・一括承認）実装済み
     - ✅ 権限設定機能（Admin::UsersController#update実装済み）
     - ✅ 部署割り当て機能（Admin::UsersController#update実装済み）
-    - ⚠️ **ユーザー編集UI未実装**（app/views/admin/users/edit.html.erb作成必要 - 0.5SP）
+    - ✅ **ユーザー編集UI実装済み**（app/views/admin/users/edit.html.erb、単一ロール選択対応）
+    - ✅ **ユーザー詳細ページ実装済み**（app/views/admin/users/show.html.erb、承認フロー改善）
     - ✅ 部署メンバー管理機能（DepartmentsController#show実装済み）
+    - ✅ **単一ロール制約の実装**（各ユーザーは1つのロールのみ保持可能）
 
 ~~5-4. **日次勤怠サマリバッチ実装** - 2SP~~ ✅ **不要と判断（MVPから除外）**
     - ~~Sidekiqジョブ作成~~
@@ -163,10 +165,13 @@
     - ✅ TypeScript型エラー修正済み
     - ✅ フロントエンドlint対応（Biome）完了
 
-6-2. **セキュリティ強化** - 1SP ⚠️ **要確認**
-    - ⚠️ 全コントローラーでPundit認可確認が必要
-    - ⚠️ ShiftRequestsController、TimeRecordsControllerの権限チェック
-    - ⚠️ パラメータの不正入力対策確認
+~~6-2. **セキュリティ強化** - 1SP~~ ✅ **実装済み**
+    - ✅ 全コントローラーでPundit認可確認を実装
+    - ✅ ShiftRequestPolicy作成（学生のみシフト提出可能）
+    - ✅ TimeRecordPolicy作成（学生のみ打刻可能）
+    - ✅ ApplicationRecordPolicy作成（学生が申請、部署担当者が自部署の申請を閲覧）
+    - ✅ AttendancePolicy作成（学生が自分の勤怠、部署担当者が自部署の勤怠を閲覧）
+    - ✅ Strong Parameters確認済み（適切に設定されている）
 
 6-3. **最終調整・バグ修正** - 4SP
     - ⚠️ UI/UX調整・改善
@@ -177,16 +182,19 @@
 
 ## MVP残タスク一覧
 
-### 必須タスク（推定 5.5SP）
-1. **ユーザー編集UI作成** - 0.5SP
-   - app/views/admin/users/edit.html.erb 作成
-   - 部署選択ドロップダウン
-   - 権限選択チェックボックス
+### 必須タスク（推定 4SP）
+~~1. **ユーザー編集UI作成** - 0.5SP~~ ✅ **完了**
+   - ✅ app/views/admin/users/edit.html.erb 作成済み
+   - ✅ 部署選択ドロップダウン実装済み
+   - ✅ 権限選択ラジオボタン実装済み（単一ロール選択）
+   - ✅ app/views/admin/users/show.html.erb 作成済み（承認フロー改善）
+   - ✅ 単一ロール制約の実装完了（コントローラー・ビュー・ドキュメント）
 
-2. **セキュリティ強化** - 1SP
-   - 全コントローラーの認可チェック確認
-   - ShiftRequestsPolicy、TimeRecordsPolicy作成
-   - Strong Parameters の見直し
+~~2. **セキュリティ強化** - 1SP~~ ✅ **完了**
+   - ✅ 全コントローラーの認可チェック確認・実装
+   - ✅ ShiftRequestPolicy、TimeRecordPolicy作成
+   - ✅ ApplicationRecordPolicy、AttendancePolicy作成
+   - ✅ Strong Parameters の見直し・確認
 
 3. **最終調整・バグ修正** - 4SP
    - 全機能の動作確認と修正
@@ -194,7 +202,7 @@
    - エラーハンドリング改善
    - パフォーマンス最適化
 
-## 合計：70SP → 64.5SP実装済み（残り5.5SP）
+## 合計：70SP → 66SP実装済み（残り4SP）
 
 ## 主要な技術的成果
 

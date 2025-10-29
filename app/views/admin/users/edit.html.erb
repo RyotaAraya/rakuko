@@ -1,0 +1,160 @@
+<% content_for :title, "ユーザー編集" %>
+
+<%= render 'shared/header' %>
+
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+      <div class="flex items-center space-x-4 mb-4">
+        <%= link_to admin_users_path, class: "text-blue-600 hover:text-blue-900" do %>
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        <% end %>
+        <h1 class="text-3xl font-bold text-gray-900">ユーザー編集</h1>
+      </div>
+      <p class="mt-2 text-gray-600"><%= @user.display_name %>さんの情報を編集</p>
+    </div>
+
+    <!-- エラー表示 -->
+    <% if @user.errors.any? %>
+      <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">
+              <%= pluralize(@user.errors.count, "個のエラー") %>があります
+            </h3>
+            <div class="mt-2 text-sm text-red-700">
+              <ul class="list-disc pl-5 space-y-1">
+                <% @user.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- 編集フォーム -->
+    <div class="bg-white shadow sm:rounded-lg">
+      <%= form_with model: [:admin, @user], class: "space-y-6" do |form| %>
+        <div class="px-4 py-5 sm:p-6">
+          <!-- 基本情報 -->
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">基本情報</h3>
+
+              <!-- 名前 -->
+              <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <%= form.label :last_name, "姓", class: "block text-sm font-medium text-gray-700" %>
+                  <%= form.text_field :last_name, class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+                </div>
+
+                <div>
+                  <%= form.label :first_name, "名", class: "block text-sm font-medium text-gray-700" %>
+                  <%= form.text_field :first_name, class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+                </div>
+              </div>
+
+              <!-- メールアドレス（読み取り専用） -->
+              <div class="mt-6">
+                <%= form.label :email, "メールアドレス", class: "block text-sm font-medium text-gray-700" %>
+                <div class="mt-1 block w-full border border-gray-200 rounded-md shadow-sm py-2 px-3 bg-gray-50 text-gray-500 sm:text-sm">
+                  <%= @user.email %>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">メールアドレスは変更できません</p>
+              </div>
+            </div>
+
+            <!-- 部署 -->
+            <div>
+              <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">所属部署</h3>
+              <%= form.label :department_id, "部署", class: "block text-sm font-medium text-gray-700" %>
+              <%= form.select :department_id,
+                              options_from_collection_for_select(@departments, :id, :name, @user.department_id),
+                              { include_blank: "部署を選択してください" },
+                              class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+              <p class="mt-1 text-xs text-gray-500">ユーザーが所属する部署を選択してください</p>
+            </div>
+
+            <!-- 権限 -->
+            <div>
+              <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">権限設定</h3>
+              <fieldset>
+                <legend class="block text-sm font-medium text-gray-700 mb-2">権限（1つ選択）</legend>
+                <div class="space-y-3">
+                  <% @roles.each do |role| %>
+                    <div class="relative flex items-start">
+                      <div class="flex items-center h-5">
+                        <%= radio_button_tag "user[role_id]",
+                                             role.id,
+                                             @user.roles.include?(role),
+                                             id: "role_#{role.id}",
+                                             class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" %>
+                      </div>
+                      <div class="ml-3 text-sm">
+                        <%= label_tag "role_#{role.id}", class: "font-medium text-gray-700" do %>
+                          <%= role.display_name %>
+                          <span class="text-gray-500 font-normal block mt-1">
+                            <%= role_description(role.name) %>
+                          </span>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </fieldset>
+              <p class="mt-2 text-xs text-gray-500">ユーザーの役割を1つ選択してください。</p>
+            </div>
+
+            <!-- ステータス -->
+            <div>
+              <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">アカウントステータス</h3>
+              <%= form.label :status, "ステータス", class: "block text-sm font-medium text-gray-700" %>
+              <%= form.select :status,
+                              [["有効", "active"], ["承認待ち", "pending"], ["拒否", "rejected"]],
+                              {},
+                              class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+              <p class="mt-1 text-xs text-gray-500">アカウントの有効/無効を設定できます</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- フッター -->
+        <div class="px-4 py-3 bg-gray-50 text-right sm:px-6 space-x-3">
+          <%= link_to "キャンセル", admin_users_path, class: "inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+          <%= form.submit "保存", class: "inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- 契約情報（参照のみ） -->
+    <% if @user.contract_start_date.present? %>
+      <div class="mt-6 bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">契約情報</h3>
+          <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <div>
+              <dt class="text-sm font-medium text-gray-500">契約開始日</dt>
+              <dd class="mt-1 text-sm text-gray-900"><%= @user.contract_start_date.strftime('%Y年%m月%d日') %></dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">契約終了日</dt>
+              <dd class="mt-1 text-sm text-gray-900">
+                <%= @user.contract_end_date.present? ? @user.contract_end_date.strftime('%Y年%m月%d日') : '未設定' %>
+              </dd>
+            </div>
+          </dl>
+          <p class="mt-4 text-xs text-gray-500">契約情報の編集は別途実装予定です</p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
