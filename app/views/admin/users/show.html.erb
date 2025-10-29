@@ -46,7 +46,7 @@
 
     <!-- 承認待ちの場合、承認フォームを表示 -->
     <% if @user.pending? %>
-      <div class="bg-white shadow sm:rounded-lg mb-6 border-l-4 border-yellow-500">
+      <div class="bg-white shadow sm:rounded-lg mb-6">
         <div class="px-4 py-5 sm:p-6">
           <h3 class="text-lg font-medium text-gray-900 mb-4">承認・拒否アクション</h3>
 
@@ -56,7 +56,7 @@
               <%= form.label :department_id, "部署", class: "block text-sm font-medium text-gray-700" %>
               <%= form.select :department_id,
                               options_from_collection_for_select(@departments, :id, :name, @user.department_id),
-                              { include_blank: "部署を選択してください", prompt: "部署を選択してください" },
+                              { prompt: "部署を選択してください" },
                               required: true,
                               class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
               <p class="mt-1 text-xs text-red-500">※必須項目：承認時にユーザーが所属する部署を選択してください</p>
@@ -156,7 +156,7 @@
                   <% end %>
                 </div>
               <% else %>
-                <span class="text-gray-400">未設定</span>
+                未設定
               <% end %>
             </dd>
           </div>
