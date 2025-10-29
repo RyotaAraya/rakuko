@@ -1,0 +1,244 @@
+<% content_for :title, "#{@user.display_name}さんのシフト表 - 勤怠管理システム" %>
+
+<%= render 'shared/header' %>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fafafa;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+  .user-info-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .user-info-card h2 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    color: #333;
+  }
+  .user-info-card .meta {
+    color: #666;
+    font-size: 14px;
+  }
+  .week-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .week-title {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #333;
+  }
+  .shift-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .shift-table th,
+  .shift-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+  }
+  .shift-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+  }
+  .shift-table .day-label {
+    font-weight: 600;
+    min-width: 80px;
+  }
+  .shift-table .out-of-month {
+    background: #f9f9f9;
+    color: #999;
+  }
+  .time-cell {
+    min-width: 60px;
+  }
+  .company-row {
+    background: #e3f2fd;
+  }
+  .sidejob-row {
+    background: #fff3e0;
+  }
+  .summary-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+  }
+  .summary-label {
+    font-weight: 600;
+    color: #666;
+    font-size: 13px;
+  }
+  .summary-value {
+    font-weight: bold;
+    color: #333;
+  }
+  .back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #007cba;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .back-link:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="container">
+  <%= link_to "← 部署メンバー一覧に戻る", department_path(@user.department), class: "back-link" %>
+
+  <!-- ユーザー情報 -->
+  <div class="user-info-card">
+    <h2><%= @user.display_name %>さんのシフト表</h2>
+    <div class="meta">
+      部署: <%= @user.department&.name || '未設定' %> |
+      対象月: <%= @target_year %>年<%= @target_month %>月
+    </div>
+  </div>
+
+  <!-- 月選択UI -->
+  <div class="user-info-card">
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <label style="font-weight: bold; font-size: 14px;">対象月:</label>
+      <select id="month-selector" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+        <% @available_months.each do |month_data| %>
+          <% selected = (month_data[:year] == @target_year && month_data[:month] == @target_month) %>
+          <option value="<%= month_data[:year] %>-<%= month_data[:month] %>" <%= 'selected' if selected %>>
+            <%= month_data[:year] %>年<%= month_data[:month] %>月
+          </option>
+        <% end %>
+      </select>
+    </div>
+  </div>
+
+  <!-- 週別シフト表示 -->
+  <% if @weeks_data.present? %>
+    <% @weeks_data.each do |week| %>
+      <div class="week-card">
+        <div class="week-title"><%= week[:title] %></div>
+
+        <table class="shift-table">
+          <thead>
+            <tr>
+              <th rowspan="2">勤務先</th>
+              <th rowspan="2">時間</th>
+              <% week[:days].each do |day| %>
+                <th class="<%= 'out-of-month' unless day[:inTargetMonth] %>">
+                  <%= day[:label] %>
+                </th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 弊社シフト -->
+            <tr class="company-row">
+              <td rowspan="2" style="font-weight: 600;">弊社</td>
+              <td style="font-weight: 600;">開始</td>
+              <% week[:days].each do |day| %>
+                <td class="time-cell <%= 'out-of-month' unless day[:inTargetMonth] %>">
+                  <%= week[:shifts][:company][:start][day[:key]] %>
+                </td>
+              <% end %>
+            </tr>
+            <tr class="company-row">
+              <td style="font-weight: 600;">終了</td>
+              <% week[:days].each do |day| %>
+                <td class="time-cell <%= 'out-of-month' unless day[:inTargetMonth] %>">
+                  <%= week[:shifts][:company][:end][day[:key]] %>
+                </td>
+              <% end %>
+            </tr>
+
+            <!-- 掛け持ちシフト -->
+            <tr class="sidejob-row">
+              <td rowspan="2" style="font-weight: 600;">掛け持ち</td>
+              <td style="font-weight: 600;">開始</td>
+              <% week[:days].each do |day| %>
+                <td class="time-cell <%= 'out-of-month' unless day[:inTargetMonth] %>">
+                  <%= week[:shifts][:sidejob][:start][day[:key]] %>
+                </td>
+              <% end %>
+            </tr>
+            <tr class="sidejob-row">
+              <td style="font-weight: 600;">終了</td>
+              <% week[:days].each do |day| %>
+                <td class="time-cell <%= 'out-of-month' unless day[:inTargetMonth] %>">
+                  <%= week[:shifts][:sidejob][:end][day[:key]] %>
+                </td>
+              <% end %>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="user-info-card" style="text-align: center; padding: 40px;">
+      <p style="color: #666;">この月のシフトデータはありません。</p>
+    </div>
+  <% end %>
+
+  <!-- 月次サマリー情報 -->
+  <% if @monthly_summary %>
+    <div class="user-info-card">
+      <h3 style="margin: 0 0 15px 0; font-size: 16px;">月次サマリー</h3>
+      <div class="summary-section">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div>
+            <div class="summary-label">ステータス</div>
+            <div class="summary-value">
+              <%= case @monthly_summary.status
+                  when 'draft' then '下書き'
+                  when 'submitted' then '提出済み'
+                  when 'approved' then '承認済み'
+                  else @monthly_summary.status
+                  end %>
+            </div>
+          </div>
+          <div>
+            <div class="summary-label">提出週数</div>
+            <div class="summary-value">
+              <%= @monthly_summary.user_weekly_shifts_for_month.count %>週
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  // 月選択の変更時にページ遷移
+  function initMonthSelector() {
+    const selector = document.getElementById('month-selector');
+    if (selector && !selector.dataset.initialized) {
+      selector.dataset.initialized = 'true';
+      selector.addEventListener('change', function() {
+        const [year, month] = this.value.split('-');
+        window.location.href = `/users/<%= @user.id %>/shift_requests?year=${year}&month=${month}`;
+      });
+    }
+  }
+
+  // 通常のページロード
+  document.addEventListener('DOMContentLoaded', initMonthSelector);
+
+  // Turboページ遷移時
+  document.addEventListener('turbo:load', initMonthSelector);
+</script>

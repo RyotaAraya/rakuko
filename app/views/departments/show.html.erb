@@ -1,134 +1,19 @@
-<% content_for :title, "部署詳細" %>
+<% content_for :title, "部署メンバー" %>
 
 <%= render 'shared/header' %>
 
 <div class="min-h-screen bg-gray-50 py-8">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mb-8">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <%= link_to departments_path, class: "mr-4 text-gray-600 hover:text-gray-900" do %>
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-          <% end %>
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900"><%= @department.name %></h1>
-            <div class="mt-2 flex items-center">
-              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full mr-2
-                <%= case @department.department_type
-                    when 'general'
-                      'bg-blue-100 text-blue-800'
-                    when 'management'
-                      'bg-purple-100 text-purple-800'
-                    end %>">
-                <%= @department.type_display_name %>
-              </span>
-              <span class="text-gray-600">所属人数: <%= @department.user_count %> 人</span>
-            </div>
-          </div>
-        </div>
-        <div class="flex space-x-3">
-          <%= link_to edit_department_path(@department),
-                      class: "inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
-            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            編集
-          <% end %>
-          <%= link_to department_path(@department),
-                      method: :delete,
-                      confirm: "部署「#{@department.name}」を削除しますか？この操作は取り消せません。",
-                      class: "inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" do %>
-            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-            削除
-          <% end %>
-        </div>
-      </div>
+      <h1 class="text-3xl font-bold text-gray-900"><%= @department.name %> - 部署メンバー</h1>
+      <p class="mt-2 text-gray-600">部署メンバーの一覧とアルバイトのシフトを確認できます</p>
     </div>
 
-    <!-- 部署統計情報 -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-8">
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <dt class="text-sm font-medium text-gray-500 truncate">所属メンバー</dt>
-          <dd class="mt-1 text-3xl font-semibold text-gray-900"><%= @statistics[:total_members] %>名</dd>
-        </div>
-      </div>
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <dt class="text-sm font-medium text-gray-500 truncate">アクティブ</dt>
-          <dd class="mt-1 text-3xl font-semibold text-green-600"><%= @statistics[:active_members] %>名</dd>
-        </div>
-      </div>
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <dt class="text-sm font-medium text-gray-500 truncate">承認待ち</dt>
-          <dd class="mt-1 text-3xl font-semibold text-yellow-600"><%= @statistics[:pending_members] %>名</dd>
-        </div>
-      </div>
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <dt class="text-sm font-medium text-gray-500 truncate">アルバイト</dt>
-          <dd class="mt-1 text-3xl font-semibold text-blue-600"><%= @statistics[:students_count] %>名</dd>
-        </div>
-      </div>
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <dt class="text-sm font-medium text-gray-500 truncate">部署担当者</dt>
-          <dd class="mt-1 text-3xl font-semibold text-purple-600"><%= @statistics[:managers_count] %>名</dd>
-        </div>
-      </div>
-    </div>
-
-    <!-- 部署詳細情報 -->
-    <div class="bg-white shadow sm:rounded-lg mb-8">
-      <div class="px-4 py-5 sm:p-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">部署詳細</h3>
-        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-          <div>
-            <dt class="text-sm font-medium text-gray-500">部署名</dt>
-            <dd class="mt-1 text-sm text-gray-900"><%= @department.name %></dd>
-          </div>
-          <div>
-            <dt class="text-sm font-medium text-gray-500">部署種別</dt>
-            <dd class="mt-1">
-              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                <%= case @department.department_type
-                    when 'general'
-                      'bg-blue-100 text-blue-800'
-                    when 'management'
-                      'bg-purple-100 text-purple-800'
-                    end %>">
-                <%= @department.type_display_name %>
-              </span>
-            </dd>
-          </div>
-          <div class="sm:col-span-2">
-            <dt class="text-sm font-medium text-gray-500">説明</dt>
-            <dd class="mt-1 text-sm text-gray-900">
-              <%= @department.description.present? ? simple_format(@department.description) : "説明なし" %>
-            </dd>
-          </div>
-          <div>
-            <dt class="text-sm font-medium text-gray-500">作成日時</dt>
-            <dd class="mt-1 text-sm text-gray-900"><%= @department.created_at.strftime("%Y年%m月%d日 %H:%M") %></dd>
-          </div>
-          <div>
-            <dt class="text-sm font-medium text-gray-500">更新日時</dt>
-            <dd class="mt-1 text-sm text-gray-900"><%= @department.updated_at.strftime("%Y年%m月%d日 %H:%M") %></dd>
-          </div>
-        </dl>
-      </div>
-    </div>
-
-    <!-- 所属メンバー -->
+    <!-- 部署メンバー -->
     <div class="bg-white shadow sm:rounded-lg">
       <div class="px-4 py-5 sm:p-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg leading-6 font-medium text-gray-900">所属メンバー</h3>
+          <h3 class="text-lg leading-6 font-medium text-gray-900">部署メンバー</h3>
           <span class="text-sm text-gray-500"><%= @users.count %> 人</span>
         </div>
 
@@ -151,6 +36,9 @@
                       <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         状態
                       </th>
+                      <th scope="col" class="relative px-6 py-3">
+                        <span class="sr-only">操作</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
@@ -165,9 +53,14 @@
                           <div class="text-sm text-gray-900"><%= user.email %></div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                          <div class="text-sm text-gray-900">
+                          <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                            <%= if user.student?
+                                  'bg-blue-100 text-blue-800'
+                                elsif user.department_manager?
+                                  'bg-purple-100 text-purple-800'
+                                end %>">
                             <%= user.role_display_names %>
-                          </div>
+                          </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
@@ -189,6 +82,11 @@
                                 end %>
                           </span>
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <% if user.student? && user.active? %>
+                            <%= link_to "シフト確認", shift_requests_user_path(user), class: "text-blue-600 hover:text-blue-900" %>
+                          <% end %>
+                        </td>
                       </tr>
                     <% end %>
                   </tbody>
@@ -201,7 +99,7 @@
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">所属メンバーがいません</h3>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">部署メンバーがいません</h3>
             <p class="mt-1 text-sm text-gray-500">まだこの部署にメンバーが割り当てられていません。</p>
           </div>
         <% end %>

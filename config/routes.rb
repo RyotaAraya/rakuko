@@ -49,6 +49,13 @@ Rails.application.routes.draw do
   # シフト希望提出
   resources :shift_requests, only: [:new, :create, :update]
 
+  # ユーザー個別のシフト閲覧（部署担当者・システム管理者用）
+  resources :users, only: [] do
+    member do
+      get :shift_requests
+    end
+  end
+
   # 勤怠登録
   resources :attendances, only: [:index, :show, :new, :create] do
     collection do

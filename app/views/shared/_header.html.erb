@@ -126,7 +126,10 @@
             <span class="badge"><%= pending_count %></span>
           <% end %>
         <% end %>
-        <%= link_to "部署メンバー", department_path(current_user.department), class: "nav-item" if current_user.department.present? %>
+        <% if current_user.department.present? %>
+          <% is_department_page = request.path.match?(/^\/departments\/\d+$/) || request.path.match?(/^\/users\/\d+\/shift_requests/) %>
+          <%= link_to "部署メンバー", department_path(current_user.department), class: "nav-item #{'active' if is_department_page}" %>
+        <% end %>
         <%= link_to "月末締め", month_end_closings_path, class: "nav-item #{'active' if current_page?(month_end_closings_path)}" %>
       <% end %>
 
@@ -139,7 +142,8 @@
             <span class="badge"><%= pending_users_count %></span>
           <% end %>
         <% end %>
-        <%= link_to "部署管理", departments_path, class: "nav-item #{'active' if current_page?(departments_path)}" %>
+        <% is_departments_page = request.path.match?(/^\/departments/) %>
+        <%= link_to "部署管理", departments_path, class: "nav-item #{'active' if is_departments_page}" %>
       <% end %>
     </nav>
 
