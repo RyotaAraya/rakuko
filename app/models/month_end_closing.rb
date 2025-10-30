@@ -127,14 +127,6 @@ class MonthEndClosing < ApplicationRecord
     user.attendances.for_month(year, month)
   end
 
-  def all_attendances_approved?
-    period_attendances.all?(&:approved?)
-  end
-
-  def pending_attendances_count
-    period_attendances.pending.count
-  end
-
   def summary
     {
       period: period_display,

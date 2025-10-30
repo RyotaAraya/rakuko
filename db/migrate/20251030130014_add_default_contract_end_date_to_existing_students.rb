@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddDefaultContractEndDateToExistingStudents < ActiveRecord::Migration[7.1]
   def up
     # アルバイト権限を持つユーザーで契約終了日が未設定のユーザーに

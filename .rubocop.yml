@@ -47,9 +47,12 @@ Metrics/MethodLength:
     - 'app/models/week.rb'            # 週管理ロジック
     - 'app/models/types/time_only.rb' # カスタム型定義
     - 'app/controllers/admin/users_controller.rb'  # 管理画面ロジック
+    - 'app/controllers/approvals_controller.rb'    # 承認処理ロジック
+    - 'app/controllers/users_controller.rb'        # ユーザーシフト表示ロジック
     - 'app/controllers/shift_requests_controller.rb' # シフト登録ビジネスロジック
-    - 'app/controllers/time_records_controller.rb'   # 打刻処理ロジック
+    - 'app/controllers/time_records_controller.rb'   # 打刮処理ロジック
     - 'app/controllers/attendances_controller.rb'    # 勤怠集計ロジック
+    - 'app/helpers/application_helper.rb'          # ヘルパーメソッド
     - 'app/services/**/*'             # サービスクラスの複雑なロジック
 
 # Allow longer classes in controllers and complex models
@@ -103,9 +106,13 @@ Metrics/AbcSize:
     - 'app/models/types/time_only.rb' # カスタム型定義
     - 'app/models/week.rb'            # 週管理ロジック
     - 'app/controllers/users/omniauth_callbacks_controller.rb'  # OAuth認証ロジック
+    - 'app/controllers/admin/users_controller.rb'  # 管理画面ロジック
+    - 'app/controllers/approvals_controller.rb'    # 承認処理ロジック
+    - 'app/controllers/users_controller.rb'        # ユーザーシフト表示ロジック
     - 'app/controllers/shift_requests_controller.rb' # シフト登録ビジネスロジック
     - 'app/controllers/time_records_controller.rb'   # 打刻処理ロジック
     - 'app/controllers/attendances_controller.rb'    # 勤怠集計ロジック
+    - 'app/policies/**/*'             # ポリシークラスの権限判定ロジック
     - 'app/services/**/*'             # サービスクラスの複雑なロジック
     - 'db/migrate/**/*'               # マイグレーションファイル
 
@@ -115,6 +122,8 @@ Metrics/CyclomaticComplexity:
     - 'app/models/application.rb'     # 申請タイプ別バリデーション
     - 'app/models/attendance.rb'      # 勤怠集計ビジネスロジック
     - 'app/models/types/time_only.rb' # カスタム型定義
+    - 'app/controllers/attendances_controller.rb'  # 契約期間チェックロジック
+    - 'app/controllers/approvals_controller.rb'    # 承認処理ロジック
     - 'app/controllers/time_records_controller.rb' # 打刻処理ロジック
     - 'app/services/**/*'             # サービスクラスの複雑なロジック
 
@@ -124,6 +133,7 @@ Metrics/PerceivedComplexity:
     - 'app/models/application.rb'     # 申請タイプ別バリデーション
     - 'app/models/attendance.rb'      # 勤怠集計ビジネスロジック
     - 'app/models/types/time_only.rb' # カスタム型定義
+    - 'app/controllers/approvals_controller.rb'    # 承認処理ロジック
     - 'app/controllers/time_records_controller.rb' # 打刻処理ロジック
     - 'app/services/**/*'             # サービスクラスの複雑なロジック
 
@@ -147,6 +157,7 @@ Rails/WhereNotWithMultipleConditions:
 Rails/SkipsModelValidations:
   Exclude:
     - 'app/models/notification.rb'    # 一括既読更新
+    - 'db/migrate/**/*'               # マイグレーションでの一括更新
 
 # Migration specific rules
 Rails/BulkChangeTable:

@@ -19,19 +19,32 @@
   <div style="display: flex; gap: 10px; margin-bottom: 20px;">
     <% prev_date = Date.new(@year, @month, 1) - 1.month %>
     <% next_date = Date.new(@year, @month, 1) + 1.month %>
-    <%= link_to "← 前月", attendances_path(year: prev_date.year, month: prev_date.month),
-        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+    <% can_view_prev = @available_months.include?(prev_date) %>
+    <% can_view_next = @available_months.include?(next_date) %>
+
+    <% if can_view_prev %>
+      <%= link_to "← 前月", attendances_path(year: prev_date.year, month: prev_date.month),
+          style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+    <% else %>
+      <span style="padding: 8px 16px; border: 1px solid #ccc; background: #f5f5f5; color: #999; cursor: not-allowed;">← 前月</span>
+    <% end %>
+
     <%= link_to "今月", attendances_path,
         style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
-    <%= link_to "次月 →", attendances_path(year: next_date.year, month: next_date.month),
-        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+
+    <% if can_view_next %>
+      <%= link_to "次月 →", attendances_path(year: next_date.year, month: next_date.month),
+          style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
+    <% else %>
+      <span style="padding: 8px 16px; border: 1px solid #ccc; background: #f5f5f5; color: #999; cursor: not-allowed;">次月 →</span>
+    <% end %>
   </div>
 
   <!-- 月間サマリー -->
   <% month_summary = Attendance.monthly_summary(current_user, @year, @month) %>
   <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
     <div style="font-weight: bold; margin-bottom: 15px; font-size: 16px;">月間集計</div>
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
       <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
         <div style="font-size: 12px; color: #666; margin-bottom: 5px;">総労働時間</div>
         <div style="font-size: 24px; font-weight: bold;"><%= month_summary[:total_hours].to_f.round(1) %>h</div>
@@ -43,10 +56,6 @@
       <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
         <div style="font-size: 12px; color: #666; margin-bottom: 5px;">平均労働時間</div>
         <div style="font-size: 24px; font-weight: bold;"><%= month_summary[:avg_hours].to_f.round(1) %>h</div>
-      </div>
-      <div style="border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
-        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">承認待ち</div>
-        <div style="font-size: 24px; font-weight: bold;"><%= month_summary[:pending_count] %>件</div>
       </div>
     </div>
   </div>
@@ -89,11 +98,5 @@
         <% end %>
       </tbody>
     </table>
-  </div>
-
-  <!-- 戻るリンク -->
-  <div style="margin-top: 20px;">
-    <%= link_to "← 勤怠登録に戻る", today_attendances_path,
-        style: "padding: 8px 16px; border: 1px solid #ccc; background: white; text-decoration: none; color: black;" %>
   </div>
 </div>

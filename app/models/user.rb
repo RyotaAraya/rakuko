@@ -230,6 +230,29 @@ class User < ApplicationRecord
     months
   end
 
+  # 勤怠閲覧可能な月の一覧を取得（契約期間内）
+  def available_months_for_attendance
+    return [] unless contract_start_date && contract_end_date
+
+    months = []
+    current_date = contract_start_date.beginning_of_month
+    end_date = contract_end_date.beginning_of_month
+
+    while current_date <= end_date
+      months << current_date
+      current_date = current_date.next_month
+    end
+
+    months
+  end
+
+  # 指定した日付が契約期間内かチェック
+  def within_contract_period?(date)
+    return false unless contract_start_date && contract_end_date
+
+    date.between?(contract_start_date, contract_end_date)
+  end
+
   # 指定月が編集可能かチェック
   def can_edit_shift_for_month?(year, month)
     target_date = Date.new(year, month, 1)
@@ -266,9 +289,9 @@ class User < ApplicationRecord
   def contract_end_date_after_created_at
     return unless contract_end_date && created_at
 
-    if contract_end_date <= created_at.to_date
-      errors.add(:contract_end_date, 'は契約開始日より後の日付を設定してください')
-    end
+    return unless contract_end_date <= created_at.to_date
+
+    errors.add(:contract_end_date, 'は契約開始日より後の日付を設定してください')
   end
 
   # デフォルトの契約終了日を設定（作成日の6ヶ月後）

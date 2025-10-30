@@ -13,9 +13,6 @@ module Admin
       @active_users = filter_active_users
       @departments = Department.order(:name)
       @roles = Role.order(:name)
-
-      # 週次労働時間の制限違反チェック
-      @weekly_violations = check_all_users_violations(@active_users)
     end
 
     def show
@@ -60,9 +57,7 @@ module Admin
       @user.department_id = params[:user][:department_id]
 
       # 契約終了日の設定（アルバイトの場合）
-      if params[:user][:contract_end_date].present?
-        @user.contract_end_date = params[:user][:contract_end_date]
-      end
+      @user.contract_end_date = params[:user][:contract_end_date] if params[:user][:contract_end_date].present?
 
       if @user.approve!
         # 権限の設定（単一権限）
@@ -172,27 +167,6 @@ module Admin
       return users if params[:role_id].blank?
 
       users.joins(:user_roles).where(user_roles: { role_id: params[:role_id] }).distinct
-    end
-
-    def check_all_users_violations(users)
-      violations = []
-      start_date = Date.current.beginning_of_week
-
-      users.each do |user|
-        # 学生ユーザーのみチェック
-        next unless user.has_role?(:student)
-
-        result = Attendance.check_weekly_violations(user, start_date)
-        next unless result[:has_violations]
-
-        violations << {
-          user: user,
-          violations: result[:violations],
-          breakdown: result[:breakdown],
-        }
-      end
-
-      violations
     end
   end
 end

@@ -9,6 +9,17 @@ class AttendancesController < ApplicationController
     authorize Attendance
     @year = params[:year]&.to_i || Date.current.year
     @month = params[:month]&.to_i || Date.current.month
+
+    # 契約期間内のみ表示
+    @available_months = current_user.available_months_for_attendance
+    requested_month = Date.new(@year, @month, 1)
+
+    unless @available_months.include?(requested_month)
+      # 契約期間内の最新月にリダイレクト
+      latest_month = @available_months.max || Date.current.beginning_of_month
+      redirect_to attendances_path(year: latest_month.year, month: latest_month.month) and return
+    end
+
     @attendances = current_user.attendances.for_month(@year, @month).order(date: :asc)
   end
 
@@ -45,6 +56,13 @@ class AttendancesController < ApplicationController
     authorize Attendance, :weekly?
     @start_date = params[:start_date]&.to_date || Date.current.beginning_of_week
     @end_date = @start_date.end_of_week
+
+    # 契約期間内のみ表示
+    unless current_user.within_contract_period?(@start_date)
+      # 契約期間内の最新週にリダイレクト
+      latest_week_start = [current_user.created_at.to_date, Date.current].max.beginning_of_week
+      redirect_to weekly_attendances_path(start_date: latest_week_start) and return
+    end
 
     @attendances = current_user.attendances
                                .where(date: @start_date..@end_date)
@@ -89,8 +107,6 @@ class AttendancesController < ApplicationController
       date: attendance.date.iso8601,
       actual_hours: attendance.actual_hours,
       total_break_time: attendance.total_break_time,
-      status: attendance.status,
-      status_display: attendance.status_display_name,
       work_hours_display: attendance.work_hours_display,
       break_time_display: attendance.break_time_display,
     }
@@ -100,10 +116,9 @@ class AttendancesController < ApplicationController
     start_date = Date.current.beginning_of_week
     Date.current.end_of_week
 
-    # 今週の実績（承認済み）
+    # 今週の実績
     completed_attendances = current_user.attendances
                                         .where(date: start_date...Date.current)
-                                        .approved
 
     actual_hours = completed_attendances.sum(:actual_hours)
 

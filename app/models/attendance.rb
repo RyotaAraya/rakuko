@@ -1,39 +1,13 @@
 # frozen_string_literal: true
 
 class Attendance < ApplicationRecord
-  include AASM
-
   belongs_to :user
-  has_many :approvals, as: :approvable, dependent: :destroy
-
-  # Enums
-  enum :status, {
-    pending: 0,
-    approved: 1,
-    rejected: 2,
-  }
-
-  # AASM 状態管理（勤怠は自動承認）
-  aasm column: :status, enum: true, whiny_persistence: true do
-    state :approved, initial: true # 自動承認
-    state :pending
-    state :rejected
-
-    event :approve do
-      transitions from: :pending, to: :approved
-    end
-
-    event :reject do
-      transitions from: :pending, to: :rejected
-    end
-  end
 
   # Validations
   validates :date, presence: true
   validates :user_id, uniqueness: { scope: :date, message: 'この日付の勤怠記録は既に存在します' }
   validates :actual_hours, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :total_break_time, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :status, presence: true
 
   # Scopes
   scope :for_date, ->(date) { where(date: date) }
@@ -41,8 +15,6 @@ class Attendance < ApplicationRecord
   scope :for_week, ->(start_date) { where(date: start_date.all_week) }
   scope :auto_generated, -> { where(is_auto_generated: true) }
   scope :manual_entry, -> { where(is_auto_generated: false) }
-  scope :pending_approval, -> { where(status: :pending) }
-  scope :approved, -> { where(status: :approved) }
 
   # Callbacks
   before_save :calculate_break_time_from_records, if: :is_auto_generated?
@@ -61,14 +33,6 @@ class Attendance < ApplicationRecord
     else
       "#{minutes}分"
     end
-  end
-
-  def status_display_name
-    {
-      'pending' => '承認待ち',
-      'approved' => '承認済み',
-      'rejected' => '却下',
-    }[status]
   end
 
   def generation_type_display
@@ -97,24 +61,6 @@ class Attendance < ApplicationRecord
     messages
   end
 
-  # 承認フロー関連メソッド（Attendanceは部署承認のみ）
-  def department_approval
-    approvals.find_by(approval_type: :department)
-  end
-
-  def check_and_update_status!
-    return unless pending?
-
-    # Attendanceは部署承認のみ
-    dept_approved = department_approval&.approved?
-
-    if dept_approved
-      approve! if may_approve?
-    elsif department_approval&.rejected?
-      reject! if may_reject?
-    end
-  end
-
   # Class methods
   def self.generate_from_time_records(user, date)
     work_hours = TimeRecord.calculate_work_hours(user, date)
@@ -126,12 +72,11 @@ class Attendance < ApplicationRecord
     find_or_initialize_by(user: user, date: date, is_auto_generated: true).tap do |attendance|
       attendance.actual_hours = work_hours
       attendance.total_break_time = break_minutes
-      # status は initial state (approved) が自動設定される
     end
   end
 
   def self.weekly_summary(user, start_date)
-    week_attendances = for_week(start_date).where(user: user).approved
+    week_attendances = for_week(start_date).where(user: user)
     {
       total_hours: week_attendances.sum(:actual_hours),
       total_days: week_attendances.count,
@@ -143,8 +88,8 @@ class Attendance < ApplicationRecord
   def self.weekly_hours_breakdown(user, start_date)
     end_date = start_date.end_of_week
 
-    # 実績労働時間（承認済みのみ）
-    completed_attendances = where(user: user, date: start_date..end_date).approved
+    # 実績労働時間
+    completed_attendances = where(user: user, date: start_date..end_date)
     actual_company_hours = completed_attendances.sum(:actual_hours)
 
     # 掛け持ちバイト時間（shift_requestsから取得）
@@ -288,12 +233,11 @@ class Attendance < ApplicationRecord
   end
 
   def self.monthly_summary(user, year, month)
-    month_attendances = for_month(year, month).where(user: user).approved
+    month_attendances = for_month(year, month).where(user: user)
     {
       total_hours: month_attendances.sum(:actual_hours),
       total_days: month_attendances.count,
       avg_hours: month_attendances.average(:actual_hours)&.round(2) || 0,
-      pending_count: for_month(year, month).where(user: user).pending.count,
     }
   end
 

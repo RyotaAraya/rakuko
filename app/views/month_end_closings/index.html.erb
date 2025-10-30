@@ -170,10 +170,6 @@
           <div style="margin-top: 20px; padding: 12px; background: #e3f2fd; border: 1px solid #64b5f6; border-radius: 4px; color: #1976d2;">
             ℹ️ 承認申請済みです。部署担当者の承認をお待ちください。
           </div>
-        <% elsif @current_closing.pending_attendances_count > 0 %>
-          <div style="margin-top: 20px; padding: 12px; background: #fff3e0; border: 1px solid #ffb74d; border-radius: 4px; color: #e65100;">
-            ⚠️ 承認待ちの勤怠が <%= @current_closing.pending_attendances_count %> 件あります。すべて承認されてから承認申請を提出してください。
-          </div>
         <% end %>
 
         <% if @current_closing.closed_or_locked? && @current_closing.closed_at %>

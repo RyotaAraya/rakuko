@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_30_130014) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_30_133734) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -47,7 +47,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_30_130014) do
     t.decimal "actual_hours"
     t.integer "total_break_time"
     t.boolean "is_auto_generated"
-    t.integer "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_attendances_on_user_id"
