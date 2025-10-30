@@ -8,7 +8,7 @@
       <div class="bg-yellow-50 border border-yellow-200 rounded p-2.5 text-yellow-800 text-sm leading-relaxed">
         ・週の合計時間（弊社+掛け持ち）が40時間を超えないよう入力してください<br>
         ・弊社での労働時間は週20時間以内に制限されています<br>
-        ・日次で自社と掛け持ちの時間を個別に入力してください<br>
+        ・日次で弊社と掛け持ちの時間を個別に入力してください<br>
         ・月跨ぎの週は自動的に判定され、該当月の提出対象となります
       </div>
     </div>

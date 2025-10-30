@@ -371,15 +371,22 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  function initMonthSelector() {
     // 月選択の変更時にページ遷移
     const monthSelector = document.getElementById('month-selector');
-    if (monthSelector) {
+    if (monthSelector && !monthSelector.dataset.initialized) {
+      monthSelector.dataset.initialized = 'true';
       monthSelector.addEventListener('change', function() {
         const [year, month] = this.value.split('-');
         window.location.href = `/month_end_closings?year=${year}&month=${month}`;
       });
     }
+  }
+
+  document.addEventListener('DOMContentLoaded', initMonthSelector);
+  document.addEventListener('turbo:load', initMonthSelector);
+
+  document.addEventListener('DOMContentLoaded', function() {
 
     // チェックリスト機能
     const checkboxes = document.querySelectorAll('.checklist-checkbox');

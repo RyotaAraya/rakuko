@@ -59,6 +59,11 @@ module Admin
       # 部署の設定
       @user.department_id = params[:user][:department_id]
 
+      # 契約終了日の設定（アルバイトの場合）
+      if params[:user][:contract_end_date].present?
+        @user.contract_end_date = params[:user][:contract_end_date]
+      end
+
       if @user.approve!
         # 権限の設定（単一権限）
         if params[:user][:role_id].present?
@@ -125,7 +130,7 @@ module Admin
     end
 
     def user_params
-      params.require(:user).permit(:first_name, :last_name, :department_id, :status)
+      params.require(:user).permit(:first_name, :last_name, :department_id, :status, :contract_end_date)
     end
 
     def update_user_role

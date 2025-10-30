@@ -69,6 +69,9 @@ class MonthEndClosingsController < ApplicationController
     @closings = current_user.month_end_closings.recent.limit(12)
     @current_closing = current_user.month_end_closings.find_or_initialize_by(year: @year, month: @month)
     @available_months = current_user.available_months_for_shift # シフト提出と同じ契約期間を使用
+
+    # 契約期間内であれば自動作成
+    @current_closing.save if @current_closing.new_record?
   end
 
   def load_department_manager_closings

@@ -20,6 +20,8 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: true
   validates :first_name, presence: true
   validates :status, presence: true
+  validates :contract_end_date, presence: true, if: :student?
+  validate :contract_end_date_after_created_at, if: :student?
 
   # Associations
   belongs_to :department, optional: true
@@ -254,4 +256,23 @@ class User < ApplicationRecord
   scope :department_managers, -> { joins(:roles).where(roles: { name: 'department_manager' }) }
   scope :system_admins, -> { joins(:roles).where(roles: { name: 'system_admin' }) }
   scope :students, -> { joins(:roles).where(roles: { name: 'student' }) }
+
+  # Callbacks
+  before_create :set_default_contract_end_date, if: :student?
+
+  private
+
+  # 契約終了日が契約開始日（作成日時）より後かチェック
+  def contract_end_date_after_created_at
+    return unless contract_end_date && created_at
+
+    if contract_end_date <= created_at.to_date
+      errors.add(:contract_end_date, 'は契約開始日より後の日付を設定してください')
+    end
+  end
+
+  # デフォルトの契約終了日を設定（作成日の6ヶ月後）
+  def set_default_contract_end_date
+    self.contract_end_date ||= (created_at || Time.current).to_date + 6.months
+  end
 end

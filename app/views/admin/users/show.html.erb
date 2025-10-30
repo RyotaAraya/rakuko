@@ -73,13 +73,13 @@
                         <%= radio_button_tag "user[role_id]",
                                              role.id,
                                              role.name == 'student',
-                                             id: "role_#{role.id}",
+                                             id: "approve_role_#{role.id}",
                                              class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" %>
                       </div>
                       <div class="ml-3 text-sm">
-                        <%= label_tag "role_#{role.id}", class: "font-medium text-gray-700" do %>
+                        <%= label_tag "approve_role_#{role.id}", class: "font-medium text-gray-900" do %>
                           <%= role.display_name %>
-                          <span class="text-gray-500 font-normal block mt-1">
+                          <span class="text-gray-500 font-normal block mt-1 text-sm">
                             <%= role_description(role.name) %>
                           </span>
                         <% end %>
@@ -89,6 +89,18 @@
                 </div>
               </fieldset>
               <p class="mt-2 text-xs text-gray-500">デフォルトで「アルバイト」権限が選択されています</p>
+            </div>
+
+            <!-- 契約終了日（アルバイトのみ） -->
+            <div id="approve-contract-section" style="display: none;">
+              <%= form.label :contract_end_date, "契約終了日", class: "block text-sm font-medium text-gray-700" %>
+              <%= form.date_field :contract_end_date,
+                                  value: (@user.created_at.to_date + 6.months).to_s,
+                                  class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+              <p class="mt-1 text-xs text-gray-500">
+                契約開始日: <%= @user.created_at.strftime('%Y年%m月%d日') %><br>
+                デフォルトで6ヶ月後が設定されています
+              </p>
             </div>
 
             <!-- アクションボタン -->
@@ -113,6 +125,34 @@
           <% end %>
         </div>
       </div>
+
+      <script>
+        function initApproveContractSection() {
+          const roleRadios = document.querySelectorAll('input[name="user[role_id]"]');
+          const contractSection = document.getElementById('approve-contract-section');
+          const studentRoleId = <%= @roles.find { |r| r.name == 'student' }&.id || 'null' %>;
+
+          if (!contractSection) return;
+
+          function toggleContractSection() {
+            const selectedRole = document.querySelector('input[name="user[role_id]"]:checked');
+            if (selectedRole && parseInt(selectedRole.value) === studentRoleId) {
+              contractSection.style.display = 'block';
+            } else {
+              contractSection.style.display = 'none';
+            }
+          }
+
+          roleRadios.forEach(radio => {
+            radio.addEventListener('change', toggleContractSection);
+          });
+
+          toggleContractSection();
+        }
+
+        document.addEventListener('DOMContentLoaded', initApproveContractSection);
+        document.addEventListener('turbo:load', initApproveContractSection);
+      </script>
     <% else %>
       <!-- 有効ユーザーの場合、編集リンクを表示 -->
       <div class="mb-6">
@@ -164,15 +204,15 @@
       </div>
     </div>
 
-    <!-- 契約情報 -->
-    <% if @user.contract_start_date.present? %>
+    <!-- 契約情報（アルバイトのみ） -->
+    <% if @user.student? %>
       <div class="bg-white shadow sm:rounded-lg">
         <div class="px-4 py-5 sm:p-6">
           <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">契約情報</h3>
           <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
             <div>
               <dt class="text-sm font-medium text-gray-500">契約開始日</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @user.contract_start_date.strftime('%Y年%m月%d日') %></dd>
+              <dd class="mt-1 text-sm text-gray-900"><%= @user.created_at.strftime('%Y年%m月%d日') %></dd>
             </div>
             <div>
               <dt class="text-sm font-medium text-gray-500">契約終了日</dt>

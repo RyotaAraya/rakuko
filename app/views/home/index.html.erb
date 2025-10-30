@@ -154,26 +154,6 @@
         <% end %>
       <% end %>
 
-      <!-- ステータス表示 -->
-      <div class="status-section">
-        <div class="status-title">労働時間状況</div>
-        <% if @week_violations %>
-          <% breakdown = @week_violations[:breakdown] %>
-          <div>今週（弊社）: <%= breakdown[:actual_company_hours] %>h / <%= breakdown[:company_limit] %>h</div>
-          <div>今週（掛け持ち）: <%= breakdown[:actual_sidejob_hours] %>h</div>
-          <div>合計予測: <%= breakdown[:predicted_total_hours] %>h / <%= breakdown[:total_limit] %>h</div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: <%= [breakdown[:predicted_total_hours] / breakdown[:total_limit] * 100, 100].min %>%"></div>
-          </div>
-        <% else %>
-          <div>今週: 0h/20h　掛け持ち: 0h</div>
-          <div>合計: 0h/40h</div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: 0%"></div>
-          </div>
-        <% end %>
-      </div>
-
       <!-- 今日の勤怠登録 -->
       <div id="home-attendance-app" data-date="<%= Date.current.iso8601 %>">
         <div id="home-loading-message" style="text-align: center; padding: 40px;">

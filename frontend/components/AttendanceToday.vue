@@ -92,7 +92,7 @@
     </div>
 
     <!-- ナビゲーション -->
-    <div class="bg-white border border-gray-300 rounded-lg p-6 mb-5">
+    <div class="bg-white border border-gray-300 rounded-lg p-6">
       <div class="font-bold mb-4 text-base text-gray-800">勤怠履歴</div>
       <div class="flex gap-4">
         <a href="/attendances/weekly" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-center">
@@ -101,33 +101,6 @@
         <a href="/attendances" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-center">
           📊 月別勤怠一覧
         </a>
-      </div>
-    </div>
-
-    <!-- 今週の予測 -->
-    <div class="bg-white border border-gray-300 rounded-lg p-6">
-      <div class="font-bold mb-4 text-base text-gray-800">今週の労働時間</div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div class="border border-gray-200 p-4 rounded">
-          <div class="text-sm text-gray-600 mb-1">実績</div>
-          <div class="text-2xl font-bold">{{ safeActualHours.toFixed(1) }}h</div>
-        </div>
-        <div class="border border-gray-200 p-4 rounded">
-          <div class="text-sm text-gray-600 mb-1">残り予定</div>
-          <div class="text-2xl font-bold">{{ safeRemainingHours.toFixed(1) }}h</div>
-        </div>
-        <div class="border border-gray-200 p-4 rounded">
-          <div class="text-sm text-gray-600 mb-1">予測合計</div>
-          <div class="text-2xl font-bold" :class="{ 'text-red-600': weekSummary.over_limit }">
-            {{ safePredictedHours.toFixed(1) }}h / {{ weekSummary.week_limit }}h
-          </div>
-        </div>
-      </div>
-      <div v-if="weekSummary.over_limit" class="p-3 bg-red-50 border border-red-200 text-red-800 rounded">
-        ⚠️ 今週の労働時間が制限（20時間）を超過する予測です
-      </div>
-      <div v-else class="p-3 bg-green-50 border border-green-200 text-green-800 rounded">
-        ✓ 今週の労働時間は制限内です
       </div>
     </div>
   </div>
@@ -150,31 +123,10 @@ const summary = ref({
   is_working: false,
 })
 
-const weekSummary = ref({
-  actual_hours: 0.0,
-  remaining_scheduled_hours: 0.0,
-  predicted_total_hours: 0.0,
-  week_limit: 20,
-  over_limit: false,
-})
-
 const dateDisplay = computed(() => {
   if (!props.date) return ''
   const date = new Date(props.date)
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
-})
-
-// 週間サマリーの安全な数値変換
-const safeActualHours = computed(() => {
-  return Number(weekSummary.value.actual_hours) || 0
-})
-
-const safeRemainingHours = computed(() => {
-  return Number(weekSummary.value.remaining_scheduled_hours) || 0
-})
-
-const safePredictedHours = computed(() => {
-  return Number(weekSummary.value.predicted_total_hours) || 0
 })
 
 // 打刻ボタンの有効/無効制御
@@ -218,25 +170,6 @@ const fetchTodayData = async () => {
     const data = await response.json()
     records.value = data.records
     summary.value = data.summary
-
-    // 週間サマリーの取得
-    const weekResponse = await fetch('/attendances/today.json', {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-      },
-    })
-
-    const weekData = await weekResponse.json()
-    if (weekData.week_summary) {
-      weekSummary.value = {
-        actual_hours: weekData.week_summary.actual_hours || 0.0,
-        remaining_scheduled_hours: weekData.week_summary.remaining_scheduled_hours || 0.0,
-        predicted_total_hours: weekData.week_summary.predicted_total_hours || 0.0,
-        week_limit: weekData.week_summary.week_limit || 20,
-        over_limit: weekData.week_summary.over_limit || false,
-      }
-    }
   } catch (error) {
     console.error('Failed to fetch today data:', error)
     alert('データの取得に失敗しました')

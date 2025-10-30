@@ -114,6 +114,18 @@
               <p class="mt-2 text-xs text-gray-500">ユーザーの役割を1つ選択してください。</p>
             </div>
 
+            <!-- 契約終了日（アルバイトのみ） -->
+            <div id="contract-end-date-section" style="display: none;">
+              <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">契約情報</h3>
+              <%= form.label :contract_end_date, "契約終了日", class: "block text-sm font-medium text-gray-700" %>
+              <%= form.date_field :contract_end_date,
+                                  class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+              <p class="mt-1 text-xs text-gray-500">
+                契約開始日: <%= @user.created_at.strftime('%Y年%m月%d日') %><br>
+                契約終了日までシフト提出や月末締めが可能です
+              </p>
+            </div>
+
             <!-- ステータス -->
             <div>
               <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">アカウントステータス</h3>
@@ -134,27 +146,34 @@
         </div>
       <% end %>
     </div>
-
-    <!-- 契約情報（参照のみ） -->
-    <% if @user.contract_start_date.present? %>
-      <div class="mt-6 bg-white shadow sm:rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">契約情報</h3>
-          <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-            <div>
-              <dt class="text-sm font-medium text-gray-500">契約開始日</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @user.contract_start_date.strftime('%Y年%m月%d日') %></dd>
-            </div>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">契約終了日</dt>
-              <dd class="mt-1 text-sm text-gray-900">
-                <%= @user.contract_end_date.present? ? @user.contract_end_date.strftime('%Y年%m月%d日') : '未設定' %>
-              </dd>
-            </div>
-          </dl>
-          <p class="mt-4 text-xs text-gray-500">契約情報の編集は別途実装予定です</p>
-        </div>
-      </div>
-    <% end %>
   </div>
 </div>
+
+<script>
+  function initContractSection() {
+    const roleRadios = document.querySelectorAll('input[name="user[role_id]"]');
+    const contractSection = document.getElementById('contract-end-date-section');
+    const studentRoleId = <%= @roles.find { |r| r.name == 'student' }&.id || 'null' %>;
+
+    if (!contractSection) return;
+
+    function toggleContractSection() {
+      const selectedRole = document.querySelector('input[name="user[role_id]"]:checked');
+      if (selectedRole && parseInt(selectedRole.value) === studentRoleId) {
+        contractSection.style.display = 'block';
+      } else {
+        contractSection.style.display = 'none';
+      }
+    }
+
+    roleRadios.forEach(radio => {
+      radio.addEventListener('change', toggleContractSection);
+    });
+
+    // 初期表示
+    toggleContractSection();
+  }
+
+  document.addEventListener('DOMContentLoaded', initContractSection);
+  document.addEventListener('turbo:load', initContractSection);
+</script>
