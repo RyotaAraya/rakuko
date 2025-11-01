@@ -5,13 +5,8 @@ class User < ApplicationRecord
 
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
-  if Rails.env.production?
-    # 本番環境：Google認証のみ
-    devise :rememberable, :omniauthable, omniauth_providers: [:google_oauth2]
-  else
-    # 開発・ステージング環境：Google認証 + パスワード認証
-    devise :database_authenticatable, :registerable, :rememberable, :omniauthable, omniauth_providers: [:google_oauth2]
-  end
+  # 全環境：Google認証 + パスワード認証（デモ用）
+  devise :database_authenticatable, :registerable, :rememberable, :omniauthable, omniauth_providers: [:google_oauth2]
 
   # Enums
   enum :status, { pending: 0, active: 1, inactive: 2 }
