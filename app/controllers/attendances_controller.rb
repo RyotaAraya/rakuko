@@ -16,8 +16,14 @@ class AttendancesController < ApplicationController
 
     unless @available_months.include?(requested_month)
       # 契約期間内の最新月にリダイレクト
-      latest_month = @available_months.max || Date.current.beginning_of_month
-      redirect_to attendances_path(year: latest_month.year, month: latest_month.month) and return
+      if @available_months.any?
+        latest_month = @available_months.max
+        redirect_to attendances_path(year: latest_month.year, month: latest_month.month) and return
+      else
+        # 契約期間がない場合はエラーメッセージを表示
+        flash[:alert] = '契約期間が設定されていません。管理者にお問い合わせください。'
+        redirect_to root_path and return
+      end
     end
 
     @attendances = current_user.attendances.for_month(@year, @month).order(date: :asc)
@@ -59,9 +65,13 @@ class AttendancesController < ApplicationController
 
     # 契約期間内のみ表示
     unless current_user.within_contract_period?(@start_date)
-      # 契約期間内の最新週にリダイレクト
-      latest_week_start = [current_user.created_at.to_date, Date.current].max.beginning_of_week
-      redirect_to weekly_attendances_path(start_date: latest_week_start) and return
+      # 契約期間内の今日の日付にリダイレクト（契約期間外の場合は契約開始日）
+      fallback_date = if current_user.within_contract_period?(Date.current)
+                        Date.current
+                      else
+                        current_user.contract_start_date
+                      end
+      redirect_to weekly_attendances_path(start_date: fallback_date.beginning_of_week) and return
     end
 
     @attendances = current_user.attendances

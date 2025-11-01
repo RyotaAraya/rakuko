@@ -202,6 +202,11 @@ class User < ApplicationRecord
 
   # ====== 契約期間管理 ======
 
+  # 契約開始日を取得（created_atを使用）
+  def contract_start_date
+    created_at&.to_date
+  end
+
   # 契約期間内かチェック
   def contract_active?(date = Date.current)
     return false unless contract_start_date && contract_end_date
