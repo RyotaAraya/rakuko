@@ -52,6 +52,7 @@ Metrics/MethodLength:
     - 'app/controllers/shift_requests_controller.rb' # シフト登録ビジネスロジック
     - 'app/controllers/time_records_controller.rb'   # 打刮処理ロジック
     - 'app/controllers/attendances_controller.rb'    # 勤怠集計ロジック
+    - 'app/controllers/month_end_closings_controller.rb' # 月末締め承認処理
     - 'app/helpers/application_helper.rb'          # ヘルパーメソッド
     - 'app/services/**/*'             # サービスクラスの複雑なロジック
 
@@ -134,6 +135,7 @@ Metrics/PerceivedComplexity:
     - 'app/models/application.rb'     # 申請タイプ別バリデーション
     - 'app/models/attendance.rb'      # 勤怠集計ビジネスロジック
     - 'app/models/types/time_only.rb' # カスタム型定義
+    - 'app/controllers/attendances_controller.rb'  # 契約期間チェックロジック
     - 'app/controllers/approvals_controller.rb'    # 承認処理ロジック
     - 'app/controllers/time_records_controller.rb' # 打刻処理ロジック
     - 'app/services/**/*'             # サービスクラスの複雑なロジック
@@ -150,6 +152,11 @@ Naming/PredicatePrefix:
     - 'app/models/daily_schedule.rb'  # has_*? はビジネスロジック
     - 'app/models/monthly_summary.rb' # has_violations?, is_over_monthly_limit?
     - 'app/models/weekly_shift.rb'    # has_violations?
+
+# Block chain style
+Style/MultilineBlockChain:
+  Exclude:
+    - 'db/seeds.rb'  # シードデータ生成で週末除外処理
 
 # Rails patterns
 Rails/WhereNotWithMultipleConditions:
