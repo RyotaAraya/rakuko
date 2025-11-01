@@ -100,7 +100,7 @@ class User < ApplicationRecord
   end
 
   def full_name
-    [first_name, last_name].compact.join(' ')
+    [last_name, first_name].compact.join(' ')
   end
 
   def display_name

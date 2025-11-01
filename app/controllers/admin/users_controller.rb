@@ -11,6 +11,7 @@ module Admin
 
       # 検索・フィルタリング
       @active_users = filter_active_users
+      @inactive_users = policy_scope([:admin, User]).inactive.includes(:department, :roles).order(updated_at: :desc)
       @departments = Department.order(:name)
       @roles = Role.order(:name)
     end
@@ -30,9 +31,19 @@ module Admin
     def update
       authorize [:admin, @user]
 
+      # 共通バリデーション
+      validation_error = validate_user_update
+      if validation_error
+        @departments = Department.order(:name)
+        @roles = Role.order(:name)
+        flash.now[:alert] = validation_error
+        render :edit, status: :unprocessable_entity
+        return
+      end
+
       if @user.update(user_params)
         # 権限の更新（単一権限）
-        update_user_role if params[:user][:role_id]
+        update_user_role
         redirect_to admin_user_path(@user), notice: 'ユーザー情報が更新されました。'
       else
         @departments = Department.order(:name)
@@ -126,6 +137,24 @@ module Admin
 
     def user_params
       params.require(:user).permit(:first_name, :last_name, :department_id, :status, :contract_end_date)
+    end
+
+    def validate_user_update
+      # 姓名のバリデーション
+      return '姓を入力してください。' if params[:user][:last_name].blank?
+      return '名を入力してください。' if params[:user][:first_name].blank?
+
+      # 所属部署のバリデーション
+      return '所属部署を選択してください。' if params[:user][:department_id].blank?
+
+      # 権限のバリデーション
+      return '権限を選択してください。' if params[:user][:role_id].blank?
+
+      # アルバイト権限の場合の契約終了日バリデーション
+      selected_role = Role.find_by(id: params[:user][:role_id])
+      return 'アルバイトの場合、契約終了日を設定してください。' if selected_role&.name == 'student' && params[:user][:contract_end_date].blank?
+
+      nil
     end
 
     def update_user_role

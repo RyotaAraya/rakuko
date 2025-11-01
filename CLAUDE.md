@@ -33,8 +33,8 @@ The project uses standard Rails testing conventions. Check for test files in `te
 - **Backend**: Ruby on Rails 7.1 with PostgreSQL
 - **Frontend**: Vue.js 3 + TypeScript (partial integration via Vite Rails)
 - **Authentication**: Devise with Google OAuth2 integration
-- **Authorization**: Pundit (planned)
-- **State Management**: AASM (planned)
+- **Authorization**: Pundit (role-based access control)
+- **State Management**: AASM (User: pending/active/inactive, Application: pending/approved/rejected/canceled, WeeklyShift: draft/submitted)
 - **Background Jobs**: Sidekiq (planned)
 - **Styling**: Tailwind CSS
 
@@ -43,10 +43,16 @@ The project uses standard Rails testing conventions. Check for test files in `te
 #### Rails Application Structure
 - **Models**: Standard Rails models in `app/models/`
   - `User` model with Devise and OAuth integration
-  - Role-based system with enum (student, department_manager, system_admin)
+  - `Role` + `UserRole` - Single role constraint (each user has exactly one role)
+  - `WeeklyShift` + `DailySchedule` - Week-based shift management
+  - `Attendance` + `TimeRecord` - Time tracking and attendance records
+  - `Application` + `Approval` - Application and approval workflow (polymorphic)
 - **Controllers**:
   - `HomeController` for main application entry
   - `Users::OmniauthCallbacksController` for Google OAuth
+  - `Admin::UsersController` for user management
+  - `ShiftRequestsController` for shift submission
+  - `AttendancesController` for attendance tracking
 - **Views**: ERB templates in `app/views/` with Vue.js integration points
 
 #### Frontend Structure
@@ -56,9 +62,29 @@ The project uses standard Rails testing conventions. Check for test files in `te
 - **Types**: TypeScript definitions in `frontend/types/`
 
 #### Database Schema
-Key tables:
-- `users` - User accounts with OAuth fields, roles, and department info
-- `shift_requests` - Shift scheduling with status tracking
+**Week-based Design** (solves month-crossing week problems):
+- `weeks` - Week master table (Monday to Sunday, cross-month flag)
+- `weekly_shifts` - User's weekly shift data (AASM: draft/submitted)
+- `daily_schedules` - Daily schedule details (company/side-job hours)
+- `monthly_summaries` - Monthly summary aggregated from weekly_shifts
+
+**User Management**:
+- `users` - User accounts (contract_start_date uses created_at, contract_end_date column)
+- `roles` - Role definitions (student, department_manager, system_admin)
+- `user_roles` - Single role constraint via join table
+- `departments` - Department management
+
+**Attendance & Time Tracking**:
+- `time_records` - Clock in/out records (work_start, work_end, break_start, break_end)
+- `attendances` - Daily attendance summary (auto-generated from time_records)
+
+**Applications & Approvals**:
+- `applications` - Applications (absence, late, early_leave, shift_change)
+- `approvals` - Polymorphic approval records (department approval only)
+
+**Other**:
+- `month_end_closings` - Monthly closing process
+- `notifications` - User notifications
 
 ### Vue.js Integration Pattern
 The application uses a hybrid approach:
@@ -96,6 +122,16 @@ The application uses a hybrid approach:
 - ✅ レガシーカラム削除済み (`role`, `name`, `department`, `provider`, `uid`)
 - ✅ Pundit gemによる権限制御実装済み
 - ✅ 管理者によるユーザー承認機能実装済み
+
+### レガシーテーブル（未使用）
+- ⚠️ `shifts`テーブル - 初期実装の残骸、`weekly_shifts`に置き換え済み
+- ⚠️ `shift_schedules`テーブル - 初期実装の残骸、`daily_schedules`に置き換え済み
+- **対応予定**: マイグレーションで削除すべき（本番データ確認後）
+
+### 契約開始日の扱い
+- `contract_start_date`カラムは存在するが、実際は`created_at`を契約開始日として使用
+- 表示画面では`@user.created_at`を「契約開始日」として表示
+- **理由**: ユーザー作成日 = 契約開始日という仕様
 
 ## Key Features Being Developed
 - Student work hour tracking (20h/week limit compliance)

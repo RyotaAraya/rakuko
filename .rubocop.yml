@@ -123,6 +123,7 @@ Metrics/CyclomaticComplexity:
     - 'app/models/attendance.rb'      # 勤怠集計ビジネスロジック
     - 'app/models/types/time_only.rb' # カスタム型定義
     - 'app/controllers/attendances_controller.rb'  # 契約期間チェックロジック
+    - 'app/controllers/admin/users_controller.rb'  # ユーザー更新バリデーション
     - 'app/controllers/approvals_controller.rb'    # 承認処理ロジック
     - 'app/controllers/time_records_controller.rb' # 打刻処理ロジック
     - 'app/services/**/*'             # サービスクラスの複雑なロジック
