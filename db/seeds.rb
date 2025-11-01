@@ -86,10 +86,9 @@ development_users.each do |user_attrs|
       password_confirmation: 'password123'
     )
 
-    # 学生ユーザーには契約期間を設定
+    # 学生ユーザーには契約終了日を設定（契約開始日はcreated_atを使用）
     if user_attrs[:roles].include?(:student)
       current_date = Date.current
-      user.contract_start_date = current_date.beginning_of_month
       user.contract_end_date = (current_date + 6.months).end_of_month
       user.contract_updated_at = Time.current
     end
@@ -104,11 +103,10 @@ development_users.each do |user_attrs|
       Rails.logger.debug { "✗ Failed to create user: #{user.email} - #{user.errors.full_messages.join(', ')}" }
     end
   else
-    # 既存ユーザーでも学生で契約期間がない場合は設定
-    if user_attrs[:roles].include?(:student) && user.contract_start_date.nil?
+    # 既存ユーザーでも学生で契約終了日がない場合は設定
+    if user_attrs[:roles].include?(:student) && user.contract_end_date.nil?
       current_date = Date.current
       user.update(
-        contract_start_date: current_date.beginning_of_month,
         contract_end_date: (current_date + 6.months).end_of_month,
         contract_updated_at: Time.current
       )
@@ -173,7 +171,6 @@ if student_user
     student_user.attendances.find_or_create_by(date: work_date) do |att|
       att.actual_hours = 4
       att.total_break_time = 60
-      att.status = :approved
       att.is_auto_generated = true
     end
   end
