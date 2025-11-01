@@ -21,6 +21,8 @@ initial_departments = [
   { name: '情報システム部', department_type: :management, description: 'システム管理・運用を担当' },
   { name: '営業部', department_type: :general, description: '営業活動を担当する一般事業部' },
   { name: '開発部', department_type: :general, description: 'プロダクト開発を担当する一般事業部' },
+  { name: '人事部', department_type: :general, description: '人事・労務を担当する一般事業部' },
+  { name: 'マーケティング部', department_type: :general, description: 'マーケティング活動を担当する一般事業部' },
 ]
 
 initial_departments.each do |dept_data|
@@ -35,22 +37,7 @@ Rails.logger.debug 'Creating development user accounts...'
 
 # 3. 開発用ユーザーアカウントを作成
 development_users = [
-  {
-    email: 'student@example.com',
-    first_name: '学生',
-    last_name: '太郎',
-    roles: [:student],
-    status: :active,
-    department: '営業部',
-  },
-  {
-    email: 'department.manager@example.com',
-    first_name: '部署',
-    last_name: '管理者',
-    roles: [:department_manager],
-    status: :active,
-    department: '営業部',
-  },
+  # システム管理者
   {
     email: 'system.admin@example.com',
     first_name: 'システム',
@@ -59,13 +46,139 @@ development_users = [
     status: :active,
     department: '情報システム部',
   },
+
+  # 部署管理者（各部署）
   {
-    email: 'pending.user@example.com',
+    email: 'sales.manager@example.com',
+    first_name: '営業',
+    last_name: '部長',
+    roles: [:department_manager],
+    status: :active,
+    department: '営業部',
+  },
+  {
+    email: 'dev.manager@example.com',
+    first_name: '開発',
+    last_name: '部長',
+    roles: [:department_manager],
+    status: :active,
+    department: '開発部',
+  },
+  {
+    email: 'hr.manager@example.com',
+    first_name: '人事',
+    last_name: '部長',
+    roles: [:department_manager],
+    status: :active,
+    department: '人事部',
+  },
+
+  # 学生アルバイト（営業部）
+  {
+    email: 'student1@example.com',
+    first_name: '太郎',
+    last_name: '田中',
+    roles: [:student],
+    status: :active,
+    department: '営業部',
+  },
+  {
+    email: 'student2@example.com',
+    first_name: '花子',
+    last_name: '佐藤',
+    roles: [:student],
+    status: :active,
+    department: '営業部',
+  },
+
+  # 学生アルバイト（開発部）
+  {
+    email: 'student3@example.com',
+    first_name: '次郎',
+    last_name: '鈴木',
+    roles: [:student],
+    status: :active,
+    department: '開発部',
+  },
+  {
+    email: 'student4@example.com',
+    first_name: '美咲',
+    last_name: '高橋',
+    roles: [:student],
+    status: :active,
+    department: '開発部',
+  },
+
+  # 学生アルバイト（人事部）
+  {
+    email: 'student5@example.com',
+    first_name: '健太',
+    last_name: '伊藤',
+    roles: [:student],
+    status: :active,
+    department: '人事部',
+  },
+
+  # 学生アルバイト（マーケティング部）
+  {
+    email: 'student6@example.com',
+    first_name: '愛',
+    last_name: '渡辺',
+    roles: [:student],
+    status: :active,
+    department: 'マーケティング部',
+  },
+
+  # 承認待ちユーザー（複数）
+  {
+    email: 'pending1@example.com',
     first_name: '承認待ち',
-    last_name: 'ユーザー',
-    roles: [], # 承認待ちは権限なし
+    last_name: 'ユーザー1',
+    roles: [],
     status: :pending,
     department: nil,
+  },
+  {
+    email: 'pending2@example.com',
+    first_name: '承認待ち',
+    last_name: 'ユーザー2',
+    roles: [],
+    status: :pending,
+    department: nil,
+  },
+  {
+    email: 'pending3@example.com',
+    first_name: '承認待ち',
+    last_name: 'ユーザー3',
+    roles: [],
+    status: :pending,
+    department: nil,
+  },
+  {
+    email: 'pending4@example.com',
+    first_name: '承認待ち',
+    last_name: 'ユーザー4',
+    roles: [],
+    status: :pending,
+    department: nil,
+  },
+  {
+    email: 'pending5@example.com',
+    first_name: '承認待ち',
+    last_name: 'ユーザー5',
+    roles: [],
+    status: :pending,
+    department: nil,
+  },
+
+  # 非アクティブユーザー
+  {
+    email: 'inactive@example.com',
+    first_name: '退職',
+    last_name: 'ユーザー',
+    roles: [:student],
+    status: :inactive,
+    department: '営業部',
   },
 ]
 
@@ -118,39 +231,42 @@ end
 
 Rails.logger.debug 'Development user accounts setup complete!'
 
-# 4. 週次シフトデータの作成（新設計）
+# 4. 週次シフトデータの作成（複数学生分）
 Rails.logger.debug 'Creating sample weekly shift data...'
-student_user = User.find_by(email: 'student@example.com')
+student_users = User.joins(:user_roles).joins('INNER JOIN roles ON user_roles.role_id = roles.id')
+                    .where(roles: { name: 'student' }, status: :active)
 
-if student_user
+student_users.each do |student|
   # 今月と来月の月次サマリーを作成
   current_date = Date.current
   [current_date, current_date.next_month].each do |date|
     WeekManagementService.create_monthly_summary_with_shifts(
-      student_user,
+      student,
       date.year,
       date.month
     )
-
-    Rails.logger.debug { "✓ Created monthly summary for #{date.strftime('%Y年%m月')}" }
   end
+  Rails.logger.debug { "✓ Created shift data for #{student.full_name}" }
 end
 
-# 5. 勤怠データの作成（先月分）
+# 5. 勤怠データの作成（先月分＋今月分の一部）
 Rails.logger.debug 'Creating sample attendance data...'
-if student_user
+student_users.each_with_index do |student, index|
+  # 先月の勤怠データ
   last_month = Date.current.last_month
+  work_days_last_month = (1..last_month.end_of_month.day).map { |day|
+    Date.new(last_month.year, last_month.month, day)
+  }.reject { |date| [0, 6].include?(date.wday) } # 土日除外
 
-  # 先月の平日に勤怠記録を作成
-  (1..Date.new(last_month.year, last_month.month, -1).day).each do |day|
-    work_date = Date.new(last_month.year, last_month.month, day)
-    next if [0, 6].include?(work_date.wday) # 土日はスキップ
+  work_days_last_month.each do |work_date|
+    # 各学生で勤務パターンを変える
+    work_hours = [3, 4, 5, 6][index % 4]
+    clock_in_hour = [9, 10, 13, 14][index % 4]
 
-    # タイムレコードの作成
-    clock_in_time = work_date.beginning_of_day + 13.hours + rand(0..30).minutes
+    clock_in_time = work_date.beginning_of_day + clock_in_hour.hours + rand(0..30).minutes
     break_start_time = clock_in_time + 2.hours + rand(0..30).minutes
     break_end_time = break_start_time + 1.hour
-    clock_out_time = clock_in_time + 4.hours + rand(0..30).minutes
+    clock_out_time = clock_in_time + work_hours.hours + 1.hour + rand(0..30).minutes
 
     [
       { record_type: :clock_in, recorded_at: clock_in_time, break_sequence: nil },
@@ -158,168 +274,315 @@ if student_user
       { record_type: :break_end, recorded_at: break_end_time, break_sequence: 1 },
       { record_type: :clock_out, recorded_at: clock_out_time, break_sequence: nil },
     ].each do |record_data|
-      student_user.time_records.find_or_create_by(
+      student.time_records.find_or_create_by(
         date: work_date,
-        record_type: record_data[:record_type]
+        record_type: record_data[:record_type],
+        break_sequence: record_data[:break_sequence]
       ) do |record|
         record.recorded_at = record_data[:recorded_at]
-        record.break_sequence = record_data[:break_sequence]
       end
     end
 
     # 勤怠記録の作成
-    student_user.attendances.find_or_create_by(date: work_date) do |att|
-      att.actual_hours = 4
+    student.attendances.find_or_create_by(date: work_date) do |att|
+      att.actual_hours = work_hours
       att.total_break_time = 60
       att.is_auto_generated = true
     end
   end
 
-  Rails.logger.debug { "✓ Created attendance records for #{last_month.strftime('%Y年%m月')}" }
+  # 今月の勤怠データ（月初から今日まで）
+  current_month = Date.current
+  work_days_this_month = (1..current_month.day).map { |day|
+    Date.new(current_month.year, current_month.month, day)
+  }.reject { |date| [0, 6].include?(date.wday) } # 土日除外
+
+  work_days_this_month.each do |work_date|
+    next if work_date > Date.current # 未来の日付はスキップ
+
+    work_hours = [3, 4, 5, 6][index % 4]
+    clock_in_hour = [9, 10, 13, 14][index % 4]
+
+    clock_in_time = work_date.beginning_of_day + clock_in_hour.hours + rand(0..30).minutes
+    break_start_time = clock_in_time + 2.hours + rand(0..30).minutes
+    break_end_time = break_start_time + 1.hour
+    clock_out_time = clock_in_time + work_hours.hours + 1.hour + rand(0..30).minutes
+
+    [
+      { record_type: :clock_in, recorded_at: clock_in_time, break_sequence: nil },
+      { record_type: :break_start, recorded_at: break_start_time, break_sequence: 1 },
+      { record_type: :break_end, recorded_at: break_end_time, break_sequence: 1 },
+      { record_type: :clock_out, recorded_at: clock_out_time, break_sequence: nil },
+    ].each do |record_data|
+      student.time_records.find_or_create_by(
+        date: work_date,
+        record_type: record_data[:record_type],
+        break_sequence: record_data[:break_sequence]
+      ) do |record|
+        record.recorded_at = record_data[:recorded_at]
+      end
+    end
+
+    # 勤怠記録の作成
+    student.attendances.find_or_create_by(date: work_date) do |att|
+      att.actual_hours = work_hours
+      att.total_break_time = 60
+      att.is_auto_generated = true
+    end
+  end
+
+  Rails.logger.debug { "✓ Created attendance records for #{student.full_name}" }
 end
 
-# 6. 申請データの作成
+# 6. 申請データの作成（様々な状態）
 Rails.logger.debug 'Creating sample application data...'
-if student_user
-  # 来週の申請を作成
+student_users.each_with_index do |student, index|
   next_week = Date.current.next_week
+  department_manager = student.department.users
+                              .joins(:user_roles)
+                              .joins('INNER JOIN roles ON user_roles.role_id = roles.id')
+                              .where(roles: { name: 'department_manager' })
+                              .first
 
-  # 遅刻申請
-  student_user.applications.find_or_create_by(
-    application_type: :late,
-    application_date: next_week
-  ) do |app|
-    app.start_time = Time.zone.parse('10:00')
-    app.reason = '電車の遅延により遅刻いたします。'
-    app.status = :pending
+  # 各学生に複数の申請を作成
+  applications_data = [
+    # 承認待ち遅刻申請
+    {
+      type: :late,
+      date: next_week,
+      start_time: '10:00',
+      reason: '電車の遅延により遅刻いたします。',
+      status: :pending,
+    },
+    # 承認待ち早退申請
+    {
+      type: :early_leave,
+      date: next_week + 1.day,
+      end_time: '16:00',
+      reason: '病院への通院のため早退させていただきます。',
+      status: :pending,
+    },
+    # 承認待ち欠勤申請
+    {
+      type: :absence,
+      date: next_week + 2.days,
+      reason: '体調不良のため欠勤いたします。',
+      status: :pending,
+    },
+  ]
+
+  # 承認済み・却下済みの申請も追加（過去の日付）
+  last_week = Date.current.last_week
+  past_applications = [
+    {
+      type: :late,
+      date: last_week,
+      start_time: '10:30',
+      reason: '交通機関の遅延のため',
+      status: :approved,
+    },
+    {
+      type: :absence,
+      date: last_week + 1.day,
+      reason: '大学の試験のため欠勤いたします。',
+      status: :approved,
+    },
+    {
+      type: :early_leave,
+      date: last_week + 2.days,
+      end_time: '15:00',
+      reason: '私用のため',
+      status: :rejected,
+    },
+  ]
+
+  # 承認待ち申請を作成（承認レコードも作成）
+  applications_data.take(index % 3 + 1).each do |app_data|
+    application = student.applications.find_or_create_by(
+      application_type: app_data[:type],
+      application_date: app_data[:date]
+    ) do |app|
+      app.start_time = Time.zone.parse(app_data[:start_time]) if app_data[:start_time]
+      app.end_time = Time.zone.parse(app_data[:end_time]) if app_data[:end_time]
+      app.reason = app_data[:reason]
+      app.status = app_data[:status]
+    end
+
+    # 承認待ちの場合、Approvalレコードを作成
+    if application.status == 'pending' && department_manager && !application.approvals.exists?
+      application.approvals.create!(
+        approval_type: :department,
+        status: :pending,
+        approver: department_manager
+      )
+    end
   end
 
-  # 早退申請
-  student_user.applications.find_or_create_by(
-    application_type: :early_leave,
-    application_date: next_week + 2.days
-  ) do |app|
-    app.end_time = Time.zone.parse('16:00')
-    app.reason = '病院への通院のため早退させていただきます。'
-    app.status = :approved
+  # 過去の申請（承認済み・却下済み）を作成
+  past_applications.take(index % 2 + 1).each do |app_data|
+    student.applications.find_or_create_by(
+      application_type: app_data[:type],
+      application_date: app_data[:date]
+    ) do |app|
+      app.start_time = Time.zone.parse(app_data[:start_time]) if app_data[:start_time]
+      app.end_time = Time.zone.parse(app_data[:end_time]) if app_data[:end_time]
+      app.reason = app_data[:reason]
+      app.status = app_data[:status]
+    end
   end
 
-  Rails.logger.debug '✓ Created sample applications'
+  Rails.logger.debug { "✓ Created applications for #{student.full_name}" }
 end
 
 # 7. 月末締めデータの作成
 Rails.logger.debug 'Creating sample month-end closing data...'
-if student_user
-  department_manager = User.find_by(email: 'department.manager@example.com')
+student_users.each_with_index do |student, index|
   last_month = Date.current.last_month
 
-  # 承認済みの月末締め
-  student_user.month_end_closings.find_or_create_by(
+  # 先月の締め（承認済み）
+  student.month_end_closings.find_or_create_by(
     year: last_month.year,
     month: last_month.month
   ) do |closing|
     closing.status = :closed
-    closing.total_work_hours = 80
-    closing.total_work_days = 20
+    closing.total_work_hours = [60, 70, 75, 80][index % 4]
+    closing.total_work_days = [15, 17, 18, 20][index % 4]
     closing.overtime_hours = 0
-    closing.closed_by = department_manager
+    closing.closed_by = student.department.users.joins(:user_roles).joins('INNER JOIN roles ON user_roles.role_id = roles.id')
+                              .where(roles: { name: 'department_manager' }).first
     closing.closed_at = last_month.end_of_month
   end
 
-  # 今月の承認待ち締め
+  # 今月の締め（状態は様々）
   current_month = Date.current
-  student_user.month_end_closings.find_or_create_by(
+  status = [:open, :pending_approval, :closed][index % 3]
+  department_manager = student.department.users
+                              .joins(:user_roles)
+                              .joins('INNER JOIN roles ON user_roles.role_id = roles.id')
+                              .where(roles: { name: 'department_manager' })
+                              .first
+
+  closing = student.month_end_closings.find_or_create_by(
     year: current_month.year,
     month: current_month.month
-  ) do |closing|
-    closing.status = :pending_approval
-    closing.total_work_hours = 60
-    closing.total_work_days = 15
-    closing.overtime_hours = 0
+  ) do |c|
+    c.status = status
+    c.total_work_hours = [40, 50, 55, 60][index % 4]
+    c.total_work_days = [10, 12, 13, 15][index % 4]
+    c.overtime_hours = 0
+    if status == :closed
+      c.closed_by = department_manager
+      c.closed_at = Time.current
+    end
   end
 
-  Rails.logger.debug { "✓ Created month-end closing for #{last_month.strftime('%Y年%m月')}" }
+  # 承認待ちの場合、Approvalレコードを作成
+  if closing.status == 'pending_approval' && department_manager && !closing.approvals.exists?
+    closing.approvals.create!(
+      approval_type: :department,
+      status: :pending,
+      approver: department_manager
+    )
+  end
+
+  Rails.logger.debug { "✓ Created month-end closing for #{student.full_name}" }
 end
 
-# 8. 承認データの作成（週次シフト用）
-# Rails.logger.debug 'Creating sample approval data...'
-# TODO: 承認機能は後のフェーズで実装予定
-# if student_user
-#   department_manager = User.find_by(email: 'department.manager@example.com')
-#   hr_manager = User.find_by(email: 'hr.manager@example.com')
-#
-#   # 月次サマリーの承認
-#   monthly_summary = student_user.monthly_summaries.first
-#   if monthly_summary
-#     # 部署承認
-#     monthly_summary.approvals.find_or_create_by(
-#       approval_type: :department_approval,
-#       approver: department_manager
-#     ) do |approval|
-#       approval.status = :approved
-#       approval.comment = 'シフト内容を確認しました。'
-#       approval.approved_at = Time.current
-#     end
-#
-#     # 労務承認
-#     monthly_summary.approvals.find_or_create_by(
-#       approval_type: :labor_approval,
-#       approver: hr_manager
-#     ) do |approval|
-#       approval.status = :pending
-#     end
-#   end
-#
-#   Rails.logger.debug '✓ Created sample approval records'
-# end
-
-# 9. 通知データの作成
+# 8. 通知データの作成（複数パターン）
 Rails.logger.debug 'Creating sample notification data...'
-if student_user
-  # シフト提出リマインダー
-  student_user.notifications.find_or_create_by(
-    notification_type: :shift_reminder,
-    title: 'シフト提出リマインダー'
-  ) do |notification|
-    notification.message = "#{Date.current.next_month.strftime('%Y年%m月')}のシフトを提出してください。"
-    notification.priority = :normal
-    notification.action_url = '/shifts/new'
-    notification.notifiable = student_user
+student_users.each_with_index do |student, index|
+  case index % 4
+  when 0
+    # シフト提出リマインダー（未読）
+    student.notifications.find_or_create_by(
+      notification_type: :shift_reminder,
+      title: 'シフト提出リマインダー'
+    ) do |notification|
+      notification.message = "#{Date.current.next_month.strftime('%Y年%m月')}のシフトを提出してください。"
+      notification.priority = :normal
+      notification.action_url = '/shifts/new'
+      notification.notifiable = student
+    end
+  when 1
+    # 承認完了通知（既読）
+    student.notifications.find_or_create_by(
+      notification_type: :approval_approved,
+      title: '申請が承認されました'
+    ) do |notification|
+      notification.message = '早退申請が承認されました。'
+      notification.priority = :normal
+      notification.read_at = 1.hour.ago
+      notification.notifiable = student
+    end
+  when 2
+    # 却下通知（未読）
+    student.notifications.find_or_create_by(
+      notification_type: :approval_rejected,
+      title: '申請が却下されました'
+    ) do |notification|
+      notification.message = '欠勤申請が却下されました。詳細を確認してください。'
+      notification.priority = :high
+      notification.action_url = '/applications'
+      notification.notifiable = student
+    end
+  when 3
+    # 月末締め完了通知（既読）
+    student.notifications.find_or_create_by(
+      notification_type: :system_announcement,
+      title: '月末締めが完了しました'
+    ) do |notification|
+      notification.message = "#{Date.current.last_month.strftime('%Y年%m月')}の月末締めが完了しました。"
+      notification.priority = :normal
+      notification.read_at = 2.hours.ago
+      notification.notifiable = student
+    end
   end
 
-  # 承認完了通知
-  student_user.notifications.find_or_create_by(
-    notification_type: :approval_approved,
-    title: '承認完了'
-  ) do |notification|
-    notification.message = 'シフト申請が承認されました。'
-    notification.priority = :normal
-    notification.read_at = 1.hour.ago
-    notification.notifiable = student_user
-  end
-
-  Rails.logger.debug '✓ Created sample notifications'
+  Rails.logger.debug { "✓ Created notifications for #{student.full_name}" }
 end
 
 Rails.logger.debug ''
+Rails.logger.debug '================================'
 Rails.logger.debug 'All sample data created successfully!'
+Rails.logger.debug '================================'
 Rails.logger.debug ''
 Rails.logger.debug 'Available test accounts:'
-Rails.logger.debug '========================'
-Rails.logger.debug '学生ユーザー: student@example.com'
-Rails.logger.debug '部署管理者: department.manager@example.com'
-Rails.logger.debug 'システム管理者: system.admin@example.com'
-Rails.logger.debug '承認待ちユーザー: pending.user@example.com'
+Rails.logger.debug '------------------------'
+Rails.logger.debug ''
+Rails.logger.debug '【システム管理者】'
+Rails.logger.debug '  system.admin@example.com'
+Rails.logger.debug ''
+Rails.logger.debug '【部署管理者】'
+Rails.logger.debug '  sales.manager@example.com (営業部)'
+Rails.logger.debug '  dev.manager@example.com (開発部)'
+Rails.logger.debug '  hr.manager@example.com (人事部)'
+Rails.logger.debug ''
+Rails.logger.debug '【学生アルバイト】'
+Rails.logger.debug '  student1@example.com (田中 太郎 - 営業部)'
+Rails.logger.debug '  student2@example.com (佐藤 花子 - 営業部)'
+Rails.logger.debug '  student3@example.com (鈴木 次郎 - 開発部)'
+Rails.logger.debug '  student4@example.com (高橋 美咲 - 開発部)'
+Rails.logger.debug '  student5@example.com (伊藤 健太 - 人事部)'
+Rails.logger.debug '  student6@example.com (渡辺 愛 - マーケティング部)'
+Rails.logger.debug ''
+Rails.logger.debug '【承認待ちユーザー】'
+Rails.logger.debug '  pending1@example.com'
+Rails.logger.debug '  pending2@example.com'
+Rails.logger.debug ''
+Rails.logger.debug '【非アクティブユーザー】'
+Rails.logger.debug '  inactive@example.com'
 Rails.logger.debug ''
 Rails.logger.debug '共通パスワード: password123'
-Rails.logger.debug 'ログインURL: /users/sign_in'
 Rails.logger.debug ''
 Rails.logger.debug 'Sample data includes:'
-Rails.logger.debug '- Shifts for current and next month'
-Rails.logger.debug '- Attendance records for last month'
-Rails.logger.debug '- Various application types'
-Rails.logger.debug '- Approval workflows'
-Rails.logger.debug '- Notification samples'
-Rails.logger.debug '- Month-end closing records'
+Rails.logger.debug '- 6名の学生アルバイト（複数部署）'
+Rails.logger.debug '- 3名の部署管理者'
+Rails.logger.debug '- 先月分の勤怠データ（全学生）'
+Rails.logger.debug '- 今月分の勤怠データ（月初〜今日まで）'
+Rails.logger.debug '- 週次シフトデータ（今月・来月）'
+Rails.logger.debug '- 様々な状態の申請データ（承認待ち、承認済み、却下、キャンセル）'
+Rails.logger.debug '- 月末締めデータ（先月・今月）'
+Rails.logger.debug '- 通知データ（既読・未読）'
 Rails.logger.debug ''
 Rails.logger.debug '注意: これらは開発環境専用のアカウントです。'
+Rails.logger.debug ''

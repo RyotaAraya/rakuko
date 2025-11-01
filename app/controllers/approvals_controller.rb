@@ -36,7 +36,7 @@ class ApprovalsController < ApplicationController
           AND approvals.approvable_id = month_end_closings.id
                                       SQL
                                       .where(approval_type: :department, status: :pending)
-                                      .where(month_end_closings: { status: 0 }) # pending_approval
+                                      .where(month_end_closings: { status: 1 }) # pending_approval
                                       .includes(:approvable, :approver)
                                   else
                                     []

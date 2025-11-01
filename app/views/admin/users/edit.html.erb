@@ -242,25 +242,19 @@
     const studentRoleId = <%= @roles.find { |r| r.name == 'student' }&.id || 'null' %>;
 
     if (!contractSection) {
-      console.error('contract-section not found');
       return;
     }
 
     if (!studentRoleId) {
-      console.error('student role not found');
       return;
     }
 
     function toggleContractSection() {
       const selectedRole = document.querySelector('input[name="user[role_id]"]:checked');
-      console.log('Selected role:', selectedRole ? selectedRole.value : 'none');
-      console.log('Student role ID:', studentRoleId);
 
       if (selectedRole && parseInt(selectedRole.value) === studentRoleId) {
-        console.log('Showing contract section');
         contractSection.style.display = 'block';
       } else {
-        console.log('Hiding contract section');
         contractSection.style.display = 'none';
       }
     }
@@ -273,14 +267,10 @@
 
     // 再取得したラジオボタンにイベントリスナーを追加
     document.querySelectorAll('input[name="user[role_id]"]').forEach(radio => {
-      radio.addEventListener('change', function() {
-        console.log('Role changed to:', this.value);
-        toggleContractSection();
-      });
+      radio.addEventListener('change', toggleContractSection);
     });
 
     // 初期表示
-    console.log('Initializing contract section');
     toggleContractSection();
   }
 

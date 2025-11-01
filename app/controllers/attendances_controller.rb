@@ -60,18 +60,31 @@ class AttendancesController < ApplicationController
   # 週間勤怠一覧
   def weekly
     authorize Attendance, :weekly?
-    @start_date = params[:start_date]&.to_date || Date.current.beginning_of_week
+    # パラメータで日付が指定された場合、その週の始まり（月曜日）を取得
+    date = params[:start_date]&.to_date || Date.current
+    @start_date = date.beginning_of_week
     @end_date = @start_date.end_of_week
 
-    # 契約期間内のみ表示
-    unless current_user.within_contract_period?(@start_date)
-      # 契約期間内の今日の日付にリダイレクト（契約期間外の場合は契約開始日）
-      fallback_date = if current_user.within_contract_period?(Date.current)
-                        Date.current
-                      else
-                        current_user.contract_start_date
-                      end
-      redirect_to weekly_attendances_path(start_date: fallback_date.beginning_of_week) and return
+    # 週の中に契約期間内の日が1日でも含まれていればOK
+    week_has_valid_date = (@start_date..@end_date).any? { |date| current_user.within_contract_period?(date) }
+
+    unless week_has_valid_date
+      respond_to do |format|
+        format.html do
+          # 契約期間内の今日の日付にリダイレクト（契約期間外の場合は契約開始日）
+          fallback_date = if current_user.within_contract_period?(Date.current)
+                            Date.current
+                          else
+                            current_user.contract_start_date
+                          end
+
+          redirect_to weekly_attendances_path(start_date: fallback_date) and return
+        end
+        format.json do
+          # JSONリクエストの場合はエラーを返す（リダイレクトループを防ぐ）
+          render json: { error: '指定された週は契約期間外です' }, status: :unprocessable_entity and return
+        end
+      end
     end
 
     @attendances = current_user.attendances

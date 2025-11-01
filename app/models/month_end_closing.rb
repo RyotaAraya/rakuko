@@ -3,6 +3,7 @@
 class MonthEndClosing < ApplicationRecord
   belongs_to :user
   belongs_to :closed_by, class_name: 'User', optional: true
+  has_many :approvals, as: :approvable, dependent: :destroy
 
   # Enums
   enum :status, {
@@ -80,6 +81,12 @@ class MonthEndClosing < ApplicationRecord
 
   def can_edit?
     open?
+  end
+
+  def all_attendances_approved?
+    # 勤怠は承認フローなし（自動生成のため）
+    # 月末締めは勤怠データが存在すれば承認可能
+    true
   end
 
   def can_submit_for_approval?

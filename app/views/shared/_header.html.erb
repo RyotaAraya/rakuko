@@ -130,7 +130,6 @@
           <% is_department_page = request.path.match?(/^\/departments\/\d+$/) || request.path.match?(/^\/users\/\d+\/shift_requests/) %>
           <%= link_to "部署メンバー", department_path(current_user.department), class: "nav-item #{'active' if is_department_page}" %>
         <% end %>
-        <%= link_to "月末締め", month_end_closings_path, class: "nav-item #{'active' if current_page?(month_end_closings_path)}" %>
       <% end %>
 
       <% if current_user.system_admin? %>

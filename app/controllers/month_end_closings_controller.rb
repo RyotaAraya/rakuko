@@ -99,7 +99,23 @@ class MonthEndClosingsController < ApplicationController
   def perform_submit # rubocop:disable Naming/PredicateMethod
     return false unless @closing.can_submit_for_approval?
 
-    @closing.update!(status: :pending_approval)
+    ActiveRecord::Base.transaction do
+      @closing.update!(status: :pending_approval)
+
+      # 部署承認のApprovalレコードを作成
+      department_manager = @closing.user.department.users
+                                   .joins(:user_roles)
+                                   .joins('INNER JOIN roles ON user_roles.role_id = roles.id')
+                                   .where(roles: { name: 'department_manager' })
+                                   .first
+
+      @closing.approvals.create!(
+        approval_type: :department,
+        status: :pending,
+        approver: department_manager
+      )
+    end
+
     true
   end
 

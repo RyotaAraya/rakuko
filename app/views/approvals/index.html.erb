@@ -152,28 +152,6 @@
     <h2 class="page-title">承認待ち一覧</h2>
   </div>
 
-  <!-- フィルタ・ソートUI -->
-  <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; gap: 16px; align-items: center;">
-    <div style="flex: 1;">
-      <label style="font-size: 13px; color: #666; margin-right: 8px;">種別でフィルタ:</label>
-      <select id="type-filter" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-        <option value="">すべて</option>
-        <option value="application" <%= 'selected' if @filter_type == 'application' %>>各種申請</option>
-        <option value="month_end_closing" <%= 'selected' if @filter_type == 'month_end_closing' %>>月末締め</option>
-      </select>
-    </div>
-    <div style="flex: 1;">
-      <label style="font-size: 13px; color: #666; margin-right: 8px;">並び替え:</label>
-      <select id="sort-select" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-        <option value="created_at" <%= 'selected' if @sort_by == 'created_at' %>>申請日時（新しい順）</option>
-        <option value="applicant" <%= 'selected' if @sort_by == 'applicant' %>>申請者名（五十音順）</option>
-      </select>
-    </div>
-    <div style="color: #666; font-size: 14px;">
-      合計: <strong><%= @pending_approvals.count %></strong>件
-    </div>
-  </div>
-
   <% if @pending_approvals.any? %>
     <div class="approvals-table">
       <table>
@@ -183,8 +161,6 @@
             <th>種別</th>
             <th>対象日</th>
             <th>詳細</th>
-            <th>承認種別</th>
-            <th>ステータス</th>
             <th>申請日時</th>
             <th>アクション</th>
           </tr>
@@ -206,7 +182,7 @@
                     勤怠
                   </span>
                 <% elsif approvable.is_a?(MonthEndClosing) %>
-                  <span class="type-badge" style="background: #fff3e0; color: #e65100;">
+                  <span class="type-badge" style="background: #f3e5f5; color: #7b1fa2;">
                     月末締め
                   </span>
                 <% end %>
@@ -228,16 +204,6 @@
                 <% elsif approvable.is_a?(MonthEndClosing) %>
                   月末締め申請
                 <% end %>
-              </td>
-              <td>
-                <span class="approval-type">
-                  <%= approval.approval_type == 'department' ? '部署承認' : approval.approval_type %>
-                </span>
-              </td>
-              <td>
-                <span class="status-badge status-<%= approval.status %>">
-                  <%= approval.status == 'pending' ? '承認待ち' : approval.status %>
-                </span>
               </td>
               <td><%= approval.created_at.strftime('%Y/%m/%d %H:%M') %></td>
               <td>

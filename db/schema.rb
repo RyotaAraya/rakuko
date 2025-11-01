@@ -181,14 +181,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_30_133734) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "first_name", null: false, comment: "名前"
-    t.string "last_name", comment: "苗字"
-    t.integer "status", default: 0, comment: "pending, active, inactive"
-    t.string "google_uid", comment: "Google OAuth UID"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "provider"
     t.string "uid"
+    t.string "first_name"
+    t.string "last_name"
+    t.integer "status", default: 0, null: false
+    t.string "google_uid"
     t.bigint "department_id"
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false

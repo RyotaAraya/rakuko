@@ -109,6 +109,27 @@
   .external-link:hover {
     text-decoration: underline;
   }
+  .info-box {
+    padding: 16px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  .info-box-warning {
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    color: #e65100;
+  }
+  .info-box-info {
+    background: #e3f2fd;
+    border: 1px solid #64b5f6;
+    color: #1976d2;
+  }
+  .info-box-success {
+    background: #e8f5e9;
+    border: 1px solid #81c784;
+    color: #2e7d32;
+  }
 </style>
 
 <div class="container">
@@ -130,7 +151,7 @@
       </div>
     </div>
 
-    <!-- 学生用：自分の締め処理 + チェックリスト -->
+    <!-- 学生用：自分の締め処理 -->
     <div class="section-card">
       <div class="section-title"><%= @year %>年<%= @month %>月の締め処理</div>
 
@@ -154,41 +175,49 @@
           </div>
         </div>
 
-        <% if @current_closing.can_submit_for_approval? %>
-          <div style="margin-top: 20px;">
-            <%= button_to "承認申請を提出", submit_for_approval_month_end_closing_path(@current_closing),
-                          method: :post,
-                          form: { data: { turbo_confirm: "#{@year}年#{@month}月の月末締めを承認申請しますか？\n部署担当者の承認をお待ちください。" }, id: "submit-approval-form" },
-                          class: "btn btn-success",
-                          id: "submit-approval-btn",
-                          style: "pointer-events: none; opacity: 0.5;" %>
-            <div style="margin-top: 8px; font-size: 13px; color: #e65100;" id="checklist-warning">
-              ⚠️ ラクローとジョブカンの確認を完了してください
-            </div>
-          </div>
-        <% elsif @current_closing.pending_approval? %>
-          <div style="margin-top: 20px; padding: 12px; background: #e3f2fd; border: 1px solid #64b5f6; border-radius: 4px; color: #1976d2;">
+        <% if @current_closing.pending_approval? %>
+          <div class="info-box info-box-info">
             ℹ️ 承認申請済みです。部署担当者の承認をお待ちください。
           </div>
-        <% end %>
-
-        <% if @current_closing.closed_or_locked? && @current_closing.closed_at %>
-          <div style="margin-top: 20px; font-size: 14px; color: #666;">
-            締め実行日時: <%= @current_closing.closed_at.strftime('%Y年%m月%d日 %H:%M') %>
-            <% if @current_closing.closed_by %>
-              （実行者: <%= @current_closing.closed_by.display_name %>）
+        <% elsif @current_closing.closed_or_locked? %>
+          <div class="info-box info-box-success">
+            ✓ この月の締め処理は完了しています。
+            <% if @current_closing.closed_at %>
+              <div style="margin-top: 8px; font-size: 13px;">
+                締め実行日時: <%= @current_closing.closed_at.strftime('%Y年%m月%d日 %H:%M') %>
+                <% if @current_closing.closed_by %>
+                  （実行者: <%= @current_closing.closed_by.display_name %>）
+                <% end %>
+              </div>
             <% end %>
           </div>
         <% end %>
       <% else %>
-        <p style="color: #666;">この月の締め処理データがまだ作成されていません。</p>
+        <!-- 締め処理データが存在しない場合の説明 -->
+        <div class="info-box info-box-warning">
+          <div style="font-weight: bold; margin-bottom: 8px;">⚠️ <%= @year %>年<%= @month %>月の締め処理データがまだ作成されていません</div>
+          <div style="font-size: 13px; line-height: 1.6;">
+            <strong>締め処理が作成できない理由：</strong><br>
+            <% current_date = Date.current %>
+            <% target_month = Date.new(@year, @month, 1) %>
+            <% if target_month > current_date %>
+              • 未来の月（<%= @year %>年<%= @month %>月）はまだ締め処理を開始できません<br>
+            <% else %>
+              • この月の勤怠データが存在しない可能性があります<br>
+              • システム管理者にお問い合わせください
+            <% end %>
+          </div>
+        </div>
       <% end %>
     </div>
 
     <!-- 外部システム連携チェックリスト -->
-    <%if @current_closing.can_submit_for_approval?  %>
+    <% if @current_closing.can_submit_for_approval? %>
       <div class="section-card">
         <div class="section-title">外部システム連携チェックリスト</div>
+        <div style="margin-bottom: 16px; font-size: 14px; color: #666;">
+          以下の確認を完了してから、承認申請を提出してください。
+        </div>
 
         <div class="checklist-item">
           <input type="checkbox" id="rakuro_check" class="checklist-checkbox"
@@ -214,6 +243,19 @@
               で交通費申請・承認ルートを確認してください
             </div>
           </label>
+        </div>
+
+        <!-- 承認申請ボタン（チェックリスト下部に配置） -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+          <%= button_to "承認申請を提出", submit_for_approval_month_end_closing_path(@current_closing),
+                        method: :post,
+                        form: { data: { turbo_confirm: "#{@year}年#{@month}月の月末締めを承認申請しますか？\n部署担当者の承認をお待ちください。" }, id: "submit-approval-form" },
+                        class: "btn btn-success",
+                        id: "submit-approval-btn",
+                        style: "pointer-events: none; opacity: 0.5;" %>
+          <div style="margin-top: 8px; font-size: 13px; color: #e65100;" id="checklist-warning">
+            ⚠️ 上記のチェックリストを全て完了してください
+          </div>
         </div>
       </div>
     <% end %>
