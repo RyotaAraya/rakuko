@@ -254,10 +254,10 @@ Rails.logger.debug 'Creating sample attendance data...'
 student_users.each_with_index do |student, index|
   # 先月の勤怠データ
   last_month = Date.current.last_month
-  work_days_last_month = (1..last_month.end_of_month.day).map { |day|
-    Date.new(last_month.year, last_month.month, day)
-  }.reject { |date| [0, 6].include?(date.wday) } # 土日除外
-
+  work_days_last_month = # 土日除外
+    (1..last_month.end_of_month.day).map do |day|
+      Date.new(last_month.year, last_month.month, day)
+    end.reject { |date| [0, 6].include?(date.wday) }
   work_days_last_month.each do |work_date|
     # 各学生で勤務パターンを変える
     work_hours = [3, 4, 5, 6][index % 4]
@@ -293,10 +293,10 @@ student_users.each_with_index do |student, index|
 
   # 今月の勤怠データ（月初から今日まで）
   current_month = Date.current
-  work_days_this_month = (1..current_month.day).map { |day|
-    Date.new(current_month.year, current_month.month, day)
-  }.reject { |date| [0, 6].include?(date.wday) } # 土日除外
-
+  work_days_this_month = # 土日除外
+    (1..current_month.day).map do |day|
+      Date.new(current_month.year, current_month.month, day)
+    end.reject { |date| [0, 6].include?(date.wday) }
   work_days_this_month.each do |work_date|
     next if work_date > Date.current # 未来の日付はスキップ
 
@@ -397,7 +397,7 @@ student_users.each_with_index do |student, index|
   ]
 
   # 承認待ち申請を作成（承認レコードも作成）
-  applications_data.take(index % 3 + 1).each do |app_data|
+  applications_data.take((index % 3) + 1).each do |app_data|
     application = student.applications.find_or_create_by(
       application_type: app_data[:type],
       application_date: app_data[:date]
@@ -409,17 +409,17 @@ student_users.each_with_index do |student, index|
     end
 
     # 承認待ちの場合、Approvalレコードを作成
-    if application.status == 'pending' && department_manager && !application.approvals.exists?
-      application.approvals.create!(
-        approval_type: :department,
-        status: :pending,
-        approver: department_manager
-      )
-    end
+    next unless application.status == 'pending' && department_manager && !application.approvals.exists?
+
+    application.approvals.create!(
+      approval_type: :department,
+      status: :pending,
+      approver: department_manager
+    )
   end
 
   # 過去の申請（承認済み・却下済み）を作成
-  past_applications.take(index % 2 + 1).each do |app_data|
+  past_applications.take((index % 2) + 1).each do |app_data|
     student.applications.find_or_create_by(
       application_type: app_data[:type],
       application_date: app_data[:date]
@@ -440,6 +440,12 @@ student_users.each_with_index do |student, index|
   last_month = Date.current.last_month
 
   # 先月の締め（承認済み）
+  last_month_manager = student.department.users
+                              .joins(:user_roles)
+                              .joins('INNER JOIN roles ON user_roles.role_id = roles.id')
+                              .where(roles: { name: 'department_manager' })
+                              .first
+
   student.month_end_closings.find_or_create_by(
     year: last_month.year,
     month: last_month.month
@@ -448,8 +454,7 @@ student_users.each_with_index do |student, index|
     closing.total_work_hours = [60, 70, 75, 80][index % 4]
     closing.total_work_days = [15, 17, 18, 20][index % 4]
     closing.overtime_hours = 0
-    closing.closed_by = student.department.users.joins(:user_roles).joins('INNER JOIN roles ON user_roles.role_id = roles.id')
-                              .where(roles: { name: 'department_manager' }).first
+    closing.closed_by = last_month_manager
     closing.closed_at = last_month.end_of_month
   end
 

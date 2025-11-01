@@ -16,7 +16,8 @@ class ApplicationController < ActionController::Base
     return if controller_name == 'sessions' # Deviseのsessionsコントローラー全体を除外
     return if controller_name == 'omniauth_callbacks' # OAuthコールバックも除外
 
-    return unless current_user.pending?
+    # 承認待ちまたは無効なユーザーを承認待ちページにリダイレクト
+    return unless current_user.pending? || current_user.inactive?
 
     redirect_to pending_approvals_index_path
   end

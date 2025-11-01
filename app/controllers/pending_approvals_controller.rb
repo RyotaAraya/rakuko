@@ -11,6 +11,7 @@ class PendingApprovalsController < ApplicationController
   private
 
   def ensure_pending_status
-    redirect_to root_path unless current_user&.pending?
+    # pendingまたはinactiveユーザーのみアクセス可能
+    redirect_to root_path unless current_user&.pending? || current_user&.inactive?
   end
 end

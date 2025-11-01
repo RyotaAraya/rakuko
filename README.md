@@ -417,16 +417,47 @@ docker-compose exec web bundle exec rspec
 
 ### 開発用ユーザーアカウント
 
-シードデータで以下のテストアカウントが作成されます：
+シードデータで以下のテストアカウントが作成されます（全て共通パスワード: `password123`）：
 
-| 役割 | メールアドレス | パスワード | 権限 |
-|------|---------------|-----------|------|
-| 学生ユーザー | student@example.com | password123 | アルバイト |
-| 部署管理者 | department.manager@example.com | password123 | 部署担当者 |
-| システム管理者 | system.admin@example.com | password123 | システム管理者 |
-| 承認待ちユーザー | pending.user@example.com | password123 | 承認待ち |
+#### システム管理者
+| メールアドレス | 氏名 | 部署 |
+|---------------|------|------|
+| system.admin@example.com | システム 管理者 | 情報システム部 |
+
+#### 部署管理者
+| メールアドレス | 氏名 | 部署 |
+|---------------|------|------|
+| sales.manager@example.com | 営業 部長 | 営業部 |
+| dev.manager@example.com | 開発 部長 | 開発部 |
+| hr.manager@example.com | 人事 部長 | 人事部 |
+
+#### 学生アルバイト（6名）
+| メールアドレス | 氏名 | 部署 |
+|---------------|------|------|
+| student1@example.com | 田中 太郎 | 営業部 |
+| student2@example.com | 佐藤 花子 | 営業部 |
+| student3@example.com | 鈴木 次郎 | 開発部 |
+| student4@example.com | 高橋 美咲 | 開発部 |
+| student5@example.com | 伊藤 健太 | 人事部 |
+| student6@example.com | 渡辺 愛 | マーケティング部 |
+
+#### 承認待ちユーザー（5名）
+| メールアドレス | 状態 |
+|---------------|------|
+| pending1@example.com ～ pending5@example.com | 承認待ち |
+
+#### 無効ユーザー
+| メールアドレス | 氏名 | 状態 |
+|---------------|------|------|
+| inactive@example.com | 退職 ユーザー | 無効 |
 
 **ログインURL**: http://localhost:3000/users/sign_in
+
+**注意事項**:
+- 承認待ち・無効ユーザーでログインすると承認待ちページにリダイレクトされます
+- 各学生には複数の承認待ち申請（遅刻、早退、欠勤）が作成されています
+- 月末締めの承認待ちデータも含まれています
+- 先月・今月の勤怠データが全学生分作成されています
 
 ### その他のコマンド
 

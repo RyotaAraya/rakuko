@@ -275,13 +275,13 @@ Devise.setup do |config|
 
   # Google OAuth2設定
   config.omniauth :google_oauth2,
-                  ENV['GOOGLE_CLIENT_ID'],
-                  ENV['GOOGLE_CLIENT_SECRET'],
+                  ENV.fetch('GOOGLE_CLIENT_ID', nil),
+                  ENV.fetch('GOOGLE_CLIENT_SECRET', nil),
                   {
                     scope: 'email,profile',
                     prompt: 'select_account',
                     image_aspect_ratio: 'square',
-                    image_size: 50
+                    image_size: 50,
                   }
 
   # ==> Warden configuration
