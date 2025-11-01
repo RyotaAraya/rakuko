@@ -236,10 +236,8 @@
     <p>ログインしてください</p>
     <%= button_to "Googleでログイン", user_google_oauth2_omniauth_authorize_path, method: :post, class: "btn btn-primary", data: { turbo: false } %>
 
-    <% unless Rails.env.production? %>
-      <div style="margin-top: 20px;">
-        <%= link_to "開発用ログイン", new_user_session_path, class: "btn" %>
-      </div>
-    <% end %>
+    <div style="margin-top: 20px;">
+      <%= link_to Rails.env.production? ? "デモ用ログイン" : "開発用ログイン", new_user_session_path, class: "btn" %>
+    </div>
   </div>
 <% end %>
