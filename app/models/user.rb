@@ -255,15 +255,8 @@ class User < ApplicationRecord
 
   # 指定月が編集可能かチェック
   def can_edit_shift_for_month?(year, month)
-    target_date = Date.new(year, month, 1)
-    today = Date.current
-
-    # 1. 契約期間内チェック
-    return false unless contract_active?(target_date)
-
-    # 2. 過去月は編集不可、当月・来月以降は編集可能
-    # （学業優先のため、当月も柔軟に変更可能）
-    target_date >= today.beginning_of_month
+    # 過去月でも修正可能なため、常にtrueを返す
+    true
   end
 
   # 締切日を過ぎているかチェック（25日締切）

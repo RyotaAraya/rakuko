@@ -30,23 +30,33 @@ class ShiftRequestsController < ApplicationController
   def create
     authorize :shift_request, :create?
 
-    # 編集権限チェック
-    unless @can_edit
-      render json: { success: false, errors: ['この月のシフトは編集できません（過去月または契約期間外）'] }, status: :forbidden
-      return
-    end
-
     # 週間シフトデータの保存または更新
     result = save_weekly_shifts(params[:weeks_data])
 
     if result[:success]
       if params[:submit_type] == 'draft'
-        render json: { success: true, message: '下書きを保存しました' }
+        # 下書き保存時は、提出済みの状態を下書きに戻す
+        monthly_summary = find_or_create_monthly_summary
+        monthly_summary.reload
+        monthly_summary.back_to_draft! if monthly_summary.submitted?
+        monthly_summary.reload
+        render json: { 
+          success: true, 
+          message: '下書きを保存しました',
+          status: monthly_summary.status,
+          submitted_at: monthly_summary.submitted_at&.strftime('%Y/%m/%d %H:%M')
+        }
       else
-        # 最終提出の場合
+        # 提出の場合
         submit_result = submit_monthly_shifts
         if submit_result[:success]
-          render json: { success: true, message: 'シフトを提出しました' }
+          @monthly_summary.reload
+          render json: { 
+            success: true, 
+            message: 'シフトを提出しました',
+            status: @monthly_summary.status,
+            submitted_at: @monthly_summary.submitted_at&.strftime('%Y/%m/%d %H:%M')
+          }
         else
           render json: { success: false, errors: submit_result[:errors] }
         end
@@ -58,12 +68,6 @@ class ShiftRequestsController < ApplicationController
 
   def update
     authorize :shift_request, :update?
-
-    # 編集権限チェック
-    unless @can_edit
-      render json: { success: false, errors: ['この月のシフトは編集できません（過去月または契約期間外）'] }, status: :forbidden
-      return
-    end
 
     # 週間シフトの個別更新
     weekly_shift = current_user.weekly_shifts.find_by(id: params[:weekly_shift_id])

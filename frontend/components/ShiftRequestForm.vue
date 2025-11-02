@@ -240,6 +240,23 @@ export default {
       }
     }
 
+    // ステータス表示を更新する関数
+    const updateSubmissionStatus = (status, submittedAt) => {
+      const statusElement = document.getElementById('submission-status')
+      if (!statusElement) return
+
+      if (status === 'submitted') {
+        statusElement.innerHTML = `
+          <span style="color: #2196f3; font-size: 14px; margin-left: 15px; font-weight: bold;">✅ 提出済み</span>
+          ${submittedAt ? `<span style="color: #666; font-size: 12px; margin-left: 5px;">(${submittedAt}提出)</span>` : ''}
+        `
+      } else {
+        statusElement.innerHTML = `
+          <span style="color: #ff9800; font-size: 14px; margin-left: 15px;">📝 下書き中</span>
+        `
+      }
+    }
+
     const saveShifts = async () => {
       try {
         console.log('下書き保存中...', computedWeeks.value)
@@ -255,6 +272,10 @@ export default {
 
         const result = await response.json()
         if (result.success) {
+          // ステータス表示を更新
+          if (result.status) {
+            updateSubmissionStatus(result.status, result.submitted_at)
+          }
           alert('下書きを保存しました')
         } else {
           console.error('保存エラー:', result.errors)
@@ -286,6 +307,10 @@ export default {
 
         const result = await response.json()
         if (result.success) {
+          // ステータス表示を更新
+          if (result.status) {
+            updateSubmissionStatus(result.status, result.submitted_at)
+          }
           alert('シフトを提出しました')
           // 提出後はホームにリダイレクト
           window.location.href = '/'

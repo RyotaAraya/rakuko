@@ -61,16 +61,22 @@
           </option>
         <% end %>
       </select>
-
-      <% if @can_edit %>
-        <% if @past_deadline %>
-          <span style="color: #ff9800; font-size: 14px;">⚠️ 締切日(前月25日)を過ぎています</span>
-        <% else %>
-          <span style="color: #4caf50; font-size: 14px;">✅ 編集可能</span>
+      
+      <!-- 提出ステータス表示 -->
+      <span id="submission-status">
+        <% if @monthly_summary %>
+          <% if @monthly_summary.submitted? %>
+            <span style="color: #2196f3; font-size: 14px; margin-left: 15px; font-weight: bold;">✅ 提出済み</span>
+            <% if @monthly_summary.submitted_at %>
+              <span style="color: #666; font-size: 12px; margin-left: 5px;">
+                (<%= @monthly_summary.submitted_at.strftime('%Y/%m/%d %H:%M') %>提出)
+              </span>
+            <% end %>
+          <% else %>
+            <span style="color: #ff9800; font-size: 14px; margin-left: 15px;">📝 下書き中</span>
+          <% end %>
         <% end %>
-      <% else %>
-        <span style="color: #f44336; font-size: 14px;">🔒 編集不可（過去月）</span>
-      <% end %>
+      </span>
     </div>
   </div>
 
