@@ -254,7 +254,7 @@ class User < ApplicationRecord
   end
 
   # 指定月が編集可能かチェック
-  def can_edit_shift_for_month?(year, month)
+  def can_edit_shift_for_month?(_year, _month)
     # 過去月でも修正可能なため、常にtrueを返す
     true
   end

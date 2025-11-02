@@ -12,6 +12,12 @@ class ApprovalsController < ApplicationController
     @filter_type = params[:type] # 'application', 'month_end_closing', または nil（全て）
     @sort_by = params[:sort] || 'created_at' # 'created_at' または 'applicant'
 
+    # 部署担当者が部署に所属していない場合は何も表示しない
+    if current_user.department_id.blank?
+      @pending_approvals = []
+      return
+    end
+
     # Application の承認待ちを取得（approvableもpendingのもののみ）
     application_approvals = if @filter_type.nil? || @filter_type == 'application'
                               Approval
@@ -19,9 +25,13 @@ class ApprovalsController < ApplicationController
           INNER JOIN applications
           ON approvals.approvable_type = 'Application'
           AND approvals.approvable_id = applications.id
+          INNER JOIN users AS applicant_users
+          ON applications.user_id = applicant_users.id
                                 SQL
                                 .where(approval_type: :department, status: :pending)
                                 .where(applications: { status: 0 }) # pending
+                                .where(approver_id: current_user.id) # 自分が承認者として設定されているもののみ
+                                .where(applicant_users: { department_id: current_user.department_id }) # 自身の部署のアルバイトのみ
                                 .includes(:approvable, :approver)
                             else
                               []
@@ -34,9 +44,14 @@ class ApprovalsController < ApplicationController
           INNER JOIN month_end_closings
           ON approvals.approvable_type = 'MonthEndClosing'
           AND approvals.approvable_id = month_end_closings.id
+          INNER JOIN users AS applicant_users
+          ON month_end_closings.user_id = applicant_users.id
                                       SQL
                                       .where(approval_type: :department, status: :pending)
                                       .where(month_end_closings: { status: 1 }) # pending_approval
+                                      .where(approver_id: current_user.id) # 自分が承認者
+                                      # 自身の部署のアルバイトのみ
+                                      .where(applicant_users: { department_id: current_user.department_id })
                                       .includes(:approvable, :approver)
                                   else
                                     []

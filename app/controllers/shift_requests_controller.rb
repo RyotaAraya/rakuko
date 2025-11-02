@@ -35,31 +35,9 @@ class ShiftRequestsController < ApplicationController
 
     if result[:success]
       if params[:submit_type] == 'draft'
-        # 下書き保存時は、提出済みの状態を下書きに戻す
-        monthly_summary = find_or_create_monthly_summary
-        monthly_summary.reload
-        monthly_summary.back_to_draft! if monthly_summary.submitted?
-        monthly_summary.reload
-        render json: { 
-          success: true, 
-          message: '下書きを保存しました',
-          status: monthly_summary.status,
-          submitted_at: monthly_summary.submitted_at&.strftime('%Y/%m/%d %H:%M')
-        }
+        handle_draft_save
       else
-        # 提出の場合
-        submit_result = submit_monthly_shifts
-        if submit_result[:success]
-          @monthly_summary.reload
-          render json: { 
-            success: true, 
-            message: 'シフトを提出しました',
-            status: @monthly_summary.status,
-            submitted_at: @monthly_summary.submitted_at&.strftime('%Y/%m/%d %H:%M')
-          }
-        else
-          render json: { success: false, errors: submit_result[:errors] }
-        end
+        handle_submit
       end
     else
       render json: { success: false, errors: result[:errors] }
@@ -190,6 +168,36 @@ class ShiftRequestsController < ApplicationController
       { success: true }
     else
       { success: false, errors: build_submission_errors }
+    end
+  end
+
+  def handle_draft_save
+    # 下書き保存時は、提出済みの状態を下書きに戻す
+    monthly_summary = find_or_create_monthly_summary
+    monthly_summary.reload
+    monthly_summary.back_to_draft! if monthly_summary.submitted?
+    monthly_summary.reload
+    render json: {
+      success: true,
+      message: '下書きを保存しました',
+      status: monthly_summary.status,
+      submitted_at: monthly_summary.submitted_at&.strftime('%Y/%m/%d %H:%M'),
+    }
+  end
+
+  def handle_submit
+    # 提出の場合
+    submit_result = submit_monthly_shifts
+    if submit_result[:success]
+      @monthly_summary.reload
+      render json: {
+        success: true,
+        message: 'シフトを提出しました',
+        status: @monthly_summary.status,
+        submitted_at: @monthly_summary.submitted_at&.strftime('%Y/%m/%d %H:%M'),
+      }
+    else
+      render json: { success: false, errors: submit_result[:errors] }
     end
   end
 
